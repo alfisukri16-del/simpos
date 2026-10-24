@@ -1,0 +1,183 @@
+export type PoStatus = "Dipesan" | "Diproses" | "Sudah Datang" | "Selesai";
+
+export type PoOrder = {
+  id: string;
+  number: string;
+  date: string;
+  customer: string;
+  initials: string;
+  phone: string;
+  products: string[];
+  productLabel: string;
+  status: PoStatus;
+  createdAt: string;
+  note: string;
+  items: Array<{ name: string; sub: string; qty: number }>;
+  resep?: boolean;
+};
+
+/** Data PO DEMO untuk simulasi frontend. */
+export const ORDERS: PoOrder[] = [
+  {
+    id: "PO-2026-0108",
+    number: "PO-2026-0108",
+    date: "10 Okt 2026",
+    customer: "Siti Rahma",
+    initials: "SR",
+    phone: "0812 3456 7890",
+    products: ["Lensa Single Vision", "Lensa - Essilor"],
+    productLabel: "Lensa Single Vision",
+    status: "Sudah Datang",
+    createdAt: "10 Oktober 2026 · 14.24 WIB",
+    note: "Hubungi pelanggan saat pesanan tersedia.",
+    resep: true,
+    items: [
+      { name: "Lensa Single Vision", sub: "Lensa · Essilor", qty: 1 },
+      { name: "Frame Titanium Classic", sub: "Frame · Ray-Ban", qty: 1 },
+    ],
+  },
+  {
+    id: "PO-2026-0107",
+    number: "PO-2026-0107",
+    date: "10 Okt 2026",
+    customer: "Andi Saputra",
+    initials: "AS",
+    phone: "0813 7788 3401",
+    products: ["Frame Titanium Classic", "Frame · Ray-Ban"],
+    productLabel: "Frame Titanium Classic",
+    status: "Diproses",
+    createdAt: "10 Oktober 2026 · 11.02 WIB",
+    note: "Pembuatan lensa mengikuti resep terlampir.",
+    resep: true,
+    items: [
+      { name: "Frame Titanium Classic", sub: "Frame · Ray-Ban", qty: 1 },
+      { name: "Lensa Blue Control", sub: "Lensa · Hoya", qty: 1 },
+    ],
+  },
+  {
+    id: "PO-2026-0106",
+    number: "PO-2026-0106",
+    date: "09 Okt 2026",
+    customer: "Maya Putri",
+    initials: "MP",
+    phone: "0822 9900 1112",
+    products: ["Lensa Blue Control", "Lensa · Hoya"],
+    productLabel: "Lensa Blue Control",
+    status: "Dipesan",
+    createdAt: "09 Oktober 2026 · 16.40 WIB",
+    note: "Menunggu pemrosesan admin cabang.",
+    resep: false,
+    items: [{ name: "Lensa Blue Control", sub: "Lensa · Hoya", qty: 1 }],
+  },
+  {
+    id: "PO-2026-0103",
+    number: "PO-2026-0103",
+    date: "08 Okt 2026",
+    customer: "Dimas Pratama",
+    initials: "DP",
+    phone: "0831 1188 5500",
+    products: ["Frame Urban Square", "Frame · Oakley"],
+    productLabel: "Frame Urban Square",
+    status: "Selesai",
+    createdAt: "08 Oktober 2026 · 09.15 WIB",
+    note: "Pesanan selesai dan sudah diambil pelanggan.",
+    resep: false,
+    items: [{ name: "Frame Urban Square", sub: "Frame · Oakley", qty: 1 }],
+  },
+];
+
+export type TrxStatus = "Selesai" | "Pending" | "Dibatalkan";
+
+export type Transaction = {
+  id: string;
+  date: string;
+  time: string;
+  no: string;
+  customer: string;
+  phone: string;
+  type: "Pembelian" | "Pemesanan";
+  total: number;
+  status: TrxStatus;
+  branchId?: string; // backfill 'cabang-padang' di shared store; tanpa efek render
+  method?: string; // metode pembayaran tercatat (transaksi baru); seed lama "—"
+  detail?: "resep" | "struk" | "produk";
+  products?: Array<{ name: string; brand: string; qty: number; price: number }>;
+};
+
+/** Riwayat transaksi DEMO. */
+export const TRANSACTIONS: Transaction[] = [
+  {
+    id: "T1", no: "TRX-20260812-001", date: "12 Agu 2026", time: "14:23", customer: "Rian Pratama", phone: "085277129011",
+    type: "Pembelian", total: 800_000, status: "Selesai",
+    products: [{ name: "Paket Case & Lap", brand: "Optik Mekar Jaya", qty: 1, price: 150_000 }, { name: "Lensa Single Vision", brand: "Essilor", qty: 1, price: 650_000 }],
+  },
+  {
+    id: "T2", no: "TRX-20260812-002", date: "12 Agu 2026", time: "11:10", customer: "Siti Nurhaliza", phone: "081234567890",
+    type: "Pembelian", total: 1_200_000, status: "Selesai",
+    products: [{ name: "Frame Bella Round", brand: "Vogue", qty: 1, price: 1_200_000 }],
+  },
+  {
+    id: "T3", no: "TRX-20260811-003", date: "11 Agu 2026", time: "16:45", customer: "Andi Saputra", phone: "089612345678",
+    type: "Pemesanan", total: 950_000, status: "Pending",
+    products: [{ name: "Lensa Progressive", brand: "Zeiss", qty: 1, price: 950_000 }],
+  },
+  {
+    id: "T4", no: "TRX-20260811-002", date: "11 Agu 2026", time: "13:20", customer: "Maya Lestari", phone: "082199887766",
+    type: "Pembelian", total: 450_000, status: "Selesai", detail: "resep",
+    products: [{ name: "Lensa Single Vision", brand: "Essilor", qty: 1, price: 450_000 }],
+  },
+  {
+    id: "T5", no: "TRX-20260810-001", date: "10 Agu 2026", time: "10:05", customer: "Dedi Rahman", phone: "081366778899",
+    type: "Pembelian", total: 1_350_000, status: "Selesai", detail: "produk",
+    products: [{ name: "3Clear Black Round", brand: "Makar Eyewear", qty: 1, price: 450_000 }, { name: "Lensa Blue Control", brand: "Hoya", qty: 1, price: 900_000 }],
+  },
+  {
+    id: "T6", no: "TRX-20260809-004", date: "09 Agu 2026", time: "17:30", customer: "Fitri Ananda", phone: "085122334455",
+    type: "Pembelian", total: 600_000, status: "Dibatalkan",
+    products: [{ name: "3Clear Black Round", brand: "Makar Eyewear", qty: 1, price: 450_000 }],
+  },
+  {
+    id: "T7", no: "TRX-20260809-003", date: "09 Agu 2026", time: "12:15", customer: "Zulfa Ramadhani", phone: "082311223344",
+    type: "Pemesanan", total: 750_000, status: "Pending",
+    products: [{ name: "Lensa Single Vision", brand: "Zeiss", qty: 1, price: 350_000 }],
+  },
+  {
+    id: "T8", no: "TRX-20260808-002", date: "08 Agu 2026", time: "15:40", customer: "Hendra Wijaya", phone: "081299876665",
+    type: "Pembelian", total: 950_000, status: "Selesai",
+    products: [{ name: "Frame AirFlex", brand: "Excellence", qty: 1, price: 800_000 }],
+  },
+  {
+    id: "T9", no: "TRX-20260808-001", date: "08 Agu 2026", time: "09:20", customer: "Nadia Putri", phone: "082273459988",
+    type: "Pembelian", total: 500_000, status: "Selesai",
+    products: [{ name: "Cleaning Kit", brand: "Makar Eyewear", qty: 1, price: 90_000 }, { name: "Paket Case & Lap", brand: "Optik Mekar Jaya", qty: 1, price: 150_000 }],
+  },
+];
+
+export type PaymentMethod = "Tunai" | "Transfer Bank" | "Kartu Debit/Kredit" | "QRIS";
+
+/** Pembayaran DEMO. */
+export const PAYMENTS: Array<{
+  no: string; date: string; method: PaymentMethod; customer: string; amount: number; status: "Lunas" | "Pending" | "Dibatalkan";
+}> = [
+  { no: "PMT-20261010-001", date: "10 Okt 2026", method: "Tunai", customer: "Andi Saputra", amount: 3_441_000, status: "Lunas" },
+  { no: "PMT-20261009-002", date: "09 Okt 2026", method: "QRIS", customer: "Siti Rahma", amount: 1_720_000, status: "Lunas" },
+  { no: "PMT-20261009-001", date: "09 Okt 2026", method: "Transfer Bank", customer: "Maya Putri", amount: 1_250_000, status: "Pending" },
+  { no: "PMT-20261008-003", date: "08 Okt 2026", method: "Kartu Debit/Kredit", customer: "Dimas Pratama", amount: 2_100_000, status: "Lunas" },
+  { no: "PMT-20261007-001", date: "07 Okt 2026", method: "Tunai", customer: "Nadia Amelia", amount: 950_000, status: "Lunas" },
+];
+
+/** Daftar resep DEMO. */
+export type ResepRecord = {
+  id: string; customer: string; initials: string; date: string;
+  od: { sph: string; cyl: string; axis: string }; os: { sph: string; cyl: string; axis: string };
+  pd: string; add: string; status: "Aktif" | "Expired" | "Kedaluwarsa";
+};
+
+export const RESEP_RECORDS: ResepRecord[] = [
+  { id: "RX-001", customer: "Andi Saputra", initials: "AS", date: "12 Mar 2026", od: { sph: "-1.50", cyl: "-0.75", axis: "180" }, os: { sph: "-1.25", cyl: "-0.50", axis: "170" }, pd: "32.0", add: "+1.00", status: "Aktif" },
+  { id: "RX-002", customer: "Rian Pratama", initials: "RP", date: "02 Feb 2026", od: { sph: "-2.00", cyl: "-0.50", axis: "175" }, os: { sph: "-1.75", cyl: "-0.25", axis: "5" }, pd: "31.5", add: "+1.25", status: "Aktif" },
+  { id: "RX-003", customer: "Siti Maulida", initials: "SM", date: "20 Jan 2026", od: { sph: "+1.00", cyl: "-0.75", axis: "90" }, os: { sph: "+1.25", cyl: "-0.50", axis: "85" }, pd: "30.5", add: "+2.00", status: "Aktif" },
+  { id: "RX-004", customer: "Nadia Amelia", initials: "NA", date: "05 Jan 2026", od: { sph: "-0.75", cyl: "-1.00", axis: "160" }, os: { sph: "-0.50", cyl: "-0.75", axis: "15" }, pd: "32.5", add: "-", status: "Aktif" },
+  { id: "RX-005", customer: "Dedi Rahman", initials: "DR", date: "30 Nov 2025", od: { sph: "-3.25", cyl: "-0.50", axis: "180" }, os: { sph: "-3.00", cyl: "-0.25", axis: "175" }, pd: "33.0", add: "+1.75", status: "Expired" },
+  { id: "RX-006", customer: "Dimas Hidayat", initials: "DH", date: "18 Des 2025", od: { sph: "-0.25", cyl: "-0.25", axis: "10" }, os: { sph: "-0.50", cyl: "-0.25", axis: "170" }, pd: "31.0", add: "-", status: "Expired" },
+];

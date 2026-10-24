@@ -1,0 +1,358 @@
+/* ==========================================================================
+   ADMIN CABANG — hanya gaya BARU khas admin (drawer, form, nav grup).
+   Shell, tabel, tombol, kartu, dan tipografi memakai ulang
+   layout.css / pages.css / dashboard.css / login.css Kasir tanpa diubah.
+   ========================================================================== */
+
+/* Group label pertama rapat ke brand */
+.admin .sidebar-nav > div:first-child .nav-sep {
+  margin-top: 18px;
+}
+
+/* Menu Tahap-02: nonaktif, jelas bukan dead link */
+.nav-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nav-soon {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.admin-logout {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.admin-logout:hover {
+  color: var(--danger-ink);
+}
+
+/* Chip cabang (login + dashboard) */
+.branch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+/* Stat terbungkus link — visual kartu tetap milik StatCard */
+.stat-link {
+  display: block;
+  border-radius: var(--r-lg);
+}
+
+.stat-link .stat-card {
+  height: 100%;
+  transition: transform 0.15s, box-shadow 0.18s;
+}
+
+a.stat-link:hover .stat-card {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-soon {
+  cursor: default;
+}
+
+.foot-note {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Tombol nonaktif berpenjelasan (Tahap 02) */
+.btn-disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.btn-danger {
+  color: #fff;
+  background: linear-gradient(150deg, #f0607e, var(--danger-ink));
+  box-shadow: 0 18px 34px -16px rgba(216, 69, 95, 0.8);
+}
+
+.link-danger {
+  color: var(--danger-ink);
+}
+
+.link-danger:hover {
+  color: var(--danger-ink);
+  text-decoration: underline;
+}
+
+.row-actions {
+  display: inline-flex;
+  gap: 14px;
+  justify-content: flex-end;
+}
+
+/* Daftar tindak lanjut dashboard */
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 2px;
+  border-bottom: 1px dashed var(--line-2);
+}
+
+.todo-row:last-child {
+  border-bottom: none;
+}
+
+.todo-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.todo-body b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.todo-body span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.todo-aksi {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-ink);
+  white-space: nowrap;
+}
+
+/* Overlay + drawer + dialog konfirmasi */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 20, 60, 0.42);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 80;
+}
+
+.overlay .confirm {
+  margin: auto;
+}
+
+.drawer {
+  width: min(440px, 100%);
+  height: 100%;
+  background: var(--panel-soft);
+  box-shadow: var(--shadow-lg);
+  padding: 26px 26px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+.confirm {
+  width: min(420px, calc(100% - 32px));
+  background: var(--panel-soft);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.drawer-head h2,
+.confirm h2 {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+.confirm p {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.drawer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.afield {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.afield > span {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+.afield input,
+.afield select {
+  height: 48px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 0 15px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  outline: none;
+  width: 100%;
+}
+
+.afield input:focus,
+.afield select:focus {
+  box-shadow: var(--ring);
+}
+
+.drawer-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.form-error {
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* Penerimaan — baris alokasi read-only + input qty */
+.recv-line {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: #fff;
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.recv-body {
+  flex: 1;
+  min-width: 200px;
+}
+
+.recv-body b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.recv-body span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.recv-alloc {
+  text-align: right;
+  min-width: 92px;
+}
+
+.recv-alloc span {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.8px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.recv-alloc b {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.recv-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.recv-input input {
+  width: 96px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--line-2);
+  background: var(--panel-2);
+  padding: 0 12px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink);
+  text-align: right;
+  outline: none;
+}
+
+.recv-input input:focus {
+  box-shadow: var(--ring);
+}
+
+.notice-ok {
+  background: var(--ok-bg);
+  color: var(--ok-ink);
+}
+
+/* Mobile: scroll tabel TERLOKALISIR, tidak ada overflow halaman */
+@media (max-width: 900px) {
+  .admin .table-wrap {
+    overflow-x: auto;
+  }
+  .admin table.tt {
+    min-width: 680px;
+  }
+  .todo-row {
+    flex-wrap: wrap;
+  }
+  .drawer {
+    width: 100%;
+  }
+}
