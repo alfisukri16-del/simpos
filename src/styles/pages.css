@@ -1610,83 +1610,52 @@ table.tt tbody tr.is-active {
   color: var(--ink);
 }
 
-.chart-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  height: 216px;
-  padding: 0 2px;
-}
-
-.chart-col {
-  flex: 1 1 0;
+.sales-svg-wrap {
+  width: 100%;
   min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
-.chart-value {
-  position: absolute;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  white-space: nowrap;
-  pointer-events: none;
+.sales-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
 }
 
-.chart-track {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.chart-bar {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(100%, 84px);
-  border-radius: 10px 10px 5px 5px;
-  background: linear-gradient(180deg, #7f7aff, var(--accent));
-  box-shadow: 0 14px 26px -18px rgba(91, 85, 251, 0.95);
-  transition: height 0.3s ease, filter 0.16s ease;
-}
-
-.chart-col:hover .chart-bar {
-  filter: brightness(1.07);
-}
-
-.chart-label {
-  font-size: 11.5px;
+.sales-tick {
+  font-size: 12px;
   font-weight: 600;
-  color: var(--muted);
-  white-space: nowrap;
-  text-align: center;
+  fill: var(--muted);
+}
+
+.sales-xlabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  fill: var(--ink-2);
+}
+
+.sales-axtitle {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  fill: var(--muted);
+}
+
+.sales-bar {
+  transition: filter 0.16s ease, opacity 0.16s ease;
+}
+
+.sales-bar-group:hover .sales-bar {
+  filter: brightness(1.08);
 }
 
 @media (max-width: 900px) {
-  .chart-bars {
-    height: 180px;
-    gap: 7px;
-  }
   .chart-figures {
     gap: 18px;
   }
 }
 
 @media (max-width: 620px) {
-  .chart-bars {
-    height: 150px;
-    gap: 5px;
-  }
-  .chart-value {
-    display: none;
-  }
   .sales-chart .section-head {
     align-items: flex-start;
     flex-direction: column;

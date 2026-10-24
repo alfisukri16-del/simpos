@@ -4,6 +4,7 @@ import { ArrowRight, Banknote, Boxes, ClipboardList, FilePlus2 } from "lucide-re
 import { BRANCHES } from "../../store/sharedStore";
 import { useSharedStore } from "../../store/sharedStore";
 import { Chip, PageHeader, StatCard, StatusPill, formatIDR } from "../../components/ui";
+import SalesBarChart from "../../components/SalesBarChart";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -50,12 +51,6 @@ function parseTrxDate(s: string): Date | null {
   return new Date(year, month, day);
 }
 
-function compactIDR(n: number): string {
-  if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} jt`;
-  if (n >= 1_000) return `Rp ${Math.round(n / 1_000)} rb`;
-  return `Rp ${n}`;
-}
-
 export default function OwnerDashboardPage() {
   const store = useSharedStore();
   const [scope, setScope] = useState<Scope>("all");
@@ -88,9 +83,8 @@ export default function OwnerDashboardPage() {
       value: p.value,
       count: p.count,
     }));
-    const peak = Math.max(1, ...points.map((p) => p.value));
     const sum = points.reduce((a, p) => a + p.value, 0);
-    return { points, peak, sum, avg: points.length ? Math.round(sum / points.length) : 0 };
+    return { points, sum, avg: points.length ? Math.round(sum / points.length) : 0 };
   }, [tx]);
 
   return (
@@ -176,26 +170,11 @@ export default function OwnerDashboardPage() {
         {chart.points.length === 0 ? (
           <div className="empty-note">Belum ada transaksi selesai pada cakupan ini.</div>
         ) : (
-          <div className="chart-bars">
-            {chart.points.map((p) => {
-              const h = 8 + Math.round((p.value / chart.peak) * 84);
-              return (
-                <div
-                  key={p.key}
-                  className="chart-col"
-                  title={`${p.full} · ${p.count} transaksi · ${formatIDR(p.value)}`}
-                >
-                  <div className="chart-track">
-                    <span className="chart-value" style={{ bottom: `calc(${h}% + 8px)` }}>
-                      {compactIDR(p.value)}
-                    </span>
-                    <div className="chart-bar" style={{ height: `${h}%` }} />
-                  </div>
-                  <span className="chart-label">{p.label}</span>
-                </div>
-              );
-            })}
-          </div>
+          <SalesBarChart
+            points={chart.points}
+            yTitle="Omzet (Rp)"
+            xTitle="Tanggal Transaksi"
+          />
         )}
       </section>
 
