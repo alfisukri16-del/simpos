@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    ADMIN CABANG — hanya gaya BARU khas admin (drawer, form, nav grup).
    Shell, tabel, tombol, kartu, dan tipografi memakai ulang
    layout.css / pages.css / dashboard.css / login.css Kasir tanpa diubah.
@@ -339,6 +339,93 @@ a.stat-link:hover .stat-card {
 .notice-ok {
   background: var(--ok-bg);
   color: var(--ok-ink);
+}
+
+/* Dashboard Pemilik: grafik + produk terlaris */
+.dash-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.dash-charts .sales-chart {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1180px) {
+  .dash-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.top-card {
+  padding: 20px 20px 14px;
+}
+
+.top-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  margin-top: 2px;
+}
+
+.top-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.top-rank {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.top-main {
+  min-width: 0;
+}
+
+.top-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.top-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.top-qty {
+  text-align: right;
+  line-height: 1.25;
+}
+
+.top-qty b {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+.top-qty span {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted);
 }
 
 /* Mobile: scroll tabel TERLOKALISIR, tidak ada overflow halaman */

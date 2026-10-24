@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, PackageCheck, TriangleAlert, X } from "lucide-react";
+import { CheckCircle2, PackageCheck, TriangleAlert, Truck, X } from "lucide-react";
 import { DEMO_ADMIN } from "../../data/admin";
 import { useSharedStore } from "../../store/sharedStore";
 import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
@@ -69,6 +69,12 @@ export default function AdminPenerimaanPage() {
         desc={`Catat barang yang benar-benar diterima ${DEMO_ADMIN.branch}. Alokasi dari pusat bersifat read-only; stok bertambah tepat satu kali per konfirmasi.`}
       />
 
+      <div className="notice">
+        <Truck size={16} />
+        Stok pusat berkurang kapan (saat alokasi / kirim / terima) masih keputusan terbuka PRD — prototype ini hanya
+        menambah stok cabang saat penerimaan dikonfirmasi.
+      </div>
+
       <div className="toolbar">
         <SearchBox placeholder="Cari ID distribusi, kode, atau nama produk..." value={q} onChange={setQ} />
         <div className="toolbar-chips">
@@ -87,13 +93,19 @@ export default function AdminPenerimaanPage() {
         </div>
       ) : null}
 
-      {dists.map((d) => (
+      {dists.map((d) => {
+        const totalAlokasi = d.lines.reduce((a, l) => a + l.qtyAlokasi, 0);
+        const totalDiterima = d.lines.reduce((a, l) => a + l.qtyDiterima, 0);
+        return (
         <section key={d.id} className="panel" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="section-head">
             <div>
               <h2>
                 {d.id} <span className="tt-sub" style={{ display: "inline" }}>· {d.date} · dari {d.from}</span>
               </h2>
+              <div className="section-desc">
+                {d.lines.length} produk · alokasi {totalAlokasi} · diterima {totalDiterima}
+              </div>
             </div>
             <div className="section-action">
               <StatusPill label={d.status} />
@@ -142,7 +154,8 @@ export default function AdminPenerimaanPage() {
             );
           })}
         </section>
-      ))}
+        );
+      })}
       {dists.length === 0 ? <div className="panel empty-note">Tidak ada distribusi yang cocok.</div> : null}
 
       <section className="section-block">

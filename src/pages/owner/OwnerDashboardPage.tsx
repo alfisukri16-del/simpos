@@ -66,11 +66,11 @@ export default function OwnerDashboardPage() {
 
   /* Tren omzet per tanggal transaksi — 8 tanggal terakhir pada cakupan aktif. */
   const chart = useMemo(() => {
-    const perDate = new Map<string, { at: Date; value: number; count: number }>();
+    const perDate = new Map<string, { at: Date; date: string; value: number; count: number }>();
     for (const t of tx) {
       const at = parseTrxDate(t.date);
       if (!at) continue;
-      const cur = perDate.get(t.date) ?? { at, value: 0, count: 0 };
+      const cur = perDate.get(t.date) ?? { at, date: t.date, value: 0, count: 0 };
       cur.value += t.total;
       cur.count += 1;
       perDate.set(t.date, cur);
@@ -84,8 +84,26 @@ export default function OwnerDashboardPage() {
       count: p.count,
     }));
     const sum = points.reduce((a, p) => a + p.value, 0);
-    return { points, sum, avg: points.length ? Math.round(sum / points.length) : 0 };
+    const dates = new Set(sorted.map((p) => p.date));
+    return { points, sum, avg: points.length ? Math.round(sum / points.length) : 0, dates };
   }, [tx]);
+
+  /* Produk terlaris pada periode grafik, dihitung dari baris produk transaksi selesai. */
+  const topProducts = useMemo(() => {
+    const map = new Map<string, { name: string; brand: string; qty: number; revenue: number }>();
+    for (const t of tx) {
+      if (!chart.dates.has(t.date)) continue;
+      for (const p of t.products ?? []) {
+        const key = `${p.name}::${p.brand}`;
+        const cur = map.get(key) ?? { name: p.name, brand: p.brand, qty: 0, revenue: 0 };
+        cur.qty += p.qty;
+        cur.revenue += p.qty * p.price;
+        map.set(key, cur);
+      }
+    }
+    return [...map.values()].sort((a, b) => b.qty - a.qty || b.revenue - a.revenue).slice(0, 5);
+  }, [tx, chart]);
+  const topMax = Math.max(1, ...topProducts.map((p) => p.qty));
 
   return (
     <div className="page">
@@ -147,6 +165,7 @@ export default function OwnerDashboardPage() {
         </div>
       </div>
 
+      <div className="dash-charts">
       <section className="panel sales-chart">
         <div className="section-head">
           <div>
@@ -177,6 +196,39 @@ export default function OwnerDashboardPage() {
           />
         )}
       </section>
+
+      <section className="panel top-card">
+        <div className="section-head">
+          <div>
+            <h2>Produk Terlaris</h2>
+            <div className="section-desc">Periode grafik · transaksi Selesai</div>
+          </div>
+        </div>
+        {topProducts.length > 0 ? (
+          <div className="top-list">
+            {topProducts.map((p, i) => (
+              <div className="top-row" key={`${p.name}-${p.brand}`}>
+                <span className="top-rank">{String(i + 1).padStart(2, "0")}</span>
+                <div className="top-main">
+                  <div className="top-name" title={p.name}>
+                    {p.name}
+                  </div>
+                  <div className="top-bar">
+                    <span style={{ width: `${(p.qty / topMax) * 100}%` }} />
+                  </div>
+                </div>
+                <div className="top-qty">
+                  <b>{p.qty} unit</b>
+                  <span>{formatIDR(p.revenue)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-note">Belum ada penjualan pada periode ini.</div>
+        )}
+      </section>
+      </div>
 
       <div className="two-col">
         <section className="panel">

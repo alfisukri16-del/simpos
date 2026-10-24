@@ -19,7 +19,6 @@ import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminProdukPage from "./pages/admin/AdminProdukPage";
 import AdminStokPage from "./pages/admin/AdminStokPage";
 import AdminPenerimaanPage from "./pages/admin/AdminPenerimaanPage";
-import AdminDistribusiPage from "./pages/admin/AdminDistribusiPage";
 import AdminPengajuanPage from "./pages/admin/AdminPengajuanPage";
 import AdminPemesananPage from "./pages/admin/AdminPemesananPage";
 import AdminDetailPoPage from "./pages/admin/AdminDetailPoPage";
@@ -78,7 +77,6 @@ export default function App() {
           <Route path="/admin/produk/lensa" element={<AdminProdukPage type="Lensa" />} />
           <Route path="/admin/stok" element={<AdminStokPage />} />
           <Route path="/admin/penerimaan" element={<AdminPenerimaanPage />} />
-          <Route path="/admin/distribusi" element={<AdminDistribusiPage />} />
           <Route path="/admin/pengajuan" element={<AdminPengajuanPage />} />
           <Route path="/admin/pemesanan" element={<AdminPemesananPage />} />
           <Route path="/admin/pemesanan/:id" element={<AdminDetailPoPage />} />

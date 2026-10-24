@@ -5,7 +5,6 @@ import {
   CircleDot,
   Boxes,
   PackageCheck,
-  Truck,
   FilePlus2,
   History,
   ClipboardList,
@@ -42,7 +41,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { label: "Stok Cabang", to: "/admin/stok", icon: Boxes, stage: 1 },
       { label: "Penerimaan Barang", to: "/admin/penerimaan", icon: PackageCheck, stage: 1 },
-      { label: "Distribusi Masuk", to: "/admin/distribusi", icon: Truck, stage: 1 },
       { label: "Pengajuan Stok", to: "/admin/pengajuan", icon: FilePlus2, stage: 1 },
       { label: "Riwayat Mutasi", to: "/admin/mutasi", icon: History, stage: 1 },
     ],
