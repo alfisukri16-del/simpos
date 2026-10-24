@@ -35,6 +35,27 @@ export function useOwnerScope(scope: Scope) {
 
 const SCOPES: Scope[] = ["all", "pusat", "cabang-padang"];
 
+/* Tanggal transaksi disimpan sebagai "24 Okt 2026" (id-ID), jadi diparse manual. */
+const MONTH_IDX: Record<string, number> = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, Mei: 4, Jun: 5,
+  Jul: 6, Agu: 7, Sep: 8, Okt: 9, Nov: 10, Des: 11,
+};
+
+function parseTrxDate(s: string): Date | null {
+  const [d, m, y] = s.trim().split(/\s+/);
+  const day = Number(d);
+  const month = MONTH_IDX[m];
+  const year = Number(y);
+  if (!Number.isFinite(day) || month === undefined || !Number.isFinite(year)) return null;
+  return new Date(year, month, day);
+}
+
+function compactIDR(n: number): string {
+  if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} jt`;
+  if (n >= 1_000) return `Rp ${Math.round(n / 1_000)} rb`;
+  return `Rp ${n}`;
+}
+
 export default function OwnerDashboardPage() {
   const store = useSharedStore();
   const [scope, setScope] = useState<Scope>("all");
@@ -47,6 +68,30 @@ export default function OwnerDashboardPage() {
     const bLow = (b.id === "pusat" ? store.centralStock : store.stock).filter((s) => s.saldo <= s.minimum).length;
     return { b, sales: bTx.length, po: bPo.length, low: bLow };
   }).filter(({ b }) => scope === "all" || b.id === scope);
+
+  /* Tren omzet per tanggal transaksi — 8 tanggal terakhir pada cakupan aktif. */
+  const chart = useMemo(() => {
+    const perDate = new Map<string, { at: Date; value: number; count: number }>();
+    for (const t of tx) {
+      const at = parseTrxDate(t.date);
+      if (!at) continue;
+      const cur = perDate.get(t.date) ?? { at, value: 0, count: 0 };
+      cur.value += t.total;
+      cur.count += 1;
+      perDate.set(t.date, cur);
+    }
+    const sorted = [...perDate.values()].sort((a, b) => a.at.getTime() - b.at.getTime()).slice(-8);
+    const points = sorted.map((p) => ({
+      key: p.at.toISOString(),
+      label: p.at.toLocaleDateString("id-ID", { day: "2-digit", month: "short" }),
+      full: p.at.toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }),
+      value: p.value,
+      count: p.count,
+    }));
+    const peak = Math.max(1, ...points.map((p) => p.value));
+    const sum = points.reduce((a, p) => a + p.value, 0);
+    return { points, peak, sum, avg: points.length ? Math.round(sum / points.length) : 0 };
+  }, [tx]);
 
   return (
     <div className="page">
@@ -107,6 +152,52 @@ export default function OwnerDashboardPage() {
           </span>
         </div>
       </div>
+
+      <section className="panel sales-chart">
+        <div className="section-head">
+          <div>
+            <h2>Tren Penjualan</h2>
+            <div className="section-desc">
+              Omzet transaksi selesai per tanggal · {scopeLabel(scope)}
+            </div>
+          </div>
+          <div className="chart-figures">
+            <div>
+              <span>Total</span>
+              <b>{formatIDR(chart.sum)}</b>
+            </div>
+            <div>
+              <span>Rata-rata</span>
+              <b>{formatIDR(chart.avg)}</b>
+            </div>
+          </div>
+        </div>
+
+        {chart.points.length === 0 ? (
+          <div className="empty-note">Belum ada transaksi selesai pada cakupan ini.</div>
+        ) : (
+          <div className="chart-bars">
+            {chart.points.map((p) => {
+              const h = 8 + Math.round((p.value / chart.peak) * 84);
+              return (
+                <div
+                  key={p.key}
+                  className="chart-col"
+                  title={`${p.full} · ${p.count} transaksi · ${formatIDR(p.value)}`}
+                >
+                  <div className="chart-track">
+                    <span className="chart-value" style={{ bottom: `calc(${h}% + 8px)` }}>
+                      {compactIDR(p.value)}
+                    </span>
+                    <div className="chart-bar" style={{ height: `${h}%` }} />
+                  </div>
+                  <span className="chart-label">{p.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <div className="two-col">
         <section className="panel">
