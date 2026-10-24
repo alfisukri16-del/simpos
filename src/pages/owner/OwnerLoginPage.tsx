@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Eye, EyeOff, Glasses, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Glasses, Lock, User, ArrowBigUp } from "lucide-react";
 import { DEMO_OWNER, ownerSession, setSession } from "../../store/session";
 import { useSharedStore } from "../../store/sharedStore";
 import "../../styles/login.css";
@@ -13,14 +13,19 @@ export default function OwnerLoginPage() {
   const [email, setEmail] = useState(DEMO_OWNER.email);
   const [password, setPassword] = useState(DEMO_OWNER.password);
   const [showPass, setShowPass] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function cekCaps(e: KeyboardEvent<HTMLInputElement>) {
+    setCapsOn(e.getModifierState("CapsLock"));
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     if (!email.trim() || !password.trim()) {
-      setError("Email dan password wajib diisi.");
+      setError("Username dan password wajib diisi.");
       return;
     }
     setLoading(true);
@@ -40,7 +45,7 @@ export default function OwnerLoginPage() {
         setError(`Akun ini role ${found.role === "kasir" ? "Kasir" : "Admin"} — masuk via halaman login yang sesuai.`);
       } else {
         setLoading(false);
-        setError("Email atau password salah. Gunakan akun demo Pemilik di bawah.");
+        setError("Username atau password salah. Gunakan akun demo Pemilik di bawah.");
       }
     }, 700);
   }
@@ -52,33 +57,26 @@ export default function OwnerLoginPage() {
           <img src="/assets/login-approved-visual.jpg" alt="Koleksi kacamata Optik Mekar Jaya" />
           <div className="tint" />
           <div className="auth-copy">
-            <span className="overline">OPTIK MEKAR JAYA</span>
             <h1>
               Solusi Penglihatan untuk Hidup yang <em>Lebih Baik</em>
             </h1>
             <p>
               Layanan optik modern dengan produk berkualitas dan pelayanan profesional untuk setiap gaya Anda.
             </p>
-            <button type="button" className="btn btn-primary">
-              Lihat Koleksi
-              <ArrowRight size={18} />
-            </button>
           </div>
           <div className="auth-tags" aria-hidden="true">
             <span>FRAME</span>
             <span>LENSA</span>
             <span>GAYA</span>
-            <span>KEPERCAYAAN</span>
           </div>
         </section>
 
         <section className="auth-form">
-          <div className="brand-row">
-            <span className="brand-badge-lg">
-              <Glasses size={26} strokeWidth={2.1} />
+          <div className="form-brand">
+            <span className="mark">
+              <Glasses size={24} strokeWidth={2.1} />
             </span>
             <b>Optik Mekar Jaya</b>
-            <span>Sistem Informasi Optik</span>
           </div>
 
           <h2>Masuk sebagai Pemilik</h2>
@@ -92,14 +90,14 @@ export default function OwnerLoginPage() {
             )}
 
             <div className="field">
-              <label htmlFor="owner-email">Email</label>
+              <label htmlFor="owner-username">Username</label>
               <div className="input-wrap">
-                <Mail size={18} />
+                <User size={18} />
                 <input
-                  id="owner-email"
-                  type="email"
+                  id="owner-username"
+                  type="text"
                   autoComplete="username"
-                  placeholder="nama@email.com"
+                  placeholder="Masukkan username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -117,6 +115,9 @@ export default function OwnerLoginPage() {
                   placeholder="Masukkan password anda"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={cekCaps}
+                  onKeyUp={cekCaps}
+                  onBlur={() => setCapsOn(false)}
                 />
                 <button
                   type="button"
@@ -127,12 +128,9 @@ export default function OwnerLoginPage() {
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-            </div>
-
-            <div className="field">
-              <span className="branch-chip" aria-label="Akses seluruh cabang dan pusat">
-                <Glasses size={16} />
-                Seluruh cabang + Pusat — tanpa batas lokasi
+              <span className={`caps-warn${capsOn ? " is-on" : ""}`}>
+                <ArrowBigUp size={14} />
+                Caps Lock aktif
               </span>
             </div>
 
@@ -149,6 +147,8 @@ export default function OwnerLoginPage() {
               Akun demo (simulasi frontend): {DEMO_OWNER.email} / {DEMO_OWNER.password}
             </span>
           </div>
+
+          <div className="brand-foot">v1.0 — © 2026 Optik Mekar Jaya</div>
         </section>
       </div>
     </div>

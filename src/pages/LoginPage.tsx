@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Glasses, Mail, Lock, ChevronDown, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Glasses, Lock, User, ArrowBigUp } from "lucide-react";
 import { DEMO_KASIR, setSession } from "../store/session";
 import { useSharedStore } from "../store/sharedStore";
 import "../styles/login.css";
@@ -14,17 +14,21 @@ export default function LoginPage() {
   const shared = useSharedStore();
   const [email, setEmail] = useState(DEMO_EMAIL);
   const [password, setPassword] = useState(DEMO_PASSWORD);
-  const [branch, setBranch] = useState("Cabang Padang");
   const [remember, setRemember] = useState(true);
   const [showPass, setShowPass] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function cekCaps(e: KeyboardEvent<HTMLInputElement>) {
+    setCapsOn(e.getModifierState("CapsLock"));
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     if (!email.trim() || !password.trim()) {
-      setError("Email dan password wajib diisi.");
+      setError("Username dan password wajib diisi.");
       return;
     }
     setLoading(true);
@@ -52,7 +56,7 @@ export default function LoginPage() {
         setError(`Akun ini role ${found.role === "admin" ? "Admin" : "Pemilik"} — masuk via halaman login ${found.role === "admin" ? "Admin (/admin/login)" : "Pemilik (/owner/login)"}.`);
       } else {
         setLoading(false);
-        setError("Email atau password salah. Gunakan akun demo di bawah.");
+        setError("Username atau password salah. Gunakan akun demo di bawah.");
       }
     }, 700);
   }
@@ -64,33 +68,26 @@ export default function LoginPage() {
           <img src="/assets/login-approved-visual.jpg" alt="Koleksi kacamata Optik Mekar Jaya" />
           <div className="tint" />
           <div className="auth-copy">
-            <span className="overline">OPTIK MEKAR JAYA</span>
             <h1>
               Solusi Penglihatan untuk Hidup yang <em>Lebih Baik</em>
             </h1>
             <p>
               Layanan optik modern dengan produk berkualitas dan pelayanan profesional untuk setiap gaya Anda.
             </p>
-            <button type="button" className="btn btn-primary">
-              Lihat Koleksi
-              <ArrowRight size={18} />
-            </button>
           </div>
           <div className="auth-tags" aria-hidden="true">
             <span>FRAME</span>
             <span>LENSA</span>
             <span>GAYA</span>
-            <span>KEPERCAYAAN</span>
           </div>
         </section>
 
         <section className="auth-form">
-          <div className="brand-row">
-            <span className="brand-badge-lg">
-              <Glasses size={26} strokeWidth={2.1} />
+          <div className="form-brand">
+            <span className="mark">
+              <Glasses size={24} strokeWidth={2.1} />
             </span>
             <b>Optik Mekar Jaya</b>
-            <span>Sistem Informasi Optik</span>
           </div>
 
           <h2>Selamat Datang</h2>
@@ -104,14 +101,14 @@ export default function LoginPage() {
             )}
 
             <div className="field">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="username">Username</label>
               <div className="input-wrap">
-                <Mail size={18} />
+                <User size={18} />
                 <input
-                  id="email"
-                  type="email"
+                  id="username"
+                  type="text"
                   autoComplete="username"
-                  placeholder="nama@email.com"
+                  placeholder="Masukkan username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -129,6 +126,9 @@ export default function LoginPage() {
                   placeholder="Masukkan password anda"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={cekCaps}
+                  onKeyUp={cekCaps}
+                  onBlur={() => setCapsOn(false)}
                 />
                 <button
                   type="button"
@@ -139,19 +139,10 @@ export default function LoginPage() {
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-            </div>
-
-            <div className="field">
-              <label htmlFor="branch">Pilih Cabang</label>
-              <div className="input-wrap">
-                <select id="branch" value={branch} onChange={(e) => setBranch(e.target.value)}>
-                  <option>Cabang Padang</option>
-                  <option>Cabang Bukittinggi</option>
-                </select>
-                <span className="chev">
-                  <ChevronDown size={18} />
-                </span>
-              </div>
+              <span className={`caps-warn${capsOn ? " is-on" : ""}`}>
+                <ArrowBigUp size={14} />
+                Caps Lock aktif
+              </span>
             </div>
 
             <div className="form-row">
@@ -159,9 +150,6 @@ export default function LoginPage() {
                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
                 Ingat saya
               </label>
-              <a className="link-accent" href="#lupa" onClick={(e) => e.preventDefault()}>
-                Lupa password?
-              </a>
             </div>
 
             <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
@@ -177,6 +165,8 @@ export default function LoginPage() {
               Akun demo (simulasi frontend): {DEMO_EMAIL} / {DEMO_PASSWORD}
             </span>
           </div>
+
+          <div className="brand-foot">v1.0 — © 2026 Optik Mekar Jaya</div>
         </section>
       </div>
     </div>

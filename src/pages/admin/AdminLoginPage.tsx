@@ -1,27 +1,32 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Eye, EyeOff, Glasses, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Glasses, Lock, User, ArrowBigUp } from "lucide-react";
 import { ADMIN_SESSION_KEY, DEMO_ADMIN } from "../../data/admin";
 import { adminSession, setSession } from "../../store/session";
 import { useSharedStore } from "../../store/sharedStore";
 import "../../styles/login.css";
 import "../../styles/admin.css";
 
-/** Login Admin — struktur & login.css IDENTIK dengan Login Kasir (tidak diubah). */
+/** Login Admin — struktur & login.css IDENTIK dengan Login Kasir. */
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const shared = useSharedStore();
   const [email, setEmail] = useState(DEMO_ADMIN.email);
   const [password, setPassword] = useState(DEMO_ADMIN.password);
   const [showPass, setShowPass] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function cekCaps(e: KeyboardEvent<HTMLInputElement>) {
+    setCapsOn(e.getModifierState("CapsLock"));
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     if (!email.trim() || !password.trim()) {
-      setError("Email dan password wajib diisi.");
+      setError("Username dan password wajib diisi.");
       return;
     }
     setLoading(true);
@@ -46,7 +51,7 @@ export default function AdminLoginPage() {
         setError(`Akun ini role ${found.role === "kasir" ? "Kasir" : "Pemilik"} — masuk via halaman login yang sesuai.`);
       } else {
         setLoading(false);
-        setError("Email atau password salah. Gunakan akun demo Admin di bawah.");
+        setError("Username atau password salah. Gunakan akun demo Admin di bawah.");
       }
     }, 700);
   }
@@ -58,33 +63,26 @@ export default function AdminLoginPage() {
           <img src="/assets/login-approved-visual.jpg" alt="Koleksi kacamata Optik Mekar Jaya" />
           <div className="tint" />
           <div className="auth-copy">
-            <span className="overline">OPTIK MEKAR JAYA</span>
             <h1>
               Solusi Penglihatan untuk Hidup yang <em>Lebih Baik</em>
             </h1>
             <p>
               Layanan optik modern dengan produk berkualitas dan pelayanan profesional untuk setiap gaya Anda.
             </p>
-            <button type="button" className="btn btn-primary">
-              Lihat Koleksi
-              <ArrowRight size={18} />
-            </button>
           </div>
           <div className="auth-tags" aria-hidden="true">
             <span>FRAME</span>
             <span>LENSA</span>
             <span>GAYA</span>
-            <span>KEPERCAYAAN</span>
           </div>
         </section>
 
         <section className="auth-form">
-          <div className="brand-row">
-            <span className="brand-badge-lg">
-              <Glasses size={26} strokeWidth={2.1} />
+          <div className="form-brand">
+            <span className="mark">
+              <Glasses size={24} strokeWidth={2.1} />
             </span>
             <b>Optik Mekar Jaya</b>
-            <span>Sistem Informasi Optik</span>
           </div>
 
           <h2>Masuk sebagai Admin Cabang</h2>
@@ -98,14 +96,14 @@ export default function AdminLoginPage() {
             )}
 
             <div className="field">
-              <label htmlFor="admin-email">Email</label>
+              <label htmlFor="admin-username">Username</label>
               <div className="input-wrap">
-                <Mail size={18} />
+                <User size={18} />
                 <input
-                  id="admin-email"
-                  type="email"
+                  id="admin-username"
+                  type="text"
                   autoComplete="username"
-                  placeholder="nama@email.com"
+                  placeholder="Masukkan username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -123,6 +121,9 @@ export default function AdminLoginPage() {
                   placeholder="Masukkan password anda"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={cekCaps}
+                  onKeyUp={cekCaps}
+                  onBlur={() => setCapsOn(false)}
                 />
                 <button
                   type="button"
@@ -133,12 +134,9 @@ export default function AdminLoginPage() {
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-            </div>
-
-            <div className="field">
-              <span className="branch-chip" aria-label={`Cabang ${DEMO_ADMIN.branch}`}>
-                <Glasses size={16} />
-                {DEMO_ADMIN.branch} — tetap, tidak dapat diganti
+              <span className={`caps-warn${capsOn ? " is-on" : ""}`}>
+                <ArrowBigUp size={14} />
+                Caps Lock aktif
               </span>
             </div>
 
@@ -155,6 +153,8 @@ export default function AdminLoginPage() {
               Akun demo (simulasi frontend): {DEMO_ADMIN.email} / {DEMO_ADMIN.password}
             </span>
           </div>
+
+          <div className="brand-foot">v1.0 — © 2026 Optik Mekar Jaya</div>
         </section>
       </div>
     </div>
