@@ -11,11 +11,16 @@ export default function OwnerCabangPage() {
   const rows = BRANCHES.map((b) => {
     const stock = b.id === "pusat" ? store.centralStock : store.stock;
     const units = stock.reduce((a, s) => a + s.saldo, 0);
+    const unitsOf = (type: "Frame" | "Lensa" | "Aksesoris") =>
+      stock.reduce((a, s) => a + (store.productOf(s.productId)?.type === type ? s.saldo : 0), 0);
+    const frame = unitsOf("Frame");
+    const lensa = unitsOf("Lensa");
+    const aksesoris = unitsOf("Aksesoris");
     const low = stock.filter((s) => s.saldo <= s.minimum).length;
     const sales = store.transactions.filter((t) => t.status === "Selesai" && (t.branchId ?? "cabang-padang") === b.id);
     const po = store.pos.filter((o) => (o.status === "Dipesan" || o.status === "Diproses") && o.branchId === b.id);
     const req = store.requests.filter((r) => r.branchId === b.id);
-    return { b, units, low, sales: sales.length, omzet: sales.reduce((a, t) => a + t.total, 0), po: po.length, req: req.length };
+    return { b, units, frame, lensa, aksesoris, low, sales: sales.length, omzet: sales.reduce((a, t) => a + t.total, 0), po: po.length, req: req.length };
   });
 
   return (
@@ -40,7 +45,7 @@ export default function OwnerCabangPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ b, units, low, sales, po, req }) => (
+            {rows.map(({ b, units, frame, lensa, aksesoris, low, sales, po, req }) => (
               <tr key={b.id}>
                 <td>
                   <div className="cell-person">
@@ -53,7 +58,15 @@ export default function OwnerCabangPage() {
                     </span>
                   </div>
                 </td>
-                <td className="tt-right tt-money">{units}</td>
+                <td className="tt-right">
+                  <div className="stock-cell">
+                    <b>{units} Pcs</b>
+                    <span>
+                      Frame: {frame} | Lensa: {lensa}
+                      {aksesoris > 0 ? ` | Aksesoris: ${aksesoris}` : ""}
+                    </span>
+                  </div>
+                </td>
                 <td className="tt-right">{low > 0 ? <StatusPill label="Stok Menipis" /> : <StatusPill label="Aman" />}</td>
                 <td className="tt-right tt-money">{sales}</td>
                 <td className="tt-right tt-money">{po}</td>
