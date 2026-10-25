@@ -1582,32 +1582,33 @@ table.tt tbody tr.is-active {
   margin-bottom: 22px;
 }
 
-.chart-figures {
+.chart-legend {
   display: flex;
-  gap: 28px;
+  align-items: center;
+  gap: 20px;
   flex: none;
 }
 
-.chart-figures div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: right;
+.lg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
 }
 
-.chart-figures span {
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--muted);
+.lg-line {
+  display: block;
+  width: 22px;
+  height: 0;
+  border-top: 2.5px solid var(--accent);
+  border-radius: 2px;
 }
 
-.chart-figures b {
-  font-size: 15.5px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  color: var(--ink);
+.lg-line.is-dashed {
+  border-top: 2px dashed #b7b5e4;
 }
 
 .sales-svg-wrap {
@@ -1631,27 +1632,23 @@ table.tt tbody tr.is-active {
 .sales-xlabel {
   font-size: 12.5px;
   font-weight: 600;
-  fill: var(--ink-2);
-}
-
-.sales-axtitle {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
   fill: var(--muted);
 }
 
-.sales-bar {
-  transition: filter 0.16s ease, opacity 0.16s ease;
+.sales-dot {
+  transition: r 0.15s ease;
 }
 
-.sales-bar-group:hover .sales-bar {
-  filter: brightness(1.08);
+.sales-dot-group:hover .sales-dot {
+  r: 5;
 }
 
 @media (max-width: 900px) {
-  .chart-figures {
-    gap: 18px;
+  .chart-legend {
+    gap: 14px;
+  }
+  .lg-item {
+    font-size: 12px;
   }
 }
 
@@ -1661,10 +1658,8 @@ table.tt tbody tr.is-active {
     flex-direction: column;
     gap: 10px;
   }
-  .chart-figures {
-    text-align: left;
-  }
-  .chart-figures div {
-    text-align: left;
+  .chart-legend {
+    flex-wrap: wrap;
+    gap: 10px 16px;
   }
 }

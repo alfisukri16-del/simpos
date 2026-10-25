@@ -4,7 +4,7 @@ import { ArrowRight, Banknote, Boxes, ClipboardList, FilePlus2 } from "lucide-re
 import { BRANCHES } from "../../store/sharedStore";
 import { useSharedStore } from "../../store/sharedStore";
 import { Chip, PageHeader, StatCard, StatusPill, formatIDR } from "../../components/ui";
-import SalesBarChart from "../../components/SalesBarChart";
+import SalesLineChart from "../../components/SalesLineChart";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -64,7 +64,7 @@ export default function OwnerDashboardPage() {
     return { b, sales: bTx.length, po: bPo.length, low: bLow };
   }).filter(({ b }) => scope === "all" || b.id === scope);
 
-  /* Tren omzet per tanggal transaksi — 8 tanggal terakhir pada cakupan aktif. */
+  /* Tren omzet per tanggal transaksi — 8 tanggal terakhir dibanding 8 tanggal sebelumnya. */
   const chart = useMemo(() => {
     const perDate = new Map<string, { at: Date; date: string; value: number; count: number }>();
     for (const t of tx) {
@@ -75,7 +75,9 @@ export default function OwnerDashboardPage() {
       cur.count += 1;
       perDate.set(t.date, cur);
     }
-    const sorted = [...perDate.values()].sort((a, b) => a.at.getTime() - b.at.getTime()).slice(-8);
+    const all = [...perDate.values()].sort((a, b) => a.at.getTime() - b.at.getTime());
+    const sorted = all.slice(-8);
+    const before = all.slice(-16, -8);
     const points = sorted.map((p) => ({
       key: p.at.toISOString(),
       label: p.at.toLocaleDateString("id-ID", { day: "2-digit", month: "short" }),
@@ -83,9 +85,15 @@ export default function OwnerDashboardPage() {
       value: p.value,
       count: p.count,
     }));
+    /* Periode sebelumnya dirata-kan ke kanan, jadi titik terakhirnya sejajar dengan periode ini. */
+    const previous: Array<number | null> = Array(points.length).fill(null);
+    const offset = points.length - before.length;
+    before.forEach((p, i) => {
+      previous[offset + i] = p.value;
+    });
     const sum = points.reduce((a, p) => a + p.value, 0);
     const dates = new Set(sorted.map((p) => p.date));
-    return { points, sum, avg: points.length ? Math.round(sum / points.length) : 0, dates };
+    return { points, previous, sum, avg: points.length ? Math.round(sum / points.length) : 0, dates };
   }, [tx]);
 
   /* Produk terlaris pada periode grafik, dihitung dari baris produk transaksi selesai. */
@@ -174,26 +182,22 @@ export default function OwnerDashboardPage() {
               Omzet transaksi selesai per tanggal · {scopeLabel(scope)}
             </div>
           </div>
-          <div className="chart-figures">
-            <div>
-              <span>Total</span>
-              <b>{formatIDR(chart.sum)}</b>
-            </div>
-            <div>
-              <span>Rata-rata</span>
-              <b>{formatIDR(chart.avg)}</b>
-            </div>
+          <div className="chart-legend">
+            <span className="lg-item">
+              <i className="lg-line" />
+              Periode ini
+            </span>
+            <span className="lg-item">
+              <i className="lg-line is-dashed" />
+              Periode sebelumnya
+            </span>
           </div>
         </div>
 
         {chart.points.length === 0 ? (
           <div className="empty-note">Belum ada transaksi selesai pada cakupan ini.</div>
         ) : (
-          <SalesBarChart
-            points={chart.points}
-            yTitle="Omzet (Rp)"
-            xTitle="Tanggal Transaksi"
-          />
+          <SalesLineChart points={chart.points} previous={chart.previous} />
         )}
       </section>
 

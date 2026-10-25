@@ -151,6 +151,68 @@ export const TRANSACTIONS: Transaction[] = [
     type: "Pembelian", total: 500_000, status: "Selesai",
     products: [{ name: "Cleaning Kit", brand: "Makar Eyewear", qty: 1, price: 90_000 }, { name: "Paket Case & Lap", brand: "Optik Mekar Jaya", qty: 1, price: 150_000 }],
   },
+  /* Riwayat lebih lama — dipakai grafik "periode sebelumnya" di Dashboard Pemilik.
+     Additif: di-backfill ke localStorage lama lewat id H*, tidak menimpa data pengguna. */
+  {
+    id: "H1", no: "TRX-20260620-001", date: "20 Jun 2026", time: "10:15", customer: "Rian Pratama", phone: "085277129011",
+    type: "Pembelian", total: 1_200_000, status: "Selesai", detail: "produk",
+    products: [{ name: "Frame Bella Round", brand: "Vogue", qty: 1, price: 1_200_000 }],
+  },
+  {
+    id: "H2", no: "TRX-20260623-001", date: "23 Jun 2026", time: "14:40", customer: "Siti Maulida", phone: "081234567890",
+    type: "Pembelian", total: 800_000, status: "Selesai", detail: "produk",
+    products: [{ name: "Lensa Single Vision", brand: "Essilor", qty: 1, price: 650_000 }, { name: "Paket Case & Lap", brand: "Optik Mekar Jaya", qty: 1, price: 150_000 }],
+  },
+  {
+    id: "H3", no: "TRX-20260627-001", date: "27 Jun 2026", time: "11:05", customer: "Andi Saputra", phone: "089612345678",
+    type: "Pembelian", total: 1_750_000, status: "Selesai", detail: "resep",
+    products: [{ name: "Lensa Progressive", brand: "Zeiss", qty: 1, price: 950_000 }, { name: "Frame AirFlex", brand: "Excellence", qty: 1, price: 800_000 }],
+  },
+  {
+    id: "H4", no: "TRX-20260630-001", date: "30 Jun 2026", time: "16:20", customer: "Nadia Amelia", phone: "082166778899",
+    type: "Pembelian", total: 1_350_000, status: "Selesai", detail: "produk",
+    products: [{ name: "3Clear Black Round", brand: "Makar Eyewear", qty: 1, price: 450_000 }, { name: "Lensa Blue Control", brand: "Hoya", qty: 1, price: 900_000 }],
+  },
+  {
+    id: "H5", no: "TRX-20260703-001", date: "03 Jul 2026", time: "09:35", customer: "Dimas Hidayat", phone: "085311223344",
+    type: "Pembelian", total: 890_000, status: "Selesai", detail: "produk",
+    products: [{ name: "Frame AirFlex", brand: "Excellence", qty: 1, price: 800_000 }, { name: "Cleaning Kit", brand: "Makar Eyewear", qty: 1, price: 90_000 }],
+  },
+  {
+    id: "H6", no: "TRX-20260706-001", date: "06 Jul 2026", time: "13:50", customer: "Maya Lestari", phone: "082199887766",
+    type: "Pembelian", total: 450_000, status: "Selesai", detail: "resep",
+    products: [{ name: "Lensa Single Vision", brand: "Essilor", qty: 1, price: 450_000 }],
+  },
+  {
+    id: "H7", no: "TRX-20260709-001", date: "09 Jul 2026", time: "15:10", customer: "Dedi Rahman", phone: "081366778899",
+    type: "Pembelian", total: 1_100_000, status: "Selesai", detail: "resep",
+    products: [{ name: "Lensa Progressive", brand: "Zeiss", qty: 1, price: 950_000 }, { name: "Paket Case & Lap", brand: "Optik Mekar Jaya", qty: 1, price: 150_000 }],
+  },
+  {
+    id: "H8", no: "TRX-20260712-001", date: "12 Jul 2026", time: "10:45", customer: "Fitri Ananda", phone: "085122334455",
+    type: "Pembelian", total: 1_200_000, status: "Selesai", detail: "produk",
+    products: [{ name: "Frame Bella Round", brand: "Vogue", qty: 1, price: 1_200_000 }],
+  },
+  {
+    id: "H9", no: "TRX-20260715-001", date: "15 Jul 2026", time: "12:30", customer: "Zulfa Ramadhani", phone: "082311223344",
+    type: "Pembelian", total: 900_000, status: "Selesai", detail: "produk",
+    products: [{ name: "Lensa Blue Control", brand: "Hoya", qty: 1, price: 900_000 }],
+  },
+  {
+    id: "H10", no: "TRX-20260718-001", date: "18 Jul 2026", time: "16:05", customer: "Hendra Wijaya", phone: "081299876665",
+    type: "Pembelian", total: 1_450_000, status: "Selesai", detail: "resep",
+    products: [{ name: "Frame AirFlex", brand: "Excellence", qty: 1, price: 800_000 }, { name: "Lensa Single Vision", brand: "Essilor", qty: 1, price: 650_000 }],
+  },
+  {
+    id: "H11", no: "TRX-20260722-001", date: "22 Jul 2026", time: "09:10", customer: "Nadia Putri", phone: "082273459988",
+    type: "Pembelian", total: 240_000, status: "Selesai", detail: "produk",
+    products: [{ name: "Cleaning Kit", brand: "Makar Eyewear", qty: 1, price: 90_000 }, { name: "Paket Case & Lap", brand: "Optik Mekar Jaya", qty: 1, price: 150_000 }],
+  },
+  {
+    id: "H12", no: "TRX-20260725-001", date: "25 Jul 2026", time: "14:25", customer: "Rian Pratama", phone: "085277129011",
+    type: "Pembelian", total: 1_200_000, status: "Selesai", detail: "produk",
+    products: [{ name: "Frame Bella Round", brand: "Vogue", qty: 1, price: 1_200_000 }],
+  },
 ];
 
 export type PaymentMethod = "Tunai" | "Transfer Bank" | "Kartu Debit/Kredit" | "QRIS";

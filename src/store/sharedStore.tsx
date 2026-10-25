@@ -402,6 +402,10 @@ function load(): StoreShape {
           for (const t of parsed.transactions) {
             if (!(t as { branchId?: string }).branchId) (t as { branchId?: string }).branchId = BRANCH_ID;
           }
+          /* Riwayat demo tambahan (id H*) untuk grafik periode sebelumnya — hanya menambah. */
+          const known = new Set(parsed.transactions.map((t) => t.id));
+          const history = TRANSACTIONS.filter((t) => t.id.startsWith("H") && !known.has(t.id));
+          if (history.length) parsed.transactions = [...parsed.transactions, ...history];
         }
         return parsed;
       }
