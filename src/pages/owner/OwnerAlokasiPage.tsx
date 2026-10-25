@@ -125,9 +125,9 @@ export default function OwnerAlokasiPage() {
               <th>ID / TANGGAL</th>
               <th>TUJUAN</th>
               <th>PRODUK</th>
-              <th className="tt-right">ALOKASI</th>
-              <th className="tt-right">DITERIMA</th>
-              <th>STATUS</th>
+              <th className="tt-center">ALOKASI</th>
+              <th className="tt-center">DITERIMA</th>
+              <th className="tt-center">STATUS</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
@@ -152,9 +152,9 @@ export default function OwnerAlokasiPage() {
                     );
                   })}
                 </td>
-                <td className="tt-right tt-money">{d.lines.reduce((a, l) => a + l.qtyAlokasi, 0)}</td>
-                <td className="tt-right tt-money">{d.lines.reduce((a, l) => a + l.qtyDiterima, 0)}</td>
-                <td>
+                <td className="tt-center tt-money">{d.lines.reduce((a, l) => a + l.qtyAlokasi, 0)}</td>
+                <td className="tt-center tt-money">{d.lines.reduce((a, l) => a + l.qtyDiterima, 0)}</td>
+                <td className="tt-center">
                   <StatusPill label={d.status} />
                 </td>
                 <td className="tt-right">

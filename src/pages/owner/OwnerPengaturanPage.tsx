@@ -143,7 +143,7 @@ export default function OwnerPengaturanPage() {
                 <th>NAMA / EMAIL</th>
                 <th>ROLE</th>
                 <th>CABANG</th>
-                <th>STATUS</th>
+                <th className="tt-center">STATUS</th>
                 <th className="tt-right">AKSI</th>
               </tr>
             </thead>
@@ -163,7 +163,7 @@ export default function OwnerPengaturanPage() {
                     <span className="tag-mini">{ROLE_LABEL[u.role]}</span>
                   </td>
                   <td>{u.role === "pemilik" ? "Seluruh Cabang" : BRANCHES.find((b) => b.id === u.branchId)?.name ?? u.branchId}</td>
-                  <td>
+                  <td className="tt-center">
                     <StatusPill label={u.status} />
                   </td>
                   <td className="tt-right">

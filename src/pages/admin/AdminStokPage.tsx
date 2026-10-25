@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { FilePlus2, Settings2, X } from "lucide-react";
 import { useAdminStore } from "../../store/sharedStore";
 import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
@@ -47,7 +48,7 @@ export default function AdminStokPage() {
       setAskError("Jumlah harus bilangan bulat lebih dari 0.");
       return;
     }
-    if (askFor) store.addDraft(askFor, qty, askNote.trim());
+    if (askFor) store.createRequest(askFor, qty, askNote.trim());
     setAskDone(true);
   };
 
@@ -84,9 +85,9 @@ export default function AdminStokPage() {
             <tr>
               <th>KODE / NAMA PRODUK</th>
               <th>JENIS</th>
-              <th className="tt-right">STOK SAAT INI</th>
-              <th className="tt-right">BATAS MINIMUM</th>
-              <th>STATUS</th>
+              <th className="tt-center">STOK SAAT INI</th>
+              <th className="tt-center">BATAS MINIMUM</th>
+              <th className="tt-center">STATUS</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
@@ -100,9 +101,9 @@ export default function AdminStokPage() {
                   </div>
                 </td>
                 <td>{p.type}</td>
-                <td className="tt-right tt-money">{saldo}</td>
-                <td className="tt-right tt-money">{minimum}</td>
-                <td>
+                <td className="tt-center tt-money">{saldo}</td>
+                <td className="tt-center tt-money">{minimum}</td>
+                <td className="tt-center">
                   <StatusPill label={low ? "Stok Menipis" : "Aman"} />
                 </td>
                 <td className="tt-right">
@@ -184,15 +185,18 @@ export default function AdminStokPage() {
           <div className="confirm" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             {askDone ? (
               <>
-                <h2>Draf tersimpan</h2>
+                <h2>Pengajuan terkirim</h2>
                 <p>
-                  Draf pengajuan tersimpan lokal sebagai demo. Formulir pengajuan resmi ke Pemilik hadir di
-                  Tahap 02.
+                  Pengajuan stok tercatat dan menunggu tinjauan Pemilik. Pantau statusnya di halaman
+                  Pengajuan Stok.
                 </p>
                 <div className="drawer-foot">
-                  <button className="btn btn-primary" onClick={closeAsk}>
+                  <button className="btn btn-ghost" onClick={closeAsk}>
                     Tutup
                   </button>
+                  <Link className="btn btn-primary" to="/admin/pengajuan" onClick={closeAsk}>
+                    Buka Pengajuan
+                  </Link>
                 </div>
               </>
             ) : (

@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { CalendarDays, ChevronDown, FileText, Printer, Receipt } from "lucide-react";
+import { CalendarDays, ChevronDown, FileText, Printer, Receipt, X } from "lucide-react";
 import { type TrxStatus } from "../data/mock";
 import { useSharedStore } from "../store/sharedStore";
 import { RESEP_MAP } from "../data/customers";
@@ -14,11 +14,15 @@ export default function RiwayatPage() {
   const [filter, setFilter] = useState<"Semua" | TrxStatus>("Semua");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>("T1");
+  const [strukOpen, setStrukOpen] = useState(false);
 
   // Riwayat dari shared store — penjualan baru Kasir ikut tercatat.
   const rows = shared.transactions.filter((t) => (filter === "Semua" ? true : t.status === filter)).filter((t) =>
     `${t.no} ${t.customer} ${t.phone}`.toLowerCase().includes(query.toLowerCase()),
   );
+
+  const active = rows.find((t) => t.id === openId) ?? rows[0];
+  const activeTax = active ? Math.round(active.total * PPN) : 0;
 
   const resep = RESEP_MAP["C-02"];
 
@@ -64,8 +68,8 @@ export default function RiwayatPage() {
               <th>TANGGAL</th>
               <th>PELANGGAN</th>
               <th>JENIS</th>
-              <th>TOTAL</th>
-              <th>STATUS</th>
+              <th className="tt-center">TOTAL</th>
+              <th className="tt-center">STATUS</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
@@ -95,8 +99,8 @@ export default function RiwayatPage() {
                         {t.type}
                       </span>
                     </td>
-                    <td className="tt-money">{formatIDR(t.total)}</td>
-                    <td>
+                    <td className="tt-center tt-money">{formatIDR(t.total)}</td>
+                    <td className="tt-center">
                       <StatusPill label={t.status} />
                     </td>
                     <td className="tt-right">
@@ -218,17 +222,125 @@ export default function RiwayatPage() {
               <option value="25">25 per halaman</option>
               <option value="50">50 per halaman</option>
             </select>
-            <button className="btn btn-ghost btn-sm">
+            <button
+              className="btn btn-ghost btn-sm"
+              disabled={!active}
+              onClick={() => {
+                if (!active) return;
+                setOpenId(active.id);
+                setStrukOpen(true);
+              }}
+            >
               <Printer size={15} />
               Cetak Nota
             </button>
-            <button className="btn btn-ghost btn-sm">
+            <button
+              className="btn btn-ghost btn-sm"
+              disabled={!active}
+              onClick={() => {
+                if (!active) return;
+                setOpenId(active.id);
+                setStrukOpen(true);
+              }}
+            >
               <FileText size={15} />
               Lihat Struk
             </button>
           </div>
         </div>
       </div>
+
+      {strukOpen && active ? (
+        <div className="overlay" onClick={() => setStrukOpen(false)}>
+          <div className="drawer struk-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="drawer-head">
+              <div>
+                <h2>Struk Transaksi</h2>
+                <div className="section-desc">{active.no} · data demo</div>
+              </div>
+              <button className="icon-pill" aria-label="Tutup" onClick={() => setStrukOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="struk-print" id="struk-print">
+              <div className="struk-brand">
+                <b>Optik Mekar Jaya</b>
+                <span>Cabang Padang · (0751) 123456</span>
+                <span>Jl. Contoh No. 1, Padang</span>
+              </div>
+              <div className="struk-meta">
+                <div>
+                  <span>No. Nota</span>
+                  <b>{active.no}</b>
+                </div>
+                <div>
+                  <span>Tanggal</span>
+                  <b>
+                    {active.date}, {active.time}
+                  </b>
+                </div>
+                <div>
+                  <span>Kasir</span>
+                  <b>Korena Saif</b>
+                </div>
+                <div>
+                  <span>Pelanggan</span>
+                  <b>{active.customer}</b>
+                </div>
+              </div>
+              <div className="struk-items">
+                {(active.products && active.products.length ? active.products : [{ name: active.type, brand: "-", qty: 1, price: active.total }]).map(
+                  (p) => (
+                    <div className="struk-line" key={p.name}>
+                      <span>
+                        {p.name}
+                        <small>
+                          {p.qty} × {formatIDR(p.price)}
+                        </small>
+                      </span>
+                      <b>{formatIDR(p.qty * p.price)}</b>
+                    </div>
+                  ),
+                )}
+              </div>
+              <div className="struk-totals">
+                <div>
+                  <span>Subtotal</span>
+                  <b>{formatIDR(active.total)}</b>
+                </div>
+                <div>
+                  <span>Diskon</span>
+                  <b>Rp 0</b>
+                </div>
+                <div>
+                  <span>PPN 11%</span>
+                  <b>{formatIDR(activeTax)}</b>
+                </div>
+                <div className="struk-grand">
+                  <span>Total</span>
+                  <b>{formatIDR(active.total + activeTax)}</b>
+                </div>
+              </div>
+              <div className="struk-foot">
+                <span>Metode: {active.method ?? "Tunai"}</span>
+                <span>Status: {active.status}</span>
+                <span>Terima kasih · Barang yang sudah dibeli tidak dapat ditukar</span>
+              </div>
+            </div>
+
+            <div className="drawer-foot">
+              <button className="btn btn-ghost" onClick={() => setStrukOpen(false)}>
+                Tutup
+              </button>
+              <button className="btn btn-primary" onClick={() => window.print()}>
+                <Printer size={16} />
+                Cetak Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

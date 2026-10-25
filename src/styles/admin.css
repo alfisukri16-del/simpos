@@ -263,19 +263,18 @@ a.stat-link:hover .stat-card {
 
 /* Penerimaan — baris alokasi read-only + input qty */
 .recv-line {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 18px;
   background: #fff;
   border-radius: var(--r-md);
   padding: 14px 16px;
   box-shadow: var(--shadow-sm);
-  flex-wrap: wrap;
 }
 
 .recv-body {
-  flex: 1;
-  min-width: 200px;
+  min-width: 0;
 }
 
 .recv-body b {
@@ -293,7 +292,8 @@ a.stat-link:hover .stat-card {
 
 .recv-alloc {
   text-align: right;
-  min-width: 92px;
+  min-width: 78px;
+  font-variant-numeric: tabular-nums;
 }
 
 .recv-alloc span {

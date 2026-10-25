@@ -150,11 +150,11 @@ export default function OwnerMutasiPage() {
           <thead>
             <tr>
               <th>WAKTU / ID</th>
-              <th>KEJADIAN</th>
+              <th className="tt-center">KEJADIAN</th>
               <th>REFERENSI</th>
               <th>PRODUK</th>
               <th>LOKASI</th>
-              <th className="tt-right">QTY</th>
+              <th className="tt-center">QTY</th>
               <th>AKTOR</th>
               <th className="tt-right">AKSI</th>
             </tr>
@@ -170,7 +170,7 @@ export default function OwnerMutasiPage() {
                     </div>
                     <div className="tt-sub">{r.at}</div>
                   </td>
-                  <td>
+                  <td className="tt-center">
                     <StatusPill label={r.fisik ? (r.event === "Penjualan" ? "Keluar" : "Masuk") : "Diajukan"} dot={false} />
                     <div className="tt-sub">{r.event}</div>
                   </td>
@@ -186,7 +186,7 @@ export default function OwnerMutasiPage() {
                     <div className="tt-sub">{p?.code}</div>
                   </td>
                   <td>{BRANCHES.find((b) => b.id === r.branchId)?.name ?? r.branchId}</td>
-                  <td className="tt-right tt-money">{r.qtyText}</td>
+                  <td className="tt-center tt-money">{r.qtyText}</td>
                   <td>{r.actor}</td>
                   <td className="tt-right">
                     <button className="link-action" onClick={() => setTraceKey(r.key)}>

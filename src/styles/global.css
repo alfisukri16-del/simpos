@@ -65,6 +65,186 @@ textarea {
   white-space: nowrap;
 }
 
+/* ---------------- Motion polish (halus, tidak mengganggu) ---------------- */
+@keyframes simpos-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes simpos-rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes simpos-slide-in-right {
+  from { opacity: 0.5; transform: translateX(26px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes simpos-pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.overlay {
+  animation: simpos-fade-in 0.18s ease-out;
+}
+
+.overlay .drawer {
+  animation: simpos-slide-in-right 0.26s cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+
+.overlay .confirm {
+  animation: simpos-pop-in 0.2s cubic-bezier(0.22, 0.7, 0.3, 1);
+}
+
+.notice,
+.notice-ok,
+.form-error,
+.trx-detail {
+  animation: simpos-rise-in 0.22s ease-out;
+}
+
+.btn,
+.chip,
+.link-action,
+.icon-pill,
+.select-pill,
+.pay-opt,
+.product-card {
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.15s ease;
+}
+
+.btn:active:not(:disabled),
+.chip:active,
+.icon-pill:active,
+.link-action:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.pdot {
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.pnode::before {
+  transition: background 0.3s ease;
+}
+
+.avatar-pill {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* ---- Animasi masuk untuk semua halaman ---- */
+@keyframes simpos-page-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.996); }
+  to { opacity: 1; transform: none; }
+}
+
+.page,
+.dash,
+.auth-card {
+  animation: simpos-page-in 0.32s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+}
+
+.page > *:not(.overlay),
+.dash > *:not(.overlay) {
+  animation: simpos-rise-in 0.34s ease-out both;
+}
+
+.page > *:nth-child(1):not(.overlay), .dash > *:nth-child(1):not(.overlay) { animation-delay: 0.02s; }
+.page > *:nth-child(2):not(.overlay), .dash > *:nth-child(2):not(.overlay) { animation-delay: 0.06s; }
+.page > *:nth-child(3):not(.overlay), .dash > *:nth-child(3):not(.overlay) { animation-delay: 0.1s; }
+.page > *:nth-child(4):not(.overlay), .dash > *:nth-child(4):not(.overlay) { animation-delay: 0.14s; }
+.page > *:nth-child(5):not(.overlay), .dash > *:nth-child(5):not(.overlay) { animation-delay: 0.18s; }
+.page > *:nth-child(6):not(.overlay), .dash > *:nth-child(6):not(.overlay) { animation-delay: 0.22s; }
+.page > *:nth-child(7):not(.overlay), .dash > *:nth-child(7):not(.overlay) { animation-delay: 0.26s; }
+.page > *:nth-child(n+8):not(.overlay), .dash > *:nth-child(n+8):not(.overlay) { animation-delay: 0.3s; }
+
+/* Baris tabel masuk berurutan (dibatasi agar tetap ringan) */
+@keyframes simpos-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+table.tt tbody tr {
+  animation: simpos-row-in 0.26s ease-out both;
+}
+
+table.tt tbody tr:nth-child(1) { animation-delay: 0.02s; }
+table.tt tbody tr:nth-child(2) { animation-delay: 0.05s; }
+table.tt tbody tr:nth-child(3) { animation-delay: 0.08s; }
+table.tt tbody tr:nth-child(4) { animation-delay: 0.11s; }
+table.tt tbody tr:nth-child(5) { animation-delay: 0.14s; }
+table.tt tbody tr:nth-child(n+6) { animation-delay: 0.17s; }
+
+/* ---- Animasi grafik ---- */
+@keyframes simpos-bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes simpos-fill-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes simpos-pop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+.sales-bar {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: simpos-bar-grow 0.7s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+.sales-bar-group:nth-child(1) .sales-bar { animation-delay: 0.05s; }
+.sales-bar-group:nth-child(2) .sales-bar { animation-delay: 0.12s; }
+.sales-bar-group:nth-child(3) .sales-bar { animation-delay: 0.19s; }
+.sales-bar-group:nth-child(4) .sales-bar { animation-delay: 0.26s; }
+.sales-bar-group:nth-child(5) .sales-bar { animation-delay: 0.33s; }
+.sales-bar-group:nth-child(6) .sales-bar { animation-delay: 0.4s; }
+.sales-bar-group:nth-child(n+7) .sales-bar { animation-delay: 0.47s; }
+
+.sales-bar-group .sales-xlabel,
+.sales-bar-group text {
+  animation: simpos-fade-in 0.5s ease-out 0.35s both;
+}
+
+.top-bar > span {
+  transform-origin: left center;
+  animation: simpos-fill-x 0.8s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+.top-row:nth-child(1) .top-bar > span { animation-delay: 0.08s; }
+.top-row:nth-child(2) .top-bar > span { animation-delay: 0.16s; }
+.top-row:nth-child(3) .top-bar > span { animation-delay: 0.24s; }
+.top-row:nth-child(4) .top-bar > span { animation-delay: 0.32s; }
+.top-row:nth-child(n+5) .top-bar > span { animation-delay: 0.4s; }
+
+.chart-figures b,
+.chart-figures span {
+  animation: simpos-pop 0.4s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+}
+
+.chart-figures b { animation-delay: 0.1s; }
+.chart-figures span { animation-delay: 0.18s; }
+
+.ow-metric,
+.stat-card {
+  animation: simpos-pop 0.36s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+}
+
 /* Shared page background: very soft lavender / white */
 .page-bg {
   min-height: 100%;

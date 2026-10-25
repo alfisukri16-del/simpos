@@ -145,8 +145,8 @@ export default function OwnerTransaksiPage() {
               <th>TANGGAL</th>
               <th>PELANGGAN</th>
               <th>METODE</th>
-              <th className="tt-right">TOTAL</th>
-              <th>STATUS</th>
+              <th className="tt-center">TOTAL</th>
+              <th className="tt-center">STATUS</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
@@ -165,8 +165,8 @@ export default function OwnerTransaksiPage() {
                 <td>
                   <span className="type-chip">{t.method ?? "—"}</span>
                 </td>
-                <td className="tt-right tt-money">{formatIDR(t.total)}</td>
-                <td>
+                <td className="tt-center tt-money">{formatIDR(t.total)}</td>
+                <td className="tt-center">
                   <StatusPill label={t.status} />
                 </td>
                 <td className="tt-right">

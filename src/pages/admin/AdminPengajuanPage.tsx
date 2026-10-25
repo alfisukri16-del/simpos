@@ -94,9 +94,9 @@ export default function AdminPengajuanPage() {
             <tr>
               <th>ID / WAKTU</th>
               <th>PRODUK</th>
-              <th className="tt-right">STOK SAAT INI</th>
-              <th className="tt-right">QTY DIMINTA</th>
-              <th>STATUS</th>
+              <th className="tt-center">STOK SAAT INI</th>
+              <th className="tt-center">QTY DIMINTA</th>
+              <th className="tt-center">STATUS</th>
               <th>KETERANGAN</th>
             </tr>
           </thead>
@@ -116,14 +116,14 @@ export default function AdminPengajuanPage() {
                     </div>
                     <div className="tt-sub">{p?.code}</div>
                   </td>
-                  <td className="tt-right tt-money">
+                  <td className="tt-center tt-money">
                     {s?.saldo ?? 0}
                     {s && s.saldo <= s.minimum ? (
                       <div className="tt-sub">menipis (min {s.minimum})</div>
                     ) : null}
                   </td>
-                  <td className="tt-right tt-money">{r.qty}</td>
-                  <td>
+                  <td className="tt-center tt-money">{r.qty}</td>
+                  <td className="tt-center">
                     <StatusPill label={r.status} />
                   </td>
                   <td>

@@ -109,7 +109,7 @@ export default function OwnerPOPage() {
               <th>NO. PO / TANGGAL</th>
               <th>PELANGGAN</th>
               <th>PRODUK</th>
-              <th>STATUS</th>
+              <th className="tt-center">STATUS</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
@@ -130,7 +130,7 @@ export default function OwnerPOPage() {
                   <div className="tt-num" style={{ fontSize: 13 }}>{o.productLabel}</div>
                   <div className="tt-sub">{o.products[1]}</div>
                 </td>
-                <td><StatusPill label={o.status} /></td>
+                <td className="tt-center"><StatusPill label={o.status} /></td>
                 <td className="tt-right">
                   <button className="link-action" onClick={() => setDetailId(o.id)}>
                     Detail<ArrowRight size={15} />

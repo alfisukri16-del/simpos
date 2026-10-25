@@ -12,7 +12,7 @@ import {
   TriangleAlert,
   UserPlus,
 } from "lucide-react";
-import { CUSTOMERS, RESEP_MAP, type Customer } from "../data/customers";
+import { RESEP_MAP, type Customer } from "../data/customers";
 import type { PaymentMethod } from "../data/mock";
 import { useCart } from "../context/CartContext";
 import { useSharedStore } from "../store/sharedStore";
@@ -35,7 +35,7 @@ export default function CheckoutPage() {
   const [warning, setWarning] = useState<string | null>(null);
 
   const activeCustomer = picking ? null : cart.customer;
-  const results = CUSTOMERS.filter((c) =>
+  const results = shared.customers.filter((c) =>
     `${c.name} ${c.phone} ${c.code}`.toLowerCase().includes(query.toLowerCase()),
   );
 
@@ -131,7 +131,7 @@ export default function CheckoutPage() {
                   {results.map((c) => (
                     <button key={c.id} className="cust-pick-row" onClick={() => pick(c)}>
                       <Avatar initials={c.initials} size={40} />
-                      <span style={{ flex: 1, minWidth: 0 }}>
+                      <span className="pick-body">
                         <b>{c.name}</b>
                         <span>
                           {c.code} · {c.phone}

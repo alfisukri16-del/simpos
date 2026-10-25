@@ -36,11 +36,11 @@ export default function OwnerCabangPage() {
           <thead>
             <tr>
               <th>LOKASI</th>
-              <th className="tt-right">TOTAL UNIT STOK</th>
-              <th className="tt-right">MENIPIS</th>
-              <th className="tt-right">TRANSAKSI SUKSES</th>
-              <th className="tt-right">PO AKTIF</th>
-              <th className="tt-right">PENGAJUAN</th>
+              <th className="tt-center">TOTAL UNIT STOK</th>
+              <th className="tt-center">MENIPIS</th>
+              <th className="tt-center">TRANSAKSI SUKSES</th>
+              <th className="tt-center">PO AKTIF</th>
+              <th className="tt-center">PENGAJUAN</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
@@ -58,7 +58,7 @@ export default function OwnerCabangPage() {
                     </span>
                   </div>
                 </td>
-                <td className="tt-right">
+                <td className="tt-center">
                   <div className="stock-cell">
                     <b>{units} Pcs</b>
                     <span>
@@ -67,10 +67,10 @@ export default function OwnerCabangPage() {
                     </span>
                   </div>
                 </td>
-                <td className="tt-right">{low > 0 ? <StatusPill label="Stok Menipis" /> : <StatusPill label="Aman" />}</td>
-                <td className="tt-right tt-money">{sales}</td>
-                <td className="tt-right tt-money">{po}</td>
-                <td className="tt-right tt-money">{req}</td>
+                <td className="tt-center">{low > 0 ? <StatusPill label="Stok Menipis" /> : <StatusPill label="Aman" />}</td>
+                <td className="tt-center tt-money">{sales}</td>
+                <td className="tt-center tt-money">{po}</td>
+                <td className="tt-center tt-money">{req}</td>
                 <td className="tt-right">
                   <Link className="link-action" to={`/owner/cabang/${b.id}`}>
                     Detail

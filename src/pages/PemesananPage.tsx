@@ -129,7 +129,7 @@ export default function PemesananPage() {
                 <th>NO. PO / TANGGAL</th>
                 <th>PELANGGAN</th>
                 <th>PRODUK DIPESAN</th>
-                <th>STATUS PO</th>
+                <th className="tt-center">STATUS PO</th>
                 <th className="tt-right">AKSI</th>
               </tr>
             </thead>
@@ -155,7 +155,7 @@ export default function PemesananPage() {
                     </div>
                     <div className="tt-sub">{o.products[1]}</div>
                   </td>
-                  <td>
+                  <td className="tt-center">
                     <StatusPill label={o.status} />
                   </td>
                   <td className="tt-right">

@@ -19,6 +19,8 @@ const PERIOD_LABEL: Record<PeriodKey, string> = {
 };
 const PAGE = 10;
 
+const branchLabel = (id?: string) => BRANCHES.find((b) => b.id === id)?.name ?? (id === "cabang-padang" ? "Cabang Padang" : id ?? "Cabang Padang");
+
 export default function OwnerLaporanPage() {
   const store = useSharedStore();
   const [kind, setKind] = useState<Kind>("transaksi");
@@ -51,7 +53,7 @@ export default function OwnerLaporanPage() {
       const ok = rows.filter((t) => t.status === "Selesai");
       return {
         head: ["No. Transaksi", "Tanggal", "Cabang", "Pelanggan", "Metode", "Status", "Total (Rp)"],
-        body: rows.map((t) => [t.no, `${t.date}${t.time ? ` ${t.time}` : ""}`, t.branchId ?? "cabang-padang", t.customer, t.method ?? "—", t.status, t.total]),
+        body: rows.map((t) => [t.no, `${t.date}${t.time ? ` ${t.time}` : ""}`, branchLabel(t.branchId), t.customer, t.method ?? "—", t.status, t.total]),
         total: ["", "", "", "", "", `${ok.length} sukses`, ok.reduce((a, t) => a + t.total, 0)] as Array<string | number>,
         summary: `${ok.length} sukses · ${formatIDR(ok.reduce((a, t) => a + t.total, 0))}`,
       };
@@ -81,7 +83,7 @@ export default function OwnerLaporanPage() {
         .filter((o) => `${o.number} ${o.customer}`.toLowerCase().includes(q.toLowerCase()));
       return {
         head: ["No. PO", "Tanggal", "Cabang", "Pelanggan", "Produk", "Status"],
-        body: rows.map((o) => [o.number, o.date, o.branchId, o.customer, `${o.productLabel} × ${o.items.reduce((a, i) => a + i.qty, 0)}`, o.status]),
+        body: rows.map((o) => [o.number, o.date, branchLabel(o.branchId), o.customer, `${o.productLabel} × ${o.items.reduce((a, i) => a + i.qty, 0)}`, o.status]),
         total: ["", "", "", "", `${rows.length} PO`, ""] as Array<string | number>,
         summary: `${rows.length} PO · Dipesan ${rows.filter((o) => o.status === "Dipesan").length} · Diproses ${rows.filter((o) => o.status === "Diproses").length} · Datang ${rows.filter((o) => o.status === "Sudah Datang").length} · Selesai ${rows.filter((o) => o.status === "Selesai").length}`,
       };
@@ -94,7 +96,7 @@ export default function OwnerLaporanPage() {
         const p = store.productOf(m.productId);
         return {
           sort: m.at,
-          row: [m.at, m.id, "Mutasi fisik", p?.name ?? m.productId, m.branchId, m.qty, m.sumber, m.actor] as Array<string | number>,
+          row: [m.at, m.id, "Mutasi fisik", p?.name ?? m.productId, branchLabel(m.branchId), m.qty, m.sumber, m.actor] as Array<string | number>,
           hay: `${m.id} ${m.ref} ${p?.name ?? ""}`,
         };
       });
@@ -105,7 +107,7 @@ export default function OwnerLaporanPage() {
         const p = store.productOf(r.productId);
         return {
           sort: r.at,
-          row: [r.at, r.id, "Penerimaan", p?.name ?? r.productId, r.branchId, `+${r.qty}`, r.distributionId, r.actor] as Array<string | number>,
+          row: [r.at, r.id, "Penerimaan", p?.name ?? r.productId, branchLabel(r.branchId), `+${r.qty}`, r.distributionId, r.actor] as Array<string | number>,
           hay: `${r.id} ${r.distributionId} ${p?.name ?? ""}`,
         };
       });
@@ -117,7 +119,7 @@ export default function OwnerLaporanPage() {
           const p = store.productOf(l.productId);
           return {
             sort: d.date,
-            row: [d.date, d.id, "Alokasi (reservasi)", p?.name ?? l.productId, d.branchId, l.qtyAlokasi, d.status, d.actor ?? "seed"] as Array<string | number>,
+            row: [d.date, d.id, "Alokasi (reservasi)", p?.name ?? l.productId, branchLabel(d.branchId), l.qtyAlokasi, d.status, d.actor ?? "seed"] as Array<string | number>,
             hay: `${d.id} ${p?.name ?? ""}`,
           };
         }),
@@ -133,7 +135,7 @@ export default function OwnerLaporanPage() {
 
   const pages = Math.max(1, Math.ceil(data.body.length / PAGE));
   const view = data.body.slice((page - 1) * PAGE, page * PAGE);
-  const branchName = branch === "all" ? "Semua Cabang" : branch;
+  const branchName = branch === "all" ? "Semua Cabang" : branchLabel(branch);
   const meta: Array<[string, string]> = [
     ["Cabang", branchName],
     ["Periode", range.label],
@@ -267,7 +269,7 @@ export default function OwnerLaporanPage() {
           <thead>
             <tr>
               {data.head.map((h) => (
-                <th key={h} className={/total|qty|stok|rp/i.test(h) ? "tt-right" : ""}>{h.toUpperCase()}</th>
+                <th key={h} className={/total|qty|stok|rp/i.test(h) ? "tt-center" : ""}>{h.toUpperCase()}</th>
               ))}
             </tr>
           </thead>
@@ -275,7 +277,7 @@ export default function OwnerLaporanPage() {
             {view.map((r, i) => (
               <tr key={i}>
                 {r.map((c, j) => (
-                  <td key={j} className={typeof c === "number" ? "tt-right tt-money" : ""}>
+                  <td key={j} className={typeof c === "number" ? "tt-center tt-money" : ""}>
                     {typeof c === "number" && /total/i.test(data.head[j]) ? rp(c) : String(c)}
                   </td>
                 ))}

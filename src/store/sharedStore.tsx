@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { PRODUCTS } from "../data/catalog";
-import { ORDERS, TRANSACTIONS, type PoOrder, type PoStatus, type Transaction } from "../data/mock";
-import { CUSTOMERS, RESEP_MAP } from "../data/customers";
+import { ORDERS, RESEP_RECORDS, TRANSACTIONS, type PoOrder, type PoStatus, type ResepRecord, type Transaction } from "../data/mock";
+import { CUSTOMERS, RESEP_MAP, type Customer } from "../data/customers";
 import { ADMIN_STORE_KEY, DEMO_ADMIN } from "../data/admin";
 
 /* ==========================================================================
@@ -157,6 +157,8 @@ type StoreShape = {
   saleRefs: string[]; // idempotency penjualan Kasir
   allocKeys: string[]; // idempotency alokasi Owner
   appUsers: AppUser[];
+  customers: Customer[];
+  reseps: ResepRecord[];
   settings: AppSettings;
   audit: AuditEntry[];
 };
@@ -322,6 +324,8 @@ function seed(): StoreShape {
       { id: "U-002", name: "Rina Amelia", email: "admin@mekarjaya.demo", password: "demo123", role: "admin", branchId: BRANCH_ID, status: "Aktif" },
       { id: "U-003", name: "Agus Wijaya", email: "owner@mekarjaya.demo", password: "demo123", role: "pemilik", branchId: "all", status: "Aktif" },
     ],
+    customers: CUSTOMERS,
+    reseps: RESEP_RECORDS,
     settings: {
       taxRate: 0.11,
       defaultMinimum: 2,
@@ -397,6 +401,8 @@ function load(): StoreShape {
         if (!Array.isArray(parsed.centralStock)) parsed.centralStock = seed().centralStock;
         if (!Array.isArray(parsed.allocKeys)) parsed.allocKeys = [];
         if (!Array.isArray(parsed.appUsers)) parsed.appUsers = seed().appUsers;
+        if (!Array.isArray(parsed.customers)) parsed.customers = seed().customers;
+        if (!Array.isArray(parsed.reseps)) parsed.reseps = seed().reseps;
         if (!parsed.settings) parsed.settings = seed().settings;
         if (Array.isArray(parsed.transactions)) {
           for (const t of parsed.transactions) {
@@ -441,6 +447,22 @@ type SharedStore = StoreShape & {
   }) => { ok: boolean; msg: string; id?: string };
   upsertUser: (input: { id?: string; name: string; email: string; password: string; role: "kasir" | "admin" | "pemilik"; branchId: string }) => string | null;
   setUserStatus: (id: string, status: "Aktif" | "Nonaktif") => string | null;
+  upsertCustomer: (input: {
+    id?: string;
+    name: string;
+    phone: string;
+    email: string;
+    tier: Customer["tier"];
+  }) => string | null;
+  createResep: (input: {
+    customerId: string;
+    date: string;
+    od: { sph: string; cyl: string; axis: string };
+    os: { sph: string; cyl: string; axis: string };
+    pd: string;
+    add: string;
+    note: string;
+  }) => string | null;
   saveSettings: (input: AppSettings) => string | null;
   authenticate: (email: string, password: string) => { role: "kasir" | "admin" | "pemilik"; name: string; initials: string; branch: string; branchId: string; email: string } | null;
   confirmReceipt: (
@@ -848,6 +870,86 @@ export function SharedProvider({ children }: { children: ReactNode }) {
           appUsers: prev.appUsers.map((u) => (u.id === uid ? { ...u, status } : u)),
           audit: audit(prev, `${status === "Aktif" ? "Aktifkan" : "Nonaktifkan"} pengguna ${target.email}`, `USER/${uid}`),
         }));
+        return null;
+      },
+
+      upsertCustomer: ({ id, name, phone, email, tier }) => {
+        const cleanName = name.trim();
+        const digits = phone.replace(/[^0-9]/g, "");
+        if (!cleanName) return "Nama pelanggan wajib diisi.";
+        if (digits.length < 8 || digits.length > 15) return "Nomor HP harus 8–15 digit angka.";
+        const cleanEmail = email.trim();
+        if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return "Format email tidak valid.";
+        const initials = cleanName
+          .split(/\s+/)
+          .map((w) => w[0] ?? "")
+          .join("")
+          .slice(0, 2)
+          .toUpperCase() || "PL";
+        setState((prev) => {
+          if (id) {
+            const existing = prev.customers.find((c) => c.id === id);
+            if (!existing) return prev;
+            return {
+              ...prev,
+              customers: prev.customers.map((c) =>
+                c.id === id ? { ...c, name: cleanName, phone: phone.trim(), email: cleanEmail, tier, initials } : c,
+              ),
+              audit: audit(prev, `Ubah pelanggan ${existing.code}`, `PELANGGAN/${existing.code}`),
+            };
+          }
+          const n = prev.customers.length + 1;
+          const code = `PLG-${String(n).padStart(4, "0")}`;
+          const cid = `C-${Date.now().toString().slice(-5)}`;
+          const next: Customer = {
+            id: cid,
+            code,
+            name: cleanName,
+            initials,
+            phone: phone.trim(),
+            email: cleanEmail,
+            tier,
+            hasResep: false,
+            poActive: 0,
+            branch: "Padang",
+          };
+          return {
+            ...prev,
+            customers: [...prev.customers, next],
+            audit: audit(prev, `Tambah pelanggan ${cleanName}`, `PELANGGAN/${code}`),
+          };
+        });
+        return null;
+      },
+
+      createResep: ({ customerId, date, od, os, pd, add }) => {
+        const customer = state.customers.find((c) => c.id === customerId);
+        if (!customer) return "Pelanggan wajib dipilih.";
+        if (!od.sph.trim() || !os.sph.trim()) return "SPH OD dan OS wajib diisi.";
+        if (!pd.trim()) return "PD wajib diisi.";
+        setState((prev) => {
+          const ids = prev.reseps
+            .map((r) => Number(r.id.replace(/[^0-9]/g, "")))
+            .filter((x) => Number.isFinite(x));
+          const nextId = `RX-${String(Math.max(0, ...ids) + 1).padStart(3, "0")}`;
+          const record: ResepRecord = {
+            id: nextId,
+            customer: customer.name,
+            initials: customer.initials,
+            date: date.trim() || now().split(",")[0],
+            od,
+            os,
+            pd: pd.trim(),
+            add: add.trim() || "-",
+            status: "Aktif",
+          };
+          return {
+            ...prev,
+            reseps: [record, ...prev.reseps],
+            customers: prev.customers.map((c) => (c.id === customerId ? { ...c, hasResep: true } : c)),
+            audit: audit(prev, `Tambah resep ${nextId} (${customer.name})`, `RESEP/${nextId}`),
+          };
+        });
         return null;
       },
 

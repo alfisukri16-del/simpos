@@ -74,10 +74,10 @@ export default function AdminMutasiPage() {
             <tr>
               <th>WAKTU / ID</th>
               <th>PRODUK</th>
-              <th>JENIS</th>
+              <th className="tt-center">JENIS</th>
               <th>SUMBER</th>
-              <th className="tt-right">QTY</th>
-              <th className="tt-right">SEBELUM → SESUDAH</th>
+              <th className="tt-center">QTY</th>
+              <th className="tt-center">SEBELUM → SESUDAH</th>
               <th>REFERENSI</th>
               <th>AKTOR</th>
             </tr>
@@ -99,16 +99,16 @@ export default function AdminMutasiPage() {
                     </div>
                     <div className="tt-sub">{p?.code}</div>
                   </td>
-                  <td>
+                  <td className="tt-center">
                     <StatusPill label={m.arah === "IN" ? "Masuk" : "Keluar"} />
                   </td>
                   <td>
                     <span className="type-chip">{m.sumber}</span>
                   </td>
-                  <td className="tt-right tt-money" style={{ color: m.arah === "IN" ? "var(--ok-ink)" : "var(--danger-ink)" }}>
+                  <td className="tt-center tt-money" style={{ color: m.arah === "IN" ? "var(--ok-ink)" : "var(--danger-ink)" }}>
                     {m.qty > 0 ? `+${m.qty}` : m.qty}
                   </td>
-                  <td className="tt-right">
+                  <td className="tt-center">
                     <span className="tt-sub" style={{ marginTop: 0 }}>
                       {m.sebelum} → <b style={{ color: "var(--ink)" }}>{m.sesudah}</b>
                     </span>

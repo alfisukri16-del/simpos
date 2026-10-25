@@ -105,8 +105,8 @@ export default function AdminProdukPage({ type }: Props) {
             <tr>
               <th>KODE / PRODUK</th>
               <th>KATEGORI</th>
-              <th>HARGA JUAL</th>
-              <th>STATUS</th>
+              <th className="tt-center">HARGA JUAL</th>
+              <th className="tt-center">STATUS</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
@@ -120,8 +120,8 @@ export default function AdminProdukPage({ type }: Props) {
                   </div>
                 </td>
                 <td>{p.category}</td>
-                <td className="tt-money">{formatIDR(p.price)}</td>
-                <td>
+                <td className="tt-center tt-money">{formatIDR(p.price)}</td>
+                <td className="tt-center">
                   <StatusPill label={p.status} />
                 </td>
                 <td className="tt-right">

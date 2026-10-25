@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Banknote, ChevronRight, CreditCard, Download, QrCode, Wallet } from "lucide-react";
 import { PAYMENTS, type PaymentMethod } from "../data/mock";
+import { exportXlsx, stamp } from "../store/reports";
 import { Chip, PageHeader, SearchBox, StatCard, StatusPill, formatIDR } from "../components/ui";
 import "../styles/pages.css";
 
@@ -25,6 +26,25 @@ export default function PembayaranPage() {
   const received = PAYMENTS.filter((p) => p.status === "Lunas").reduce((s, p) => s + p.amount, 0);
   const pending = PAYMENTS.filter((p) => p.status === "Pending").reduce((s, p) => s + p.amount, 0);
 
+  const doExport = () => {
+    if (rows.length === 0) {
+      setNotice(true);
+      return;
+    }
+    exportXlsx(
+      "Laporan Pembayaran — Cabang Padang",
+      [
+        ["Status", filter],
+        ["Jumlah baris", String(rows.length)],
+      ],
+      ["No. Pembayaran", "Tanggal", "Pelanggan", "Metode", "Jumlah (Rp)", "Status"],
+      rows.map((p) => [p.no, p.date, p.customer, p.method, p.amount, p.status]),
+      ["TOTAL", "", "", "", rows.reduce((s, p) => s + p.amount, 0), ""],
+      `Pembayaran-Cabang-Padang-${stamp()}.xlsx`,
+    );
+    setNotice(true);
+  };
+
   return (
     <div className="page">
       <PageHeader
@@ -37,9 +57,9 @@ export default function PembayaranPage() {
         title="Pembayaran"
         desc="Rekap pembayaran transaksi di Cabang Padang."
         actions={
-          <button className="btn btn-ghost" onClick={() => setNotice(true)}>
+          <button className="btn btn-ghost" onClick={doExport}>
             <Download size={16} />
-            Ekspor
+            Ekspor XLSX
           </button>
         }
       />
@@ -51,9 +71,11 @@ export default function PembayaranPage() {
       </div>
 
       {notice ? (
-        <div className="notice">
+        <div className={rows.length === 0 ? "notice" : "notice notice-ok"} role="status">
           <Download size={16} />
-          Ekspor laporan pembayaran belum tersedia pada demo ini.
+          {rows.length === 0
+            ? "Tidak ada baris untuk diekspor pada filter ini."
+            : `Ekspor XLSX diunduh (${rows.length} baris sesuai filter).`}
         </div>
       ) : null}
 
@@ -93,8 +115,8 @@ export default function PembayaranPage() {
                 <th>TANGGAL</th>
                 <th>PELANGGAN</th>
                 <th>METODE</th>
-                <th>JUMLAH</th>
-                <th>STATUS</th>
+                <th className="tt-center">JUMLAH</th>
+                <th className="tt-center">STATUS</th>
                 <th className="tt-right">AKSI</th>
               </tr>
             </thead>
@@ -118,8 +140,8 @@ export default function PembayaranPage() {
                         {p.method}
                       </span>
                     </td>
-                    <td className="tt-money">{formatIDR(p.amount)}</td>
-                    <td>
+                    <td className="tt-center tt-money">{formatIDR(p.amount)}</td>
+                    <td className="tt-center">
                       <StatusPill label={p.status} />
                     </td>
                     <td className="tt-right">

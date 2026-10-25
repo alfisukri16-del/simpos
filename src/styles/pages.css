@@ -394,11 +394,22 @@ table.tt tbody tr.is-active {
   text-align: right;
 }
 
+/* Selektor tabel harus lebih spesifik dari `table.tt th { text-align:left }`. */
+table.tt th.tt-right,
+table.tt td.tt-right {
+  text-align: right;
+}
+
+table.tt th.tt-center,
+table.tt td.tt-center {
+  text-align: center;
+}
+
 /* Total unit stok + rincian per jenis (tabel Monitoring Cabang) */
 .stock-cell {
   display: inline-flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 3px;
   line-height: 1.25;
 }
@@ -417,6 +428,24 @@ table.tt tbody tr.is-active {
   white-space: nowrap;
 }
 
+/* Kolom aksi: menempel ke isi, tanpa celah kosong lebar */
+table.tt td:last-child:has(.link-action),
+table.tt td:last-child:has(.row-actions) {
+  width: 1%;
+}
+
+table.tt th.tt-right,
+table.tt td.tt-right,
+table.tt td.tt-money {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+table.tt td:last-child .link-action,
+table.tt td:last-child .row-actions {
+  justify-content: flex-end;
+}
+
 .cell-person {
   display: flex;
   align-items: center;
@@ -429,11 +458,17 @@ table.tt tbody tr.is-active {
   font-weight: 800;
 }
 
-.cell-person span {
+.cell-person > span:last-child {
   display: block;
-  margin-top: 3px;
+  min-width: 0;
+  margin-top: 0;
   font-size: 12px;
   color: var(--muted);
+}
+
+.cell-person > span:last-child > span {
+  display: block;
+  margin-top: 3px;
 }
 
 .table-foot {
@@ -481,9 +516,12 @@ table.tt tbody tr.is-active {
   border-radius: 50%;
   color: #fff;
   font-weight: 800;
+  line-height: 1;
   background: linear-gradient(150deg, #7d78ff, var(--accent-strong));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 6px rgba(59, 47, 209, 0.18);
   flex: none;
   letter-spacing: 0.3px;
+  user-select: none;
 }
 
 .type-chip {
@@ -783,9 +821,20 @@ table.tt tbody tr.is-active {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 232px;
+  max-height: 296px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 2px 6px 8px 2px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.cust-pick::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cust-pick::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 999px;
 }
 
 .cust-pick-row {
@@ -810,7 +859,13 @@ table.tt tbody tr.is-active {
   font-weight: 800;
 }
 
-.cust-pick-row span {
+.cust-pick-row .pick-body {
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
+.cust-pick-row .pick-body span {
   display: block;
   margin-top: 2px;
   font-size: 12px;
@@ -1272,17 +1327,19 @@ table.tt tbody tr.is-active {
 
 .pnode {
   position: relative;
-  padding-right: 18px;
+  min-width: 0;
+  padding-right: 20px;
 }
 
 .pnode::before {
   content: "";
   position: absolute;
-  left: 18px;
+  left: 30px;
   top: 14px;
-  right: 0;
+  right: -2px;
   height: 2px;
   background: var(--line-2);
+  z-index: 0;
 }
 
 .pnode:last-child::before {
@@ -1317,17 +1374,18 @@ table.tt tbody tr.is-active {
   box-shadow: 0 0 0 5px var(--accent-soft);
 }
 
-.pnode b {
+.pnode > b {
   display: block;
-  margin-top: 14px;
+  margin-top: 12px;
   font-size: 13.5px;
   font-weight: 800;
 }
 
-.pnode span {
+.pnode > span:not(.pdot) {
   display: block;
-  margin-top: 5px;
+  margin-top: 4px;
   font-size: 12px;
+  line-height: 1.45;
   color: var(--muted);
 }
 
@@ -1364,6 +1422,41 @@ table.tt tbody tr.is-active {
   gap: 24px;
   box-shadow: var(--shadow-sm);
   margin: 4px 6px 8px;
+}
+
+.trx-detail > div + div {
+  border-left: 1px dashed var(--line-2);
+  padding-left: 24px;
+}
+
+.trx-detail .sub-row {
+  align-items: flex-start;
+  gap: 20px;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--line-2);
+}
+
+.trx-detail .sub-row:last-child {
+  border-bottom: none;
+}
+
+.trx-detail .sub-row > b,
+.trx-detail .sub-row > span:last-child {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .trx-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .trx-detail > div + div {
+    border-left: none;
+    border-top: 1px dashed var(--line-2);
+    padding-left: 0;
+    padding-top: 16px;
+  }
 }
 
 .trx-detail h4 {
@@ -1436,7 +1529,7 @@ table.tt tbody tr.is-active {
   font-weight: 800;
 }
 
-.detail-head span {
+.detail-head > div > span {
   display: block;
   margin-top: 3px;
   font-size: 12px;
@@ -1684,5 +1777,156 @@ table.tt tbody tr.is-active {
   .chart-legend {
     flex-wrap: wrap;
     gap: 10px 16px;
+  }
+}
+
+/* ---------------- Struk (modal Riwayat + cetak 80mm) ---------------- */
+.struk-drawer {
+  width: min(420px, 100%);
+}
+
+.struk-print {
+  background: #fff;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  padding: 22px 20px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.struk-brand {
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--line-2);
+}
+
+.struk-brand b {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--ink);
+}
+
+.struk-brand span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.struk-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line-2);
+}
+
+.struk-meta div,
+.struk-line,
+.struk-totals div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.struk-meta span,
+.struk-totals span {
+  color: var(--muted);
+}
+
+.struk-meta b {
+  font-weight: 700;
+  color: var(--ink);
+  text-align: right;
+}
+
+.struk-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line-2);
+}
+
+.struk-line span {
+  min-width: 0;
+}
+
+.struk-line small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.struk-line b {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.struk-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 0;
+}
+
+.struk-grand {
+  margin-top: 4px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line-2);
+}
+
+.struk-grand span,
+.struk-grand b {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.struk-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line-2);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Hanya berlaku saat modal struk terbuka; halaman lain tetap tercetak normal. */
+@media print {
+  body:has(.struk-print) * {
+    visibility: hidden !important;
+  }
+
+  body:has(.struk-print) .struk-print,
+  body:has(.struk-print) .struk-print * {
+    visibility: visible !important;
+  }
+
+  body:has(.struk-print) .struk-print {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    max-width: 80mm;
+    margin: 0;
+    padding: 6mm;
+    box-shadow: none;
+    border-radius: 0;
+    font-size: 11px;
+  }
+
+  body:has(.struk-print) .overlay,
+  body:has(.struk-print) .struk-drawer {
+    position: static !important;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
 }
