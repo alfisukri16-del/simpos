@@ -102,8 +102,11 @@ export default function TransaksiBerhasilPage() {
               <b>{formatIDR(subtotal)}</b>
             </div>
             <div className="info-row">
-              <span>Diskon</span>
-              <b>Rp 0</b>
+              <span>
+                Diskon
+                {r?.discountPercent ? ` (${r.discountPercent}%)` : ""}
+              </span>
+              <b>{formatIDR(r?.discount ?? 0)}</b>
             </div>
             <div className="info-row">
               <span>

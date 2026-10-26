@@ -475,6 +475,7 @@ type SharedStore = StoreShape & {
     refNo: string,
     actor: string,
     method?: string,
+    discount?: number,
   ) => boolean;
 };
 
@@ -776,7 +777,7 @@ export function SharedProvider({ children }: { children: ReactNode }) {
         return { ok: true, msg: `Status PO menjadi ${to}.` };
       },
 
-      recordSale: (items, refNo, actor, method = "—") => {
+      recordSale: (items, refNo, actor, method = "—", discount = 0) => {
         if (state.saleRefs.includes(refNo)) return false; // idempotent
         setState((prev) => {
           if (prev.saleRefs.includes(refNo)) return prev;
@@ -797,10 +798,12 @@ export function SharedProvider({ children }: { children: ReactNode }) {
             stock = stock.map((x) => (x.productId === it.id ? { ...x, saldo: x.saldo - deduct } : x));
           }
           const first = items[0];
+          const gross = items.reduce((a, i) => a + i.price * i.qty, 0);
           const trx: Transaction = {
             id: `T-${refNo}`, no: refNo, date: at.split(",")[0], time: at.split(",")[1]?.trim() ?? "",
-            customer: "Pelanggan Kasir", phone: "-", type: "Pembelian", total: items.reduce((a, i) => a + i.price * i.qty, 0),
+            customer: "Pelanggan Kasir", phone: "-", type: "Pembelian", total: Math.max(0, gross - discount),
             status: "Selesai", branchId: BRANCH_ID, method,
+            discount: discount > 0 ? discount : undefined,
             products: items.map((i) => ({ name: i.name, brand: i.brand, qty: i.qty, price: i.price })),
           };
           void first;

@@ -97,6 +97,7 @@ export type Transaction = {
   phone: string;
   type: "Pembelian" | "Pemesanan";
   total: number;
+  discount?: number; // potongan rupiah pada transaksi kasir (0/kosong = tanpa diskon)
   status: TrxStatus;
   branchId?: string; // backfill 'cabang-padang' di shared store; tanpa efek render
   method?: string; // metode pembayaran tercatat (transaksi baru); seed lama "—"

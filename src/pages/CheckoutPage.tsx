@@ -73,6 +73,7 @@ export default function CheckoutPage() {
       receipt.no,
       "Kasir",
       receipt.method,
+      receipt.discount,
     );
     navigate("/transaksi-berhasil");
   };
@@ -253,8 +254,14 @@ export default function CheckoutPage() {
           <div className="sum-row">
             <span>% Diskon</span>
             <span className="sum-inline">
-              <input className="sum-input" value="0" readOnly aria-label="Diskon" />
-              <b>Rp 0</b>
+              <input
+                className="sum-input"
+                value={cart.discountInput}
+                onChange={(e) => cart.setDiscountPercent(e.target.value)}
+                inputMode="decimal"
+                aria-label="Diskon dalam persen"
+              />
+              <b>{formatIDR(cart.discount)}</b>
             </span>
           </div>
 

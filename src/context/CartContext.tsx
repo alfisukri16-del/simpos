@@ -19,6 +19,7 @@ export type Receipt = {
   items: CartItem[];
   subtotal: number;
   discount: number;
+  discountPercent: number;
   total: number;
   customer: Customer | null;
   method: PaymentMethod;
@@ -29,6 +30,9 @@ type CartValue = {
   count: number;
   subtotal: number;
   discount: number;
+  discountPercent: number;
+  discountInput: string;
+  setDiscountPercent: (value: string) => void;
   total: number;
   add: (p: { id: string; name: string; brand: string; category: string; price: number }) => void;
   remove: (id: string) => void;
@@ -49,6 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("Tunai");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [discountInput, setDiscountInput] = useState("0");
 
   const add = (p: { id: string; name: string; brand: string; category: string; price: number }) => {
     setItems((prev) => {
@@ -66,12 +71,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([]);
     setCustomer(null);
     setMethod("Tunai");
+    setDiscountInput("0");
   };
 
   const subtotal = useMemo(() => items.reduce((s, i) => s + i.price * i.qty, 0), [items]);
   const count = useMemo(() => items.reduce((s, i) => s + i.qty, 0), [items]);
-  const discount = 0;
-  const total = subtotal - discount;
+  const discountPercent = useMemo(() => {
+    const n = Number(discountInput.replace(",", "."));
+    return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
+  }, [discountInput]);
+  const discount = Math.round((subtotal * discountPercent) / 100);
+  const total = Math.max(0, subtotal - discount);
+
+  /** Diskon dalam persen; hanya angka (0–100) yang diterima. */
+  const setDiscountPercent = (value: string) => {
+    const clean = value.replace(",", ".").replace(/[^\d.]/g, "");
+    const n = Number(clean);
+    if (clean !== "" && Number.isFinite(n) && n > 100) {
+      setDiscountInput("100");
+      return;
+    }
+    setDiscountInput(clean);
+  };
 
   /** Finalisasi transaksi: simpan struk lalu kosongkan keranjang. */
   const complete = (): Receipt => {
@@ -86,6 +107,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       items,
       subtotal,
       discount,
+      discountPercent,
       total,
       customer,
       method,
@@ -96,7 +118,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const value: CartValue = {
-    items, count, subtotal, discount, total,
+    items, count, subtotal, discount, discountPercent, discountInput, setDiscountPercent, total,
     add, remove, setQty, clear, complete,
     customer, setCustomer, method, setMethod, receipt,
   };

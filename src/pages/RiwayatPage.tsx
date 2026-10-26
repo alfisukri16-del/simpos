@@ -21,6 +21,8 @@ export default function RiwayatPage() {
   );
 
   const active = rows.find((t) => t.id === openId) ?? rows[0];
+  const activeDiscount = active?.discount ?? 0;
+  const activeSubtotal = (active?.total ?? 0) + activeDiscount;
 
   const resep = RESEP_MAP["C-02"];
 
@@ -74,7 +76,8 @@ export default function RiwayatPage() {
           <tbody>
             {rows.map((t) => {
               const open = openId === t.id;
-              const subtotal = t.total;
+              const discount = t.discount ?? 0;
+              const subtotal = t.total + discount;
               const label = t.detail === "resep" ? "Lihat Resep" : t.detail === "produk" ? "Lihat Semua" : "Lihat Detail";
               return (
                 <Fragment key={t.id}>
@@ -180,11 +183,11 @@ export default function RiwayatPage() {
                               </div>
                               <div className="sub-row">
                                 <span>Diskon</span>
-                                <b>Rp 0</b>
+                                <b>{formatIDR(discount)}</b>
                               </div>
                               <div className="sub-row total">
                                 <span>Total</span>
-                                <b>{formatIDR(subtotal)}</b>
+                                <b>{formatIDR(t.total)}</b>
                               </div>
                             </div>
                           </div>
@@ -300,11 +303,11 @@ export default function RiwayatPage() {
               <div className="struk-totals">
                 <div>
                   <span>Subtotal</span>
-                  <b>{formatIDR(active.total)}</b>
+                  <b>{formatIDR(activeSubtotal)}</b>
                 </div>
                 <div>
                   <span>Diskon</span>
-                  <b>Rp 0</b>
+                  <b>{formatIDR(activeDiscount)}</b>
                 </div>
                 <div className="struk-grand">
                   <span>Total</span>
