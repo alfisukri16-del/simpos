@@ -451,7 +451,7 @@ type SharedStore = StoreShape & {
     phone: string;
     email: string;
     tier: Customer["tier"];
-  }) => string | null;
+  }) => { ok: boolean; msg: string; customer?: Customer };
   createResep: (input: {
     customerId: string;
     date: string;
@@ -966,50 +966,49 @@ export function SharedProvider({ children }: { children: ReactNode }) {
       upsertCustomer: ({ id, name, phone, email, tier }) => {
         const cleanName = name.trim();
         const digits = phone.replace(/[^0-9]/g, "");
-        if (!cleanName) return "Nama pelanggan wajib diisi.";
-        if (digits.length < 8 || digits.length > 15) return "Nomor HP harus 8–15 digit angka.";
+        if (!cleanName) return { ok: false, msg: "Nama pelanggan wajib diisi." };
+        if (digits.length < 8 || digits.length > 15) return { ok: false, msg: "Nomor HP harus 8–15 digit angka." };
         const cleanEmail = email.trim();
-        if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return "Format email tidak valid.";
+        if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail))
+          return { ok: false, msg: "Format email tidak valid." };
         const initials = cleanName
           .split(/\s+/)
           .map((w) => w[0] ?? "")
           .join("")
           .slice(0, 2)
           .toUpperCase() || "PL";
-        setState((prev) => {
-          if (id) {
-            const existing = prev.customers.find((c) => c.id === id);
-            if (!existing) return prev;
-            return {
-              ...prev,
-              customers: prev.customers.map((c) =>
-                c.id === id ? { ...c, name: cleanName, phone: phone.trim(), email: cleanEmail, tier, initials } : c,
-              ),
-              audit: audit(prev, `Ubah pelanggan ${existing.code}`, `PELANGGAN/${existing.code}`),
-            };
-          }
-          const n = prev.customers.length + 1;
-          const code = `PLG-${String(n).padStart(4, "0")}`;
-          const cid = `C-${Date.now().toString().slice(-5)}`;
-          const next: Customer = {
-            id: cid,
-            code,
-            name: cleanName,
-            initials,
-            phone: phone.trim(),
-            email: cleanEmail,
-            tier,
-            hasResep: false,
-            poActive: 0,
-            branch: "Padang",
-          };
-          return {
+        if (id) {
+          const existing = state.customers.find((c) => c.id === id);
+          if (!existing) return { ok: false, msg: "Pelanggan tidak ditemukan." };
+          setState((prev) => ({
             ...prev,
-            customers: [...prev.customers, next],
-            audit: audit(prev, `Tambah pelanggan ${cleanName}`, `PELANGGAN/${code}`),
-          };
-        });
-        return null;
+            customers: prev.customers.map((c) =>
+              c.id === id ? { ...c, name: cleanName, phone: phone.trim(), email: cleanEmail, tier, initials } : c,
+            ),
+            audit: audit(prev, `Ubah pelanggan ${existing.code}`, `PELANGGAN/${existing.code}`),
+          }));
+          return { ok: true, msg: "", customer: { ...existing, name: cleanName, phone: phone.trim(), email: cleanEmail, tier, initials } };
+        }
+        const n = state.customers.length + 1;
+        const code = `PLG-${String(n).padStart(4, "0")}`;
+        const next: Customer = {
+          id: `C-${Date.now().toString().slice(-5)}`,
+          code,
+          name: cleanName,
+          initials,
+          phone: phone.trim(),
+          email: cleanEmail,
+          tier,
+          hasResep: false,
+          poActive: 0,
+          branch: "Padang",
+        };
+        setState((prev) => ({
+          ...prev,
+          customers: [...prev.customers, next],
+          audit: audit(prev, `Tambah pelanggan ${cleanName}`, `PELANGGAN/${code}`),
+        }));
+        return { ok: true, msg: "", customer: next };
       },
 
       createResep: ({ customerId, date, od, os, pd, add }) => {

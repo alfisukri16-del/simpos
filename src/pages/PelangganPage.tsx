@@ -53,9 +53,9 @@ export default function PelangganPage() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    const err = store.upsertCustomer({ id: editing ?? undefined, ...form });
-    if (err) {
-      setFormError(err);
+    const r = store.upsertCustomer({ id: editing ?? undefined, ...form });
+    if (!r.ok) {
+      setFormError(r.msg);
       return;
     }
     setOpen(false);

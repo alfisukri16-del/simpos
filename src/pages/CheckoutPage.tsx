@@ -10,7 +10,6 @@ import {
   QrCode,
   Trash2,
   TriangleAlert,
-  UserPlus,
 } from "lucide-react";
 import { RESEP_MAP, type Customer } from "../data/customers";
 import type { PaymentMethod } from "../data/mock";
@@ -93,12 +92,6 @@ export default function CheckoutPage() {
           <section className="co-card">
             <div className="section-head">
               <h2>Data Pelanggan</h2>
-              <div className="section-action">
-                <button className="btn btn-ghost btn-sm" onClick={() => setPicking(true)}>
-                  <UserPlus size={15} />
-                  Tambah Pelanggan
-                </button>
-              </div>
             </div>
 
             {activeCustomer ? (
