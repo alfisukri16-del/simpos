@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, TriangleAlert, X } from "lucide-react";
 import { BRANCHES, useSharedStore } from "../../store/sharedStore";
 import { inPeriod, periodRange, type PeriodKey } from "../../store/reports";
 import { Chip, PageHeader, SearchBox, StatusPill, formatIDR } from "../../components/ui";
@@ -28,6 +28,8 @@ export default function OwnerTransaksiPage() {
   const [method, setMethod] = useState("all");
   const [page, setPage] = useState(1);
   const [detailNo, setDetailNo] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelResult, setCancelResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const range = periodRange(period, cFrom, cTo);
 
@@ -50,12 +52,25 @@ export default function OwnerTransaksiPage() {
 
   const resetPage = () => setPage(1);
 
+  const openDetail = (no: string) => {
+    setDetailNo(no);
+    setCancelReason("");
+    setCancelResult(null);
+  };
+
+  const doCancel = () => {
+    if (!detail) return;
+    const r = store.cancelSale(detail.no, cancelReason, "Pemilik");
+    setCancelResult(r);
+    if (r.ok) setCancelReason("");
+  };
+
   return (
     <div className="page">
       <PageHeader
         overline="PENGAWASAN — TRANSAKSI"
         title="Monitoring Transaksi"
-        desc="Daftar transaksi Kasir read-only. Hanya status Selesai yang dihitung sebagai penjualan."
+        desc="Daftar transaksi Kasir. Owner dapat membatalkan transaksi; hanya status Selesai yang dihitung sebagai penjualan."
       />
 
       <div className="toolbar">
@@ -170,7 +185,7 @@ export default function OwnerTransaksiPage() {
                   <StatusPill label={t.status} />
                 </td>
                 <td className="tt-right">
-                  <button className="link-action" onClick={() => setDetailNo(t.no)}>
+                  <button className="link-action" onClick={() => openDetail(t.no)}>
                     Detail
                     <ArrowRight size={15} />
                   </button>
@@ -205,7 +220,7 @@ export default function OwnerTransaksiPage() {
             <div className="drawer-head">
               <div>
                 <h2>{detail.no}</h2>
-                <div className="section-desc">Read-only · Owner tidak dapat mengubah transaksi</div>
+                <div className="section-desc">Owner dapat membatalkan transaksi · item tidak dapat diubah</div>
               </div>
               <button className="icon-pill" aria-label="Tutup" onClick={() => setDetailNo(null)}>
                 <X size={18} />
@@ -228,6 +243,48 @@ export default function OwnerTransaksiPage() {
                 <b style={{ fontSize: 13.5 }}>{formatIDR(p.qty * p.price)}</b>
               </div>
             ))}
+
+            {cancelResult ? (
+              <div className={cancelResult.ok ? "notice notice-ok" : "notice"} role="status">
+                {cancelResult.ok ? null : <TriangleAlert size={16} />}
+                {cancelResult.msg}
+              </div>
+            ) : null}
+
+            {detail.status === "Selesai" || detail.status === "Pending" ? (
+              <>
+                <div className="mini-label" style={{ marginTop: 16 }}>PEMBATALAN TRANSAKSI</div>
+                <div className="tt-sub" style={{ fontWeight: 600 }}>
+                  Stok produk dikembalikan otomatis. Alasan wajib diisi dan tercatat di audit.
+                </div>
+                <label className="afield">
+                  <span>Alasan pembatalan</span>
+                  <input
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="cth. pelanggan membatalkan pesanan"
+                  />
+                </label>
+                <button
+                  className="btn btn-danger"
+                  onClick={doCancel}
+                  disabled={cancelReason.trim().length < 3}
+                >
+                  Batalkan Transaksi
+                </button>
+              </>
+            ) : null}
+
+            {detail.status === "Dibatalkan" ? (
+              <div className="notice" role="status">
+                <TriangleAlert size={16} />
+                <span>
+                  Dibatalkan {detail.cancelledAt ?? ""} oleh {detail.cancelledBy ?? "—"}
+                  {detail.cancelReason ? ` · ${detail.cancelReason}` : ""}
+                </span>
+              </div>
+            ) : null}
+
             <div className="drawer-foot">
               <button className="btn btn-ghost" onClick={() => setDetailNo(null)}>Tutup</button>
             </div>

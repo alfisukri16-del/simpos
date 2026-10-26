@@ -108,7 +108,7 @@ export type Mutation = {
   productId: string;
   branchId: string;
   arah: "IN" | "OUT";
-  sumber: "Penerimaan" | "Penjualan" | "Saldo Awal";
+  sumber: "Penerimaan" | "Penjualan" | "Pembatalan" | "Saldo Awal";
   qty: number; // bertanda: + masuk, - keluar
   sebelum: number;
   sesudah: number;
@@ -477,6 +477,8 @@ type SharedStore = StoreShape & {
     method?: string,
     discount?: number,
   ) => boolean;
+  cancelSale: (no: string, reason: string, actor: string) => { ok: boolean; msg: string };
+  cancelPO: (id: string, reason: string, actor: string) => { ok: boolean; msg: string };
 };
 
 const Ctx = createContext<SharedStore | null>(null);
@@ -804,7 +806,7 @@ export function SharedProvider({ children }: { children: ReactNode }) {
             customer: "Pelanggan Kasir", phone: "-", type: "Pembelian", total: Math.max(0, gross - discount),
             status: "Selesai", branchId: BRANCH_ID, method,
             discount: discount > 0 ? discount : undefined,
-            products: items.map((i) => ({ name: i.name, brand: i.brand, qty: i.qty, price: i.price })),
+            products: items.map((i) => ({ id: i.id, name: i.name, brand: i.brand, qty: i.qty, price: i.price })),
           };
           void first;
           return {
@@ -817,6 +819,93 @@ export function SharedProvider({ children }: { children: ReactNode }) {
           };
         });
         return true;
+      },
+
+      cancelSale: (no, reason, actor) => {
+        const trx = state.transactions.find((t) => t.no === no);
+        if (!trx) return { ok: false, msg: "Transaksi tidak ditemukan." };
+        if (trx.status === "Dibatalkan") return { ok: false, msg: "Transaksi ini sudah dibatalkan." };
+        if (trx.status !== "Selesai" && trx.status !== "Pending")
+          return { ok: false, msg: "Hanya transaksi Selesai atau Pending yang dapat dibatalkan." };
+        const clean = reason.trim();
+        if (clean.length < 3) return { ok: false, msg: "Alasan pembatalan wajib diisi (minimal 3 karakter)." };
+        const restored = (trx.products ?? []).filter((p) => p.id);
+        setState((prev) => {
+          const target = prev.transactions.find((t) => t.no === no);
+          if (!target || target.status === "Dibatalkan") return prev;
+          let stock = prev.stock;
+          let mutations = prev.mutations;
+          let seq = prev.mutations.length;
+          const at = now();
+          for (const p of target.products ?? []) {
+            if (!p.id) continue;
+            const s = stock.find((x) => x.productId === p.id);
+            if (!s) continue;
+            seq += 1;
+            mutations = [
+              {
+                id: `MU-${String(seq).padStart(4, "0")}`,
+                at,
+                productId: p.id,
+                branchId: target.branchId ?? BRANCH_ID,
+                arah: "IN",
+                sumber: "Pembatalan",
+                qty: p.qty,
+                sebelum: s.saldo,
+                sesudah: s.saldo + p.qty,
+                ref: `BATAL/${no}`,
+                actor,
+              },
+              ...mutations,
+            ];
+            stock = stock.map((x) => (x.productId === p.id ? { ...x, saldo: x.saldo + p.qty } : x));
+          }
+          return {
+            ...prev,
+            stock,
+            mutations,
+            transactions: prev.transactions.map((t) =>
+              t.no === no
+                ? { ...t, status: "Dibatalkan", cancelReason: clean, cancelledAt: at, cancelledBy: actor }
+                : t,
+            ),
+            audit: audit(
+              prev,
+              `Pembatalan ${no} oleh ${actor}: ${clean}${restored.length ? ` · stok kembali (${restored.length} produk)` : ""}`,
+              `BATAL/${no}`,
+            ),
+          };
+        });
+        return {
+          ok: true,
+          msg: restored.length
+            ? "Transaksi dibatalkan dan stok produk dikembalikan."
+            : "Transaksi dibatalkan. Stok tidak diubah (produk tidak tertaut ke data stok).",
+        };
+      },
+
+      cancelPO: (id, reason, actor) => {
+        const po = state.pos.find((p) => p.id === id);
+        if (!po) return { ok: false, msg: "PO tidak ditemukan." };
+        if (po.status === "Dibatalkan") return { ok: false, msg: "PO ini sudah dibatalkan." };
+        if (po.status === "Sudah Datang" || po.status === "Selesai")
+          return { ok: false, msg: "PO yang sudah datang/selesai tidak dapat dibatalkan." };
+        const clean = reason.trim();
+        if (clean.length < 3) return { ok: false, msg: "Alasan pembatalan wajib diisi (minimal 3 karakter)." };
+        setState((prev) => ({
+          ...prev,
+          pos: prev.pos.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  status: "Dibatalkan",
+                  timeline: [...p.timeline, { at: now(), actor, from: p.status, to: "Dibatalkan", note: clean }],
+                }
+              : p,
+          ),
+          audit: audit(prev, `PO ${po.number} dibatalkan oleh ${actor}: ${clean}`, `PO/${id}`),
+        }));
+        return { ok: true, msg: "PO dibatalkan. Alasan tercatat di timeline." };
       },
 
       upsertUser: ({ id, name, email, password, role, branchId }) => {

@@ -8,7 +8,7 @@ import { Avatar, Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../co
 import "../styles/pages.css";
 import "../styles/admin.css";
 
-const FILTERS: Array<"Semua" | PoStatus> = ["Semua", "Dipesan", "Diproses", "Sudah Datang", "Selesai"];
+const FILTERS: Array<"Semua" | PoStatus> = ["Semua", "Dipesan", "Diproses", "Sudah Datang", "Selesai", "Dibatalkan"];
 
 export default function PemesananPage() {
   const shared = useSharedStore();

@@ -1,4 +1,4 @@
-export type PoStatus = "Dipesan" | "Diproses" | "Sudah Datang" | "Selesai";
+export type PoStatus = "Dipesan" | "Diproses" | "Sudah Datang" | "Selesai" | "Dibatalkan";
 
 export type PoOrder = {
   id: string;
@@ -100,9 +100,12 @@ export type Transaction = {
   discount?: number; // potongan rupiah pada transaksi kasir (0/kosong = tanpa diskon)
   status: TrxStatus;
   branchId?: string; // backfill 'cabang-padang' di shared store; tanpa efek render
-  method?: string; // metode pembayaran tercatat (transaksi baru); seed lama "—"
+  method?: string; // metode pembayaran tercatat (transaksi baru); seed lama "-"
   detail?: "resep" | "struk" | "produk";
-  products?: Array<{ name: string; brand: string; qty: number; price: number }>;
+  products?: Array<{ id?: string; name: string; brand: string; qty: number; price: number }>;
+  cancelReason?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
 };
 
 /** Riwayat transaksi DEMO. */

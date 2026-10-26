@@ -8,7 +8,7 @@ import { Avatar, Chip, PageHeader, SearchBox, StatusPill } from "../../component
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
-const FILTERS: Array<"Semua" | PoStatus> = ["Semua", "Dipesan", "Diproses", "Sudah Datang", "Selesai"];
+const FILTERS: Array<"Semua" | PoStatus> = ["Semua", "Dipesan", "Diproses", "Sudah Datang", "Selesai", "Dibatalkan"];
 
 export default function AdminPemesananPage() {
   const store = useSharedStore();

@@ -13,6 +13,7 @@ const FLOW_DESC: Record<PoStatus, string> = {
   Diproses: "Menunggu proses",
   "Sudah Datang": "Menunggu barang",
   Selesai: "Belum selesai",
+  Dibatalkan: "Dibatalkan oleh Admin",
 };
 
 export default function DetailPoPage() {
@@ -21,6 +22,7 @@ export default function DetailPoPage() {
   // Status PO dari shared store — perubahan oleh Admin terbaca Kasir.
   const order = shared.pos.find((o) => o.id === id) ?? shared.pos[0];
   const current = Math.max(0, FLOW.indexOf(order.status));
+  const cancelled = order.status === "Dibatalkan";
   const resep = RESEP_MAP["C-02"];
 
   return (
@@ -72,7 +74,7 @@ export default function DetailPoPage() {
             <div className="section-desc">Status diperbarui oleh Admin Cabang</div>
           </div>
         </div>
-        <div className="progress">
+        <div className="progress" style={{ opacity: cancelled ? 0.45 : 1 }}>
           {FLOW.map((step, i) => (
             <div key={step} className={`pnode ${i < current ? "done" : ""} ${i === current ? "current" : ""}`}>
               <span className="pdot">{i < current ? <Check size={14} strokeWidth={3} /> : i + 1}</span>
@@ -81,6 +83,11 @@ export default function DetailPoPage() {
             </div>
           ))}
         </div>
+        {cancelled ? (
+          <div className="notice" role="status">
+            PO ini dibatalkan oleh Admin Cabang. Hubungi Admin bila butuh pesanan baru.
+          </div>
+        ) : null}
       </section>
 
       <div className="two-col">

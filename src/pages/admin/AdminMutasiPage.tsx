@@ -64,6 +64,7 @@ export default function AdminMutasiPage() {
           <option value="all">Semua Sumber</option>
           <option value="Penerimaan">Penerimaan</option>
           <option value="Penjualan">Penjualan</option>
+          <option value="Pembatalan">Pembatalan</option>
           <option value="Saldo Awal">Saldo Awal</option>
         </select>
       </div>

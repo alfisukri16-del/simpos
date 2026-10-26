@@ -13,6 +13,7 @@ const PERIOD_LABEL: Record<PeriodKey, string> = {
   semua: "Semua waktu", hari: "Hari ini", mingguan: "7 hari", bulanan: "30 hari", tahunan: "Tahun ini", custom: "Rentang",
 };
 const STATUSES: PoStatus[] = ["Dipesan", "Diproses", "Sudah Datang", "Selesai"];
+const FILTER_STATUSES: PoStatus[] = [...STATUSES, "Dibatalkan"];
 
 export default function OwnerPOPage() {
   const store = useSharedStore();
@@ -71,7 +72,7 @@ export default function OwnerPOPage() {
         </select>
         <select className="select-pill" aria-label="Status" value={status} onChange={(e) => { setStatus(e.target.value as typeof status); resetPage(); }}>
           <option value="all">Semua Status</option>
-          {STATUSES.map((s) => (
+          {FILTER_STATUSES.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>

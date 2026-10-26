@@ -18,10 +18,12 @@ export default function AdminDetailPoPage() {
   const { id } = useParams();
   const store = useSharedStore();
   const [note, setNote] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const order = store.pos.find((o) => o.id === id) ?? store.pos[0];
   const current = Math.max(0, FLOW.indexOf(order.status));
+  const cancelled = order.status === "Dibatalkan";
   const next = order.status === "Dipesan" || order.status === "Diproses" ? (order.status === "Dipesan" ? "Diproses" : "Sudah Datang") : null;
 
   const submit = (e: FormEvent) => {
@@ -30,6 +32,13 @@ export default function AdminDetailPoPage() {
     const r = store.transitionPO(order.id, next, note.trim(), DEMO_ADMIN.name);
     setResult(r);
     if (r.ok) setNote("");
+  };
+
+  const doCancel = (e: FormEvent) => {
+    e.preventDefault();
+    const r = store.cancelPO(order.id, cancelReason, DEMO_ADMIN.name);
+    setResult(r);
+    if (r.ok) setCancelReason("");
   };
 
   return (
@@ -77,7 +86,7 @@ export default function AdminDetailPoPage() {
             <div className="section-desc">Timeline beserta aktor — tersimpan lintas reload</div>
           </div>
         </div>
-        <div className="progress">
+        <div className="progress" style={{ opacity: cancelled ? 0.45 : 1 }}>
           {FLOW.map((step, i) => (
             <div key={step} className={`pnode ${i < current ? "done" : ""} ${i === current ? "current" : ""}`}>
               <span className="pdot">{i + 1}</span>
@@ -88,6 +97,17 @@ export default function AdminDetailPoPage() {
             </div>
           ))}
         </div>
+        {cancelled ? (
+          <div className="notice" role="status">
+            <TriangleAlert size={16} />
+            <span>
+              PO dibatalkan — alur proses dihentikan.
+              {order.timeline.find((t) => t.to === "Dibatalkan")?.note
+                ? ` Alasan: ${order.timeline.find((t) => t.to === "Dibatalkan")?.note}`
+                : ""}
+            </span>
+          </div>
+        ) : null}
         <div className="todo-list">
           {order.timeline.map((t, i) => (
             <div key={i} className="todo-row">
@@ -193,25 +213,51 @@ export default function AdminDetailPoPage() {
             <h2>Aksi Status</h2>
           </div>
           {next ? (
-            <form onSubmit={submit} className="drawer-form" noValidate>
-              <div className="tt-sub" style={{ fontWeight: 600, marginTop: 0 }}>
-                Status saat ini: <b style={{ color: "var(--ink)" }}>{order.status}</b> → {next}
+            <>
+              <form onSubmit={submit} className="drawer-form" noValidate>
+                <div className="tt-sub" style={{ fontWeight: 600, marginTop: 0 }}>
+                  Status saat ini: <b style={{ color: "var(--ink)" }}>{order.status}</b> → {next}
+                </div>
+                <label className="afield">
+                  <span>Catatan proses (opsional)</span>
+                  <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="cth. lensa selesai dipotong" />
+                </label>
+                <button type="submit" className="btn btn-primary full">
+                  {NEXT_LABEL[order.status]}
+                  <ArrowRight size={16} />
+                </button>
+              </form>
+
+              <div className="section-head" style={{ marginTop: 8 }}>
+                <h2>Batalkan PO</h2>
               </div>
-              <label className="afield">
-                <span>Catatan proses (opsional)</span>
-                <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="cth. lensa selesai dipotong" />
-              </label>
-              <button type="submit" className="btn btn-primary full">
-                {NEXT_LABEL[order.status]}
-                <ArrowRight size={16} />
-              </button>
-            </form>
+              <form onSubmit={doCancel} className="drawer-form" noValidate>
+                <div className="tt-sub" style={{ fontWeight: 600, marginTop: 0 }}>
+                  Hanya bisa sebelum barang datang. Alasan tercatat di timeline &amp; audit.
+                </div>
+                <label className="afield">
+                  <span>Alasan pembatalan (wajib)</span>
+                  <input
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="cth. pelanggan membatalkan pesanan"
+                  />
+                </label>
+                <button type="submit" className="btn btn-danger full" disabled={cancelReason.trim().length < 3}>
+                  Batalkan PO
+                </button>
+              </form>
+            </>
           ) : (
             <div className="notice">
               <Lock size={16} />
               {order.status === "Selesai"
                 ? "PO sudah Selesai. Transisi Selesai oleh Admin belum diputuskan (PRD terbuka) — tombol tidak disediakan."
-                : "Tidak ada aksi lanjutan untuk status ini."}
+                : order.status === "Sudah Datang"
+                  ? "Barang sudah datang. PO tidak dapat dibatalkan — gunakan penyesuaian stok bila perlu."
+                  : order.status === "Dibatalkan"
+                    ? "PO sudah dibatalkan. Tidak ada aksi lanjutan."
+                    : "Tidak ada aksi lanjutan untuk status ini."}
             </div>
           )}
           <div className="section-head" style={{ marginTop: 8 }}>

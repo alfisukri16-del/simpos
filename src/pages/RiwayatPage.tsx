@@ -5,6 +5,7 @@ import { useSharedStore } from "../store/sharedStore";
 import { RESEP_MAP } from "../data/customers";
 import { Avatar, Chip, PageHeader, SearchBox, StatusPill, formatIDR } from "../components/ui";
 import "../styles/pages.css";
+import "../styles/admin.css";
 
 const FILTERS: Array<"Semua" | TrxStatus> = ["Semua", "Selesai", "Pending", "Dibatalkan"];
 
@@ -14,6 +15,9 @@ export default function RiwayatPage() {
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>("T1");
   const [strukOpen, setStrukOpen] = useState(false);
+  const [cancelNo, setCancelNo] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelResult, setCancelResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // Riwayat dari shared store — penjualan baru Kasir ikut tercatat.
   const rows = shared.transactions.filter((t) => (filter === "Semua" ? true : t.status === filter)).filter((t) =>
@@ -23,6 +27,19 @@ export default function RiwayatPage() {
   const active = rows.find((t) => t.id === openId) ?? rows[0];
   const activeDiscount = active?.discount ?? 0;
   const activeSubtotal = (active?.total ?? 0) + activeDiscount;
+  const today = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+
+  const doCancel = () => {
+    if (!cancelNo) return;
+    const r = shared.cancelSale(cancelNo, cancelReason, "Kasir");
+    if (r.ok) {
+      setCancelNo(null);
+      setCancelReason("");
+      setCancelResult(null);
+    } else {
+      setCancelResult(r);
+    }
+  };
 
   const resep = RESEP_MAP["C-02"];
 
@@ -104,13 +121,27 @@ export default function RiwayatPage() {
                       <StatusPill label={t.status} />
                     </td>
                     <td className="tt-right">
-                      <button className="link-action" onClick={() => setOpenId(open ? null : t.id)}>
-                        {label}
-                        <ChevronDown
-                          size={15}
-                          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .18s" }}
-                        />
-                      </button>
+                      <div className="row-actions">
+                        <button className="link-action" onClick={() => setOpenId(open ? null : t.id)}>
+                          {label}
+                          <ChevronDown
+                            size={15}
+                            style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .18s" }}
+                          />
+                        </button>
+                        {t.date === today && (t.status === "Selesai" || t.status === "Pending") ? (
+                          <button
+                            className="link-action link-danger"
+                            onClick={() => {
+                              setCancelNo(t.no);
+                              setCancelReason("");
+                              setCancelResult(null);
+                            }}
+                          >
+                            Batalkan
+                          </button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                   {open ? (
@@ -328,6 +359,39 @@ export default function RiwayatPage() {
               <button className="btn btn-primary" onClick={() => window.print()}>
                 <Printer size={16} />
                 Cetak Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {cancelNo ? (
+        <div className="overlay" onClick={() => setCancelNo(null)}>
+          <div className="confirm" onClick={(e) => e.stopPropagation()} role="alertdialog" aria-modal="true">
+            <h2>Batalkan transaksi?</h2>
+            <p>
+              {cancelNo} akan berstatus <b>Dibatalkan</b> dan stok produk dikembalikan otomatis. Aksi ini
+              tercatat di audit.
+            </p>
+            <label className="afield">
+              <span>Alasan pembatalan (wajib)</span>
+              <input
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="cth. pelanggan membatalkan pesanan"
+              />
+            </label>
+            {cancelResult ? (
+              <div className="notice" role="status">
+                {cancelResult.msg}
+              </div>
+            ) : null}
+            <div className="drawer-foot">
+              <button className="btn btn-ghost" onClick={() => setCancelNo(null)}>
+                Batal
+              </button>
+              <button className="btn btn-danger" onClick={doCancel} disabled={cancelReason.trim().length < 3}>
+                Batalkan Transaksi
               </button>
             </div>
           </div>
