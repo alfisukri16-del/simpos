@@ -257,10 +257,6 @@ export default function CheckoutPage() {
               <b>Rp 0</b>
             </span>
           </div>
-          <div className="sum-row">
-            <span>Pajak (PPN {Math.round(cart.rate * 100)}%)</span>
-            <b>{formatIDR(cart.tax)}</b>
-          </div>
 
           <div className="sum-total">
             <span>Total</span>

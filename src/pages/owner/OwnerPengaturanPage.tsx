@@ -87,7 +87,6 @@ export default function OwnerPengaturanPage() {
   const submitToko = (e: FormEvent, prefOnly: boolean) => {
     e.preventDefault();
     const err = store.saveSettings({
-      taxRate: Number(toko.taxRate),
       defaultMinimum: Number(toko.defaultMinimum),
       storeName: toko.storeName,
       storePhone: toko.storePhone,
@@ -310,14 +309,6 @@ export default function OwnerPengaturanPage() {
                 {tokoMsg}
               </div>
             ) : null}
-            <label className="afield">
-              <span>Tarif pajak checkout — PPN (%). Saat ini dipakai di Checkout &amp; Struk.</span>
-              <input
-                inputMode="decimal"
-                value={String(Number(toko.taxRate) * 100)}
-                onChange={(e) => setToko({ ...toko, taxRate: Number(e.target.value.replace(",", ".")) / 100 })}
-              />
-            </label>
             <label className="afield">
               <span>Batas minimum default produk baru (unit)</span>
               <input

@@ -7,7 +7,6 @@ import { Avatar, Chip, PageHeader, SearchBox, StatusPill, formatIDR } from "../c
 import "../styles/pages.css";
 
 const FILTERS: Array<"Semua" | TrxStatus> = ["Semua", "Selesai", "Pending", "Dibatalkan"];
-const PPN = 0.11;
 
 export default function RiwayatPage() {
   const shared = useSharedStore();
@@ -22,7 +21,6 @@ export default function RiwayatPage() {
   );
 
   const active = rows.find((t) => t.id === openId) ?? rows[0];
-  const activeTax = active ? Math.round(active.total * PPN) : 0;
 
   const resep = RESEP_MAP["C-02"];
 
@@ -77,7 +75,6 @@ export default function RiwayatPage() {
             {rows.map((t) => {
               const open = openId === t.id;
               const subtotal = t.total;
-              const tax = Math.round(subtotal * PPN);
               const label = t.detail === "resep" ? "Lihat Resep" : t.detail === "produk" ? "Lihat Semua" : "Lihat Detail";
               return (
                 <Fragment key={t.id}>
@@ -185,13 +182,9 @@ export default function RiwayatPage() {
                                 <span>Diskon</span>
                                 <b>Rp 0</b>
                               </div>
-                              <div className="sub-row">
-                                <span>Pajak (PPN 11%)</span>
-                                <b>{formatIDR(tax)}</b>
-                              </div>
                               <div className="sub-row total">
                                 <span>Total</span>
-                                <b>{formatIDR(subtotal + tax)}</b>
+                                <b>{formatIDR(subtotal)}</b>
                               </div>
                             </div>
                           </div>
@@ -313,13 +306,9 @@ export default function RiwayatPage() {
                   <span>Diskon</span>
                   <b>Rp 0</b>
                 </div>
-                <div>
-                  <span>PPN 11%</span>
-                  <b>{formatIDR(activeTax)}</b>
-                </div>
                 <div className="struk-grand">
                   <span>Total</span>
-                  <b>{formatIDR(active.total + activeTax)}</b>
+                  <b>{formatIDR(active.total)}</b>
                 </div>
               </div>
               <div className="struk-foot">

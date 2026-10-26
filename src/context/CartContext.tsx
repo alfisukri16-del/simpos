@@ -1,7 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Customer } from "../data/customers";
 import type { PaymentMethod } from "../data/mock";
-import { useSharedStore } from "../store/sharedStore";
 
 export type CartItem = {
   id: string;
@@ -20,7 +19,6 @@ export type Receipt = {
   items: CartItem[];
   subtotal: number;
   discount: number;
-  tax: number;
   total: number;
   customer: Customer | null;
   method: PaymentMethod;
@@ -31,7 +29,6 @@ type CartValue = {
   count: number;
   subtotal: number;
   discount: number;
-  tax: number;
   total: number;
   add: (p: { id: string; name: string; brand: string; category: string; price: number }) => void;
   remove: (id: string) => void;
@@ -43,16 +40,11 @@ type CartValue = {
   setMethod: (m: PaymentMethod) => void;
   receipt: Receipt | null;
   complete: () => Receipt;
-  rate: number;
 };
 
 const CartContext = createContext<CartValue | null>(null);
 
-export const PPN_RATE = 0.11;
-
 export function CartProvider({ children }: { children: ReactNode }) {
-  const shared = useSharedStore();
-  const rate = shared.settings?.taxRate ?? PPN_RATE;
   const [items, setItems] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("Tunai");
@@ -79,8 +71,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const subtotal = useMemo(() => items.reduce((s, i) => s + i.price * i.qty, 0), [items]);
   const count = useMemo(() => items.reduce((s, i) => s + i.qty, 0), [items]);
   const discount = 0;
-  const tax = Math.round(subtotal * rate);
-  const total = subtotal - discount + tax;
+  const total = subtotal - discount;
 
   /** Finalisasi transaksi: simpan struk lalu kosongkan keranjang. */
   const complete = (): Receipt => {
@@ -95,7 +86,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       items,
       subtotal,
       discount,
-      tax,
       total,
       customer,
       method,
@@ -106,9 +96,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const value: CartValue = {
-    items, count, subtotal, discount, tax, total,
+    items, count, subtotal, discount, total,
     add, remove, setQty, clear, complete,
-    customer, setCustomer, method, setMethod, receipt, rate,
+    customer, setCustomer, method, setMethod, receipt,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

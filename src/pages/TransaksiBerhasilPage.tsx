@@ -14,8 +14,7 @@ export default function TransaksiBerhasilPage() {
     { id: "d2", name: "Lensa Blue Control", brand: "Hoya", category: "Lensa", price: 1_250_000, qty: 1 },
   ];
   const subtotal = r?.subtotal ?? 3_100_000;
-  const tax = r?.tax ?? Math.round(subtotal * cart.rate);
-  const total = r?.total ?? subtotal + tax;
+  const total = r?.total ?? subtotal;
 
   return (
     <div className="success page">
@@ -105,10 +104,6 @@ export default function TransaksiBerhasilPage() {
             <div className="info-row">
               <span>Diskon</span>
               <b>Rp 0</b>
-            </div>
-            <div className="info-row">
-              <span>Pajak (PPN {Math.round(cart.rate * 100)}%)</span>
-              <b>{formatIDR(tax)}</b>
             </div>
             <div className="info-row">
               <span>

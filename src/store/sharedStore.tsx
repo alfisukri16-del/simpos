@@ -136,7 +136,6 @@ export type AppUser = {
 };
 
 export type AppSettings = {
-  taxRate: number; // 0.11 = PPN 11%
   defaultMinimum: number; // batas minimum produk baru
   storeName: string;
   storePhone: string;
@@ -327,7 +326,6 @@ function seed(): StoreShape {
     customers: CUSTOMERS,
     reseps: RESEP_RECORDS,
     settings: {
-      taxRate: 0.11,
       defaultMinimum: 2,
       storeName: "Optik Mekar Jaya — Cabang Padang",
       storePhone: "(0751) 123456",
@@ -954,13 +952,11 @@ export function SharedProvider({ children }: { children: ReactNode }) {
       },
 
       saveSettings: (input) => {
-        if (!(input.taxRate >= 0 && input.taxRate <= 0.5)) return "Tarif pajak harus 0–50%.";
         if (!Number.isInteger(input.defaultMinimum) || input.defaultMinimum < 0) return "Minimum default harus bilangan bulat ≥ 0.";
         if (!input.storeName.trim()) return "Nama toko wajib diisi.";
         setState((prev) => ({
           ...prev,
           settings: {
-            taxRate: input.taxRate,
             defaultMinimum: input.defaultMinimum,
             storeName: input.storeName.trim(),
             storePhone: input.storePhone.trim(),
