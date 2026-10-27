@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Glasses, LogOut, Menu as MenuIcon, Search } from "lucide-react";
+import { Glasses, LogOut, Menu as MenuIcon, Search } from "lucide-react";
 import { OWNER_NAV } from "../data/owner";
 import { DEMO_OWNER, clearSession, getSession } from "../store/session";
+import NotificationBell from "./NotificationBell";
 import "../styles/layout.css";
 import "../styles/admin.css";
 
@@ -88,10 +89,7 @@ export default function OwnerLayout() {
             ) : null}
 
             <div className="topbar-right">
-              <button className="icon-pill" aria-label="Notifikasi">
-                <Bell size={19} />
-                <span className="dot" />
-              </button>
+              <NotificationBell role="pemilik" />
               <div className="profile">
                 <span className="avatar">{session?.initials ?? DEMO_OWNER.initials}</span>
                 <span className="profile-text">

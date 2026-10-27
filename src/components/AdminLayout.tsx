@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, Glasses, LogOut, Menu as MenuIcon, Search } from "lucide-react";
+import { Glasses, LogOut, Menu as MenuIcon, Search } from "lucide-react";
 import { ADMIN_NAV, DEMO_ADMIN } from "../data/admin";
 import { clearSession, getSession } from "../store/session";
+import NotificationBell from "./NotificationBell";
 import "../styles/layout.css";
 import "../styles/admin.css";
 
@@ -93,10 +94,7 @@ export default function AdminLayout() {
             ) : null}
 
             <div className="topbar-right">
-              <button className="icon-pill" aria-label="Notifikasi">
-                <Bell size={19} />
-                <span className="dot" />
-              </button>
+              <NotificationBell role="admin" />
               <div className="profile">
                 <span className="avatar">{session?.initials ?? DEMO_ADMIN.initials}</span>
                 <span className="profile-text">
