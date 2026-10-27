@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-/* Line chart dua seri: periode ini (garis penuh + titik) vs periode sebelumnya (garis putus-putus). */
+/* Bar chart dua seri: periode ini (batang penuh) vs periode sebelumnya (batang muda). */
 
 export type TrendPoint = {
   key: string;
@@ -36,25 +36,7 @@ function tickLabel(v: number) {
   return String(v);
 }
 
-/** Kurva halus (cardinal spline) supaya garis tidak terlihat kaku. */
-function smoothPath(pts: Array<{ x: number; y: number }>) {
-  if (pts.length === 0) return "";
-  if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
-  const t = 0.2;
-  let d = `M ${pts[0].x} ${pts[0].y}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] ?? pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] ?? p2;
-    d += ` C ${p1.x + (p2.x - p0.x) * t} ${p1.y + (p2.y - p0.y) * t}, ${
-      p2.x - (p3.x - p1.x) * t
-    } ${p2.y - (p3.y - p1.y) * t}, ${p2.x} ${p2.y}`;
-  }
-  return d;
-}
-
-export default function SalesLineChart({ points, previous }: Props) {
+export default function SalesBarChart({ points, previous }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(800);
 
@@ -71,8 +53,8 @@ export default function SalesLineChart({ points, previous }: Props) {
 
   const W = Math.max(280, Math.round(width));
   const compact = W < 560;
-  const H = compact ? 240 : 290;
-  const M = { left: compact ? 48 : 58, right: compact ? 12 : 18, top: 14, bottom: 30 };
+  const H = compact ? 250 : 300;
+  const M = { left: compact ? 46 : 56, right: 10, top: 16, bottom: 32 };
 
   const plotW = W - M.left - M.right;
   const plotH = H - M.top - M.bottom;
@@ -85,18 +67,11 @@ export default function SalesLineChart({ points, previous }: Props) {
   for (let v = 0; v <= max + 1e-9; v += step) ticks.push(Number(v.toFixed(6)));
 
   const n = points.length;
-  const xOf = (i: number) => (n === 1 ? M.left + plotW / 2 : M.left + (plotW * i) / (n - 1));
+  const slot = plotW / Math.max(n, 1);
+  const gap = compact ? 3 : 4;
+  const barW = Math.max(6, Math.min(compact ? 13 : 20, (slot * 0.62 - gap) / 2));
   const yOf = (v: number) => M.top + plotH * (1 - v / max);
-
-  const curPts = points.map((p, i) => ({ x: xOf(i), y: yOf(p.value) }));
-  const prevPts = points
-    .map((_, i) => {
-      const v = previous[i];
-      return v == null ? null : { x: xOf(i), y: yOf(v) };
-    })
-    .filter((p): p is { x: number; y: number } => p !== null);
-
-  const labelStep = Math.max(1, Math.ceil(n / (compact ? 3 : 4)));
+  const labelStep = Math.max(1, Math.ceil(n / (compact ? 4 : 8)));
 
   return (
     <div className="sales-svg-wrap" ref={box}>
@@ -106,6 +81,13 @@ export default function SalesLineChart({ points, previous }: Props) {
         role="img"
         aria-label="Grafik tren penjualan: periode ini dibanding periode sebelumnya"
       >
+        <defs>
+          <linearGradient id="salesBarFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#8b87ff" />
+            <stop offset="100%" stopColor="#5b55fb" />
+          </linearGradient>
+        </defs>
+
         {/* gridline + angka sumbu Y */}
         {ticks.map((t) => {
           const y = yOf(t);
@@ -119,34 +101,44 @@ export default function SalesLineChart({ points, previous }: Props) {
           );
         })}
 
-        {/* periode sebelumnya */}
-        {prevPts.length > 1 && (
-          <path
-            d={smoothPath(prevPts)}
-            fill="none"
-            stroke="#b7b5e4"
-            strokeWidth={2}
-            strokeDasharray="6 6"
-            strokeLinecap="round"
-          />
-        )}
-
-        {/* periode ini */}
-        <path d={smoothPath(curPts)} fill="none" stroke="var(--accent)" strokeWidth={2.6} strokeLinecap="round" />
-
-        {/* titik + label sumbu X */}
-        {curPts.map((p, i) => (
-          <g key={points[i].key} className="sales-dot-group">
-            <title>{`${points[i].full} · ${points[i].count} transaksi · ${tickLabel(points[i].value)}`}</title>
-            <circle cx={p.x} cy={p.y} r={9} fill="transparent" />
-            <circle cx={p.x} cy={p.y} r={3.4} fill="var(--accent)" stroke="#fff" strokeWidth={1.5} className="sales-dot" />
-            {i % labelStep === 0 && (
-              <text x={p.x} y={baseY + 20} textAnchor="middle" className="sales-xlabel">
-                {points[i].label}
-              </text>
-            )}
-          </g>
-        ))}
+        <g className="sales-bars">
+          {points.map((p, i) => {
+            const cx = M.left + slot * (i + 0.5);
+            const prev = previous[i];
+            const curH = p.value > 0 ? Math.max(baseY - yOf(p.value), 3) : 0;
+            const prevH = prev == null ? 0 : prev > 0 ? Math.max(baseY - yOf(prev), 3) : 0;
+            return (
+              <g key={p.key} className="sales-bar-group">
+                <title>{`${p.full} · ${p.count} transaksi · ${tickLabel(p.value)}`}</title>
+                {prev != null && (
+                  <rect
+                    className="sales-bar is-prev"
+                    x={cx - barW - gap / 2}
+                    y={baseY - prevH}
+                    width={barW}
+                    height={prevH}
+                    rx={4}
+                    fill="#d8d7f2"
+                  />
+                )}
+                <rect
+                  className="sales-bar"
+                  x={cx + gap / 2}
+                  y={baseY - curH}
+                  width={barW}
+                  height={curH}
+                  rx={4}
+                  fill="url(#salesBarFill)"
+                />
+                {i % labelStep === 0 && (
+                  <text x={cx} y={baseY + 21} textAnchor="middle" className="sales-xlabel">
+                    {p.label}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </g>
       </svg>
     </div>
   );

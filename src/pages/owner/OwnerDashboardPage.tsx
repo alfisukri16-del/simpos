@@ -4,7 +4,7 @@ import { ArrowRight, Banknote, Boxes, ClipboardList, FilePlus2 } from "lucide-re
 import { BRANCHES } from "../../store/sharedStore";
 import { useSharedStore } from "../../store/sharedStore";
 import { Chip, PageHeader, StatCard, StatusPill, formatIDR } from "../../components/ui";
-import SalesLineChart from "../../components/SalesLineChart";
+import SalesBarChart from "../../components/SalesBarChart";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -184,11 +184,11 @@ export default function OwnerDashboardPage() {
           </div>
           <div className="chart-legend">
             <span className="lg-item">
-              <i className="lg-line" />
+              <i className="lg-bar" />
               Periode ini
             </span>
             <span className="lg-item">
-              <i className="lg-line is-dashed" />
+              <i className="lg-bar is-prev" />
               Periode sebelumnya
             </span>
           </div>
@@ -197,7 +197,7 @@ export default function OwnerDashboardPage() {
         {chart.points.length === 0 ? (
           <div className="empty-note">Belum ada transaksi selesai pada cakupan ini.</div>
         ) : (
-          <SalesLineChart points={chart.points} previous={chart.previous} />
+          <SalesBarChart points={chart.points} previous={chart.previous} />
         )}
       </section>
 

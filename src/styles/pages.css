@@ -1715,16 +1715,16 @@ table.tt td:last-child .row-actions {
   white-space: nowrap;
 }
 
-.lg-line {
+.lg-bar {
   display: block;
-  width: 22px;
-  height: 0;
-  border-top: 2.5px solid var(--accent);
-  border-radius: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #8b87ff, #5b55fb);
 }
 
-.lg-line.is-dashed {
-  border-top: 2px dashed #b7b5e4;
+.lg-bar.is-prev {
+  background: #d8d7f2;
 }
 
 .sales-svg-wrap {
@@ -1751,12 +1751,12 @@ table.tt td:last-child .row-actions {
   fill: var(--muted);
 }
 
-.sales-dot {
-  transition: r 0.15s ease;
+.sales-bar-group .sales-bar {
+  transition: opacity 0.15s ease;
 }
 
-.sales-dot-group:hover .sales-dot {
-  r: 5;
+.sales-bar-group:hover .sales-bar {
+  opacity: 0.82;
 }
 
 @media (max-width: 900px) {
