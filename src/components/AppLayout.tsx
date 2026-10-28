@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Glasses, LogOut, Search, Menu as MenuIcon } from "lucide-react";
+import { LogOut, Search, Menu as MenuIcon } from "lucide-react";
 import { DEMO_SESSION, PRIMARY_NAV, SECONDARY_NAV } from "../data/nav";
+import MRLogo from "../components/MRLogo";
 import { clearSession, getSession } from "../store/session";
 import NotificationBell from "./NotificationBell";
 import "../styles/layout.css";
@@ -9,10 +10,19 @@ import "../styles/admin.css";
 
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
   // Search topbar hanya di Dashboard & Transaksi Baru; halaman Kasir lain disembunyikan.
   const showSearch = location.pathname === "/dashboard" || location.pathname === "/transaksi-baru";
+
+  const submitSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const q = search.trim();
+    if (!q) return;
+    navigate(`/transaksi-baru?q=${encodeURIComponent(q)}`);
+    setOpen(false);
+  };
 
   const logout = () => {
     clearSession();
@@ -26,9 +36,7 @@ export default function AppLayout() {
       <div className="app-grid">
         <aside className={`sidebar ${open ? "open" : ""}`}>
           <div className="sidebar-brand">
-            <span className="brand-badge">
-              <Glasses size={24} strokeWidth={2.1} />
-            </span>
+            <MRLogo size={44} />
             <span className="brand-text">
               <b>Optik Mekar Jaya</b>
               <span>Sistem Informasi Optik</span>
@@ -80,11 +88,17 @@ export default function AppLayout() {
             </button>
 
             {showSearch ? (
-              <label className="search-field">
+              <form className="search-field" onSubmit={submitSearch} role="search">
                 <Search size={18} />
-                <input type="search" placeholder="Cari produk, pelanggan, atau transaksi..." aria-label="Pencarian" />
-                <span className="kbd">Ctrl + K</span>
-              </label>
+                <input
+                  type="search"
+                  placeholder="Cari produk, pelanggan, atau transaksi..."
+                  aria-label="Pencarian"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <span className="kbd">Enter</span>
+              </form>
             ) : null}
 
             <div className="topbar-right">

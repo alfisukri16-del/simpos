@@ -1,13 +1,15 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BellRing, CheckCircle2, FilePlus2, TriangleAlert, X } from "lucide-react";
 import { DEMO_ADMIN } from "../../data/admin";
 import { useSharedStore } from "../../store/sharedStore";
-import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
+import { PageHeader, SearchBox, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
 export default function AdminPengajuanPage() {
   const store = useSharedStore();
+  const [params, setParams] = useSearchParams();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [productId, setProductId] = useState("");
@@ -16,6 +18,27 @@ export default function AdminPengajuanPage() {
   const [error, setError] = useState("");
   const [preview, setPreview] = useState(false);
   const [done, setDone] = useState(false);
+
+  // Deep link: ?product=FR-003 (dari Stok Cabang) atau ?new=1 (dari Dashboard) → form langsung terbuka.
+  useEffect(() => {
+    const pid = params.get("product");
+    const isNew = params.get("new") === "1";
+    if (!pid && !isNew) return;
+    const valid = !!pid && store.products.some((p) => p.id === pid && p.status === "Aktif" && p.type !== "Aksesoris");
+    const fallback = store.products.find((p) => p.status === "Aktif" && p.type !== "Aksesoris")?.id ?? "";
+    const chosenId = valid ? pid! : isNew ? fallback : "";
+    if (chosenId) {
+      setProductId(chosenId);
+      setQty("");
+      setNote("");
+      setError("");
+      setPreview(false);
+      setDone(false);
+      setOpen(true);
+    }
+    setParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const options = useMemo(
     () =>
@@ -83,9 +106,7 @@ export default function AdminPengajuanPage() {
 
       <div className="toolbar">
         <SearchBox placeholder="Cari ID pengajuan atau nama produk..." value={q} onChange={setQ} />
-        <div className="toolbar-chips">
-          <Chip active>Diajukan</Chip>
-        </div>
+        <span className="foot-note">{rows.length} pengajuan menunggu keputusan Pemilik</span>
       </div>
 
       <div className="table-wrap">

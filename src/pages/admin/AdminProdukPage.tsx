@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Pencil, Plus, Power, X } from "lucide-react";
 import { FRAME_CATS, LENSA_CATS, useAdminStore, type ProductType } from "../../store/sharedStore";
 import { Chip, PageHeader, SearchBox, StatusPill, formatIDR } from "../../components/ui";
@@ -11,6 +12,7 @@ const empty = { name: "", brand: "", category: "", price: "" };
 
 export default function AdminProdukPage({ type }: Props) {
   const store = useAdminStore();
+  const [params, setParams] = useSearchParams();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"Semua" | "Aktif" | "Nonaktif">("Semua");
   const [open, setOpen] = useState(false);
@@ -44,6 +46,17 @@ export default function AdminProdukPage({ type }: Props) {
     setFormError("");
     setOpen(true);
   };
+
+  // Deep link dari Dashboard: ?new=1 → form tambah produk langsung terbuka.
+  useEffect(() => {
+    if (params.get("new") !== "1") return;
+    setEditing(null);
+    setForm({ ...empty, category: cats[0] });
+    setFormError("");
+    setOpen(true);
+    setParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -151,7 +164,7 @@ export default function AdminProdukPage({ type }: Props) {
         </table>
         <div className="table-foot">
           <span className="foot-note">
-            Menampilkan {rows.length} produk {type.toLowerCase()} · data demo
+            Menampilkan {rows.length} produk {type.toLowerCase()}
           </span>
         </div>
       </div>

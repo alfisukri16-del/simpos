@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Check, Pencil, Plus, Power, Settings as SettingsIcon, X } from "lucide-react";
-import { BRANCHES, useSharedStore, type AppUser } from "../../store/sharedStore";
+import { useSharedStore, type AppUser } from "../../store/sharedStore";
 import { Avatar, Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
@@ -161,7 +161,7 @@ export default function OwnerPengaturanPage() {
                   <td>
                     <span className="tag-mini">{ROLE_LABEL[u.role]}</span>
                   </td>
-                  <td>{u.role === "pemilik" ? "Seluruh Cabang" : BRANCHES.find((b) => b.id === u.branchId)?.name ?? u.branchId}</td>
+                  <td>{u.role === "pemilik" ? "Seluruh Cabang" : store.branches.find((b) => b.id === u.branchId)?.name ?? u.branchId}</td>
                   <td className="tt-center">
                     <StatusPill label={u.status} />
                   </td>
@@ -211,7 +211,7 @@ export default function OwnerPengaturanPage() {
           </table>
           <div className="table-foot">
             <span className="foot-note">
-              {rows.length} pengguna · akun baru langsung bisa dipakai login di halaman role-nya · data demo
+              {rows.length} pengguna · akun baru langsung dapat digunakan sesuai perannya.
             </span>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function OwnerPengaturanPage() {
             </tbody>
           </table>
           <div className="table-foot">
-            <span className="foot-note">Matriks ini ditegakkan oleh guard rute + validasi store · data demo</span>
+            <span className="foot-note">Hak akses mengikuti peran pengguna.</span>
           </div>
         </div>
       ) : null}
@@ -332,7 +332,7 @@ export default function OwnerPengaturanPage() {
             <div className="drawer-head">
               <div>
                 <h2>{editing ? "Ubah Pengguna" : "Tambah Pengguna"}</h2>
-                <div className="section-desc">Akun demo — bukan autentikasi produksi</div>
+                <div className="section-desc">Akun pengguna dan akses sesuai peran.</div>
               </div>
               <button className="icon-pill" aria-label="Tutup" onClick={() => setOpen(false)}>
                 <X size={18} />
@@ -350,7 +350,7 @@ export default function OwnerPengaturanPage() {
               </label>
               <label className="afield">
                 <span>Email (dipakai login)</span>
-                <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="nama@mekarjaya.demo" />
+                <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="nama@email.com" />
               </label>
               <label className="afield">
                 <span>Password {editing ? "(kosongkan bila tidak diubah)" : "(min. 6 karakter)"}</span>
@@ -405,7 +405,7 @@ export default function OwnerPengaturanPage() {
 
       <span className="foot-note" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
         <SettingsIcon size={14} />
-        Perubahan tersimpan otomatis dan bertahan setelah refresh · data demo
+        Perubahan tersimpan otomatis.
       </span>
     </div>
   );

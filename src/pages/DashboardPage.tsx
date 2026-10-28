@@ -6,8 +6,14 @@ import {
   Glasses,
   ArrowRight,
   History,
+  ReceiptText,
+  PackageCheck,
+  Wallet,
 } from "lucide-react";
 import { DEMO_SESSION } from "../data/nav";
+import { useSharedStore } from "../store/sharedStore";
+import { getSession } from "../store/session";
+import { formatIDR } from "../components/ui";
 import "../styles/dashboard.css";
 
 const MENU = [
@@ -39,12 +45,25 @@ const MENU = [
 ];
 
 export default function DashboardPage() {
+  const shared = useSharedStore();
+  const session = getSession();
+  const name = session?.name ?? DEMO_SESSION.cashierName;
+  const today = new Date().toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  const todayTrx = shared.transactions.filter((t) => t.date === today && t.status === "Selesai");
+  const todayTotal = todayTrx.reduce((sum, t) => sum + t.total, 0);
+  const readyPo = shared.pos.filter((o) => o.status === "Sudah Datang" && !o.linkedTrx);
+
   return (
     <div className="dash">
       <section className="hero">
         <div className="hero-copy">
           <span className="overline">SELAMAT DATANG</span>
-          <h1>{DEMO_SESSION.cashierName}</h1>
+          <h1>{name}</h1>
           <p>Siap melayani pelanggan hari ini?</p>
           <Link className="btn btn-primary" to="/transaksi-baru">
             <ShoppingCart size={18} />
@@ -54,6 +73,42 @@ export default function DashboardPage() {
         <div className="hero-media" aria-hidden="true">
           <img src="/assets/hero-approved-right.jpg" alt="" />
         </div>
+      </section>
+
+      <section className="dash-metrics" aria-label="Ringkasan hari ini">
+        <div className="dash-metric">
+          <span className="dm-icon tone-violet">
+            <ReceiptText size={20} />
+          </span>
+          <div>
+            <span className="dm-label">Transaksi hari ini</span>
+            <b>{todayTrx.length}</b>
+            <span className="dm-caption">Transaksi lunas · {today}</span>
+          </div>
+        </div>
+        <div className="dash-metric">
+          <span className="dm-icon tone-green">
+            <Wallet size={20} />
+          </span>
+          <div>
+            <span className="dm-label">Penerimaan hari ini</span>
+            <b>{formatIDR(todayTotal)}</b>
+            <span className="dm-caption">Total pembayaran lunas</span>
+          </div>
+        </div>
+        <Link className="dash-metric" to="/pemesanan">
+          <span className="dm-icon tone-amber">
+            <PackageCheck size={20} />
+          </span>
+          <div>
+            <span className="dm-label">PO siap diambil</span>
+            <b>{readyPo.length}</b>
+            <span className="dm-caption">
+              {readyPo.length > 0 ? "Barang sudah datang di cabang" : "Tidak ada PO menunggu pengambilan"}
+            </span>
+          </div>
+          <ArrowRight size={17} className="dm-arrow" />
+        </Link>
       </section>
 
       <section>

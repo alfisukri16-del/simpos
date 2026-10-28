@@ -1,38 +1,105 @@
 import { useMemo, useState } from "react";
-import { BRANCHES, useSharedStore, type ProductType } from "../../store/sharedStore";
-import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
+import { useSearchParams } from "react-router-dom";
+import { AlertTriangle, Boxes, PackageX } from "lucide-react";
+import { useSharedStore, type ProductType } from "../../store/sharedStore";
+import { Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
+type StockState = "Aman" | "Menipis" | "Habis";
+type StockFilter = "Semua" | StockState;
+
+function stockState(saldo: number, minimum: number): StockState {
+  if (saldo <= 0) return "Habis";
+  if (saldo <= minimum) return "Menipis";
+  return "Aman";
+}
+
 export default function OwnerStokPage() {
   const store = useSharedStore();
+  const [params, setParams] = useSearchParams();
   const [q, setQ] = useState("");
-  const [loc, setLoc] = useState<"all" | "pusat" | "cabang-padang">("all");
   const [jenis, setJenis] = useState<"Semua" | ProductType>("Semua");
-  const [filter, setFilter] = useState<"Semua" | "Menipis">("Semua");
+  const [filter, setFilter] = useState<StockFilter>("Semua");
 
-  const rows = useMemo(
+  const locParam = params.get("loc") ?? "all";
+  const loc = store.branches.some((b) => b.id === locParam) ? locParam : "all";
+
+  const setLoc = (value: string) => {
+    const next = new URLSearchParams(params);
+    if (value === "all") next.delete("loc");
+    else next.set("loc", value);
+    setParams(next, { replace: true });
+  };
+
+  const baseRows = useMemo(
     () =>
-      [
-        ...store.stock.map((s) => ({ ...s, loc: "cabang-padang" as const })),
-        ...store.centralStock.map((s) => ({ ...s, loc: "pusat" as const })),
-      ]
+      store.branches
+        .flatMap((b) => store.stockForBranch(b.id).map((s) => ({ ...s, loc: b.id })))
         .map(({ loc: l, ...s }) => ({ l, s, p: store.productOf(s.productId)! }))
         .filter(({ p }) => p && p.status === "Aktif")
         .filter(({ p }) => (jenis === "Semua" ? true : p.type === jenis))
-        .filter(({ s }) => (filter === "Semua" ? true : s.saldo <= s.minimum))
-        .filter(({ l }) => (loc === "all" ? true : l === loc))
-        .filter(({ p }) => `${p.code} ${p.name} ${p.brand}`.toLowerCase().includes(q.toLowerCase())),
-    [store, q, loc, jenis, filter],
+        .filter(({ l }) => (loc === "all" ? true : l === loc)),
+    [store, loc, jenis],
   );
+
+  const rows = useMemo(
+    () =>
+      baseRows
+        .filter(({ s }) =>
+          filter === "Semua"
+            ? true
+            : filter === "Habis"
+              ? s.saldo <= 0
+              : filter === "Menipis"
+                ? s.saldo > 0 && s.saldo <= s.minimum
+                : s.saldo > s.minimum,
+        )
+        .filter(({ p }) => `${p.code} ${p.name} ${p.brand}`.toLowerCase().includes(q.toLowerCase())),
+    [baseRows, filter, q],
+  );
+
+  const totalUnits = baseRows.reduce((a, { s }) => a + s.saldo, 0);
+  const lowCount = baseRows.filter(({ s }) => s.saldo > 0 && s.saldo <= s.minimum).length;
+  const outCount = baseRows.filter(({ s }) => s.saldo <= 0).length;
+  const locBranch = store.branches.find((b) => b.id === loc);
+  const showLocation = loc === "all";
 
   return (
     <div className="page">
       <PageHeader
         overline="MONITORING — STOK"
         title="Monitoring Stok"
-        desc="Stok frame/lensa per lokasi. Saldo dan minimum read-only — penyesuaian bukan hak yang disetujui."
+        desc={
+          locBranch
+            ? `Saldo dan status persediaan ${locBranch.name}.`
+            : "Pantau saldo, minimum, dan status persediaan di seluruh lokasi."
+        }
       />
+
+      <div className="stat-row">
+        <StatCard
+          label="Total Unit"
+          value={totalUnits.toLocaleString("id-ID")}
+          caption={`${baseRows.length} baris stok`}
+          tone="violet"
+          icon={<Boxes size={22} />}
+        />
+        <StatCard
+          label="Stok Menipis"
+          value={String(lowCount)}
+          caption="Saldo di bawah minimum"
+          tone="amber"
+          icon={<AlertTriangle size={22} />}
+        />
+        <StatCard
+          label="Stok Habis"
+          value={String(outCount)}
+          caption="Saldo 0 unit"
+          tone="neutral"
+          icon={<PackageX size={22} />}
+        />
+      </div>
 
       <div className="toolbar">
         <SearchBox placeholder="Cari kode, nama, atau merek produk..." value={q} onChange={setQ} />
@@ -40,30 +107,45 @@ export default function OwnerStokPage() {
           <Chip active={filter === "Semua"} onClick={() => setFilter("Semua")}>
             Semua
           </Chip>
+          <Chip active={filter === "Aman"} onClick={() => setFilter("Aman")}>
+            Aman
+          </Chip>
           <Chip active={filter === "Menipis"} onClick={() => setFilter("Menipis")}>
             Menipis
           </Chip>
+          <Chip active={filter === "Habis"} onClick={() => setFilter("Habis")}>
+            Habis
+          </Chip>
         </div>
-        <select className="select-pill" aria-label="Lokasi" value={loc} onChange={(e) => setLoc(e.target.value as typeof loc)}>
+        <select className="select-pill" aria-label="Lokasi" value={loc} onChange={(e) => setLoc(e.target.value)}>
           <option value="all">Semua Lokasi</option>
-          {BRANCHES.map((b) => (
+          {store.branches.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
             </option>
           ))}
         </select>
         <select className="select-pill" aria-label="Jenis" value={jenis} onChange={(e) => setJenis(e.target.value as typeof jenis)}>
-          <option value="Semua">Frame + Lensa</option>
+          <option value="Semua">Semua jenis</option>
           <option value="Frame">Frame</option>
           <option value="Lensa">Lensa</option>
+          <option value="Aksesoris">Aksesoris</option>
         </select>
       </div>
 
       <div className="table-wrap">
-        <table className="tt">
+        <table className="tt stock-table">
+          <colgroup>
+            {showLocation ? <col style={{ width: "14%" }} /> : null}
+            <col style={{ width: showLocation ? "38%" : "50%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: showLocation ? "16%" : "18%" }} />
+          </colgroup>
           <thead>
             <tr>
-              <th>LOKASI</th>
+              {showLocation ? <th>LOKASI</th> : null}
               <th>KODE / NAMA PRODUK</th>
               <th>JENIS</th>
               <th className="tt-right">STOK</th>
@@ -73,32 +155,41 @@ export default function OwnerStokPage() {
           </thead>
           <tbody>
             {rows.map(({ l, s, p }) => {
-              const low = s.saldo <= s.minimum;
+              const state = stockState(s.saldo, s.minimum);
+              const branchName = store.branches.find((b) => b.id === l)?.name ?? l;
               return (
                 <tr key={`${l}-${p.id}`}>
-                  <td>
-                    <div className="tt-num" style={{ fontSize: 13 }}>
-                      {l === "pusat" ? "Pusat" : "Cabang Padang"}
-                    </div>
-                  </td>
-                  <td>
+                  {showLocation ? (
+                    <td className="stock-loc">
+                      <div className="tt-num" style={{ fontSize: 13 }}>
+                        {branchName}
+                      </div>
+                    </td>
+                  ) : null}
+                  <td className="stock-product">
                     <div className="tt-num">{p.name}</div>
                     <div className="tt-sub">
                       {p.code} · {p.brand}
                     </div>
+                    <div className="tt-sub stock-mobile-meta">
+                      {showLocation ? `${branchName} · ` : ""}
+                      {p.type} · min {s.minimum}
+                    </div>
                   </td>
-                  <td>{p.type}</td>
-                  <td className="tt-right tt-money">{s.saldo}</td>
-                  <td className="tt-right tt-money">{s.minimum}</td>
-                  <td>
-                    <StatusPill label={low ? "Stok Menipis" : "Aman"} />
+                  <td className="stock-type">{p.type}</td>
+                  <td className="tt-right tt-money stock-saldo">{s.saldo}</td>
+                  <td className="tt-right tt-money stock-min">{s.minimum}</td>
+                  <td className="stock-status">
+                    <StatusPill
+                      label={state === "Habis" ? "Stok Habis" : state === "Menipis" ? "Stok Menipis" : "Aman"}
+                    />
                   </td>
                 </tr>
               );
             })}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={showLocation ? 6 : 5}>
                   <div className="empty-note">Tidak ada stok yang cocok dengan filter.</div>
                 </td>
               </tr>
@@ -106,7 +197,9 @@ export default function OwnerStokPage() {
           </tbody>
         </table>
         <div className="table-foot">
-          <span className="foot-note">Menampilkan {rows.length} baris · agregat tidak menggandakan kuantitas · data demo</span>
+          <span className="foot-note">
+            Menampilkan {rows.length} dari {baseRows.length} baris stok.
+          </span>
         </div>
       </div>
     </div>

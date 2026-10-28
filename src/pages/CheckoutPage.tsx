@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Banknote,
   Building2,
+  ClipboardList,
   CreditCard,
   Glasses,
   Minus,
@@ -15,6 +16,7 @@ import { RESEP_MAP, type Customer } from "../data/customers";
 import type { PaymentMethod } from "../data/mock";
 import { useCart } from "../context/CartContext";
 import { useSharedStore } from "../store/sharedStore";
+import { getSession } from "../store/session";
 import { Avatar, PageHeader, Steps, formatIDR } from "../components/ui";
 import "../styles/pages.css";
 
@@ -29,16 +31,26 @@ export default function CheckoutPage() {
   const cart = useCart();
   const shared = useSharedStore();
   const navigate = useNavigate();
+  const session = getSession();
   const [query, setQuery] = useState("");
   const [picking, setPicking] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
+
+  const po = cart.poId ? shared.pos.find((o) => o.id === cart.poId) : undefined;
 
   const activeCustomer = picking ? null : cart.customer;
   const results = shared.customers.filter((c) =>
     `${c.name} ${c.phone} ${c.code}`.toLowerCase().includes(query.toLowerCase()),
   );
 
-  const resep = cart.customer ? RESEP_MAP[cart.customer.id] : undefined;
+  // Resep aktif dari sharedStore (termasuk resep baru yang dicatat Kasir), fallback ke RESEP_MAP seed,
+  // lalu ke snapshot resep PO agar pengambilan PO tetap menampilkan resep walau pelanggan belum terdaftar.
+  const resep = cart.customer
+    ? (shared.reseps.find((r) => r.customer === cart.customer?.name && r.status === "Aktif") ??
+      RESEP_MAP[cart.customer.id] ??
+      po?.resepSnapshot ??
+      null)
+    : (po?.resepSnapshot ?? null);
 
   const pick = (c: Customer) => {
     cart.setCustomer(c);
@@ -56,24 +68,50 @@ export default function CheckoutPage() {
       setWarning("Pilih pelanggan terlebih dahulu sebelum menyelesaikan transaksi.");
       return;
     }
+    if (cart.method === "Tunai") {
+      if (cart.cashInput.trim() === "") {
+        setWarning("Masukkan jumlah uang tunai yang dibayar sebelum menyelesaikan transaksi.");
+        return;
+      }
+      if (cart.cashPaid < cart.total) {
+        setWarning(`Jumlah dibayar kurang ${formatIDR(cart.total - cart.cashPaid)} dari total pembayaran.`);
+        return;
+      }
+    }
+    if (cart.poId && (!po || po.linkedTrx || po.status !== "Sudah Datang")) {
+      setWarning(
+        po?.linkedTrx
+          ? `PO ${po.number} sudah diselesaikan oleh transaksi ${po.linkedTrx}.`
+          : "PO yang diambil sudah tidak berstatus Sudah Datang. Muat ulang halaman PO.",
+      );
+      return;
+    }
     // Verifikasi stok di sumber otoritatif (bukan angka dari browser saja).
     const kurang = cart.items
       .map((i) => ({ item: i, saldo: shared.stockOf(i.id)?.saldo }))
       .filter((x) => x.saldo !== undefined && x.item.qty > (x.saldo as number));
     if (kurang.length > 0) {
       const names = kurang.map((x) => `${x.item.name} (tersedia ${x.saldo})`).join(", ");
-      setWarning(`Stok tidak mencukupi: ${names}. Kurangi jumlah atau pilih produk lain.`);
+      setWarning(`Stok tidak mencukupi: ${names}. Kurangi jumlah atau ajukan PO untuk barang tersebut.`);
       return;
     }
     // Penjualan sukses mengurangi stok SATU KALI + mutasi OUT (idempoten via no. struk).
     const receipt = cart.complete();
-    shared.recordSale(
+    const result = shared.recordSale(
       receipt.items.map((i) => ({ id: i.id, name: i.name, brand: i.brand, qty: i.qty, price: i.price })),
       receipt.no,
-      "Kasir",
+      session?.name ?? "Kasir",
       receipt.method,
       receipt.discount,
+      receipt.paid,
+      receipt.change,
+      receipt.customer ? { name: receipt.customer.name, phone: receipt.customer.phone } : null,
+      receipt.poId,
     );
+    if (!result.ok) {
+      setWarning(result.msg);
+      return;
+    }
     navigate("/transaksi-berhasil");
   };
 
@@ -82,9 +120,24 @@ export default function CheckoutPage() {
       <PageHeader
         overline="CHECKOUT"
         title="Lengkapi data transaksi dan selesaikan pembayaran"
-        desc="Pastikan data pelanggan, resep, dan produk sudah sesuai sebelum memproses pembayaran."
+        desc="Pastikan data pelanggan, resep, dan ketersediaan stok produk sudah sesuai sebelum memproses pembayaran."
         actions={<Steps current={2} />}
       />
+
+      {po ? (
+        <div className="notice notice-ok" role="status">
+          <ClipboardList size={16} />
+          Transaksi ini menyelesaikan pengambilan <b>{po.number}</b> untuk {po.customer}.
+          <button
+            type="button"
+            className="link-action"
+            style={{ marginLeft: "auto" }}
+            onClick={() => cart.setPoId(null)}
+          >
+            Lepas tautan PO
+          </button>
+        </div>
+      ) : null}
 
       <div className="checkout-grid">
         <div className="checkout-left">
@@ -144,11 +197,6 @@ export default function CheckoutPage() {
           <section className="co-card">
             <div className="section-head">
               <h2>Resep Mata</h2>
-              <div className="section-action">
-                <button className="btn btn-ghost btn-sm" onClick={() => setQuery("")}>
-                  Pilih Resep Tersimpan
-                </button>
-              </div>
             </div>
             {resep ? (
               <table className="rx-table">
@@ -166,16 +214,16 @@ export default function CheckoutPage() {
                   <tr>
                     <td>OD (Kanan)</td>
                     <td>{resep.od.sph}</td>
-                    <td>{resep.od.cyl}</td>
-                    <td>{resep.od.axis}</td>
+                    <td>{resep.od.cyl || "0.00"}</td>
+                    <td>{resep.od.axis || "-"}</td>
                     <td>{resep.add ?? "-"}</td>
                     <td>{resep.pd}</td>
                   </tr>
                   <tr>
                     <td>OS (Kiri)</td>
                     <td>{resep.os.sph}</td>
-                    <td>{resep.os.cyl}</td>
-                    <td>{resep.os.axis}</td>
+                    <td>{resep.os.cyl || "0.00"}</td>
+                    <td>{resep.os.axis || "-"}</td>
                     <td>{resep.add ?? "-"}</td>
                     <td>{resep.pd}</td>
                   </tr>
@@ -183,7 +231,7 @@ export default function CheckoutPage() {
               </table>
             ) : (
               <div className="empty-note">
-                Belum ada resep tersimpan untuk pelanggan ini. Pilih pelanggan atau ambil resep tersimpan.
+                Belum ada resep tersimpan untuk pelanggan ini.
               </div>
             )}
           </section>
@@ -203,32 +251,60 @@ export default function CheckoutPage() {
             {cart.items.length === 0 ? (
               <div className="empty-note">Belum ada produk dipilih.</div>
             ) : (
-              cart.items.map((i) => (
-                <div key={i.id} className="cart-line">
-                  <span className="cl-ico">
-                    <Glasses size={20} strokeWidth={1.7} />
-                  </span>
-                  <span className="cl-body">
-                    <b>{i.name}</b>
-                    <span>
-                      {i.brand} · {i.category}
+              cart.items.map((i) => {
+                const saldo = shared.stockOf(i.id)?.saldo;
+                const kurangStok = saldo !== undefined && i.qty > saldo;
+                return (
+                  <div key={i.id} className="cart-line" style={{ flexWrap: "wrap" }}>
+                    <span className="cl-ico">
+                      <Glasses size={20} strokeWidth={1.7} />
                     </span>
-                  </span>
-                  <span className="qty-box">
-                    <button onClick={() => cart.setQty(i.id, i.qty - 1)} aria-label="Kurangi">
-                      <Minus size={14} />
+                    <span className="cl-body">
+                      <b>{i.name}</b>
+                      <span>
+                        {i.brand} · {i.category}
+                        {saldo !== undefined ? ` · Stok cabang: ${saldo} unit` : ""}
+                      </span>
+                    </span>
+                    <span className="qty-box">
+                      <button onClick={() => cart.setQty(i.id, i.qty - 1)} aria-label="Kurangi">
+                        <Minus size={14} />
+                      </button>
+                      <b>{i.qty}</b>
+                      <button onClick={() => cart.setQty(i.id, i.qty + 1)} aria-label="Tambah">
+                        <Plus size={14} />
+                      </button>
+                    </span>
+                    <span className="ci-price">{formatIDR(i.price * i.qty)}</span>
+                    <button className="ci-remove" onClick={() => cart.remove(i.id)} aria-label={`Hapus ${i.name}`}>
+                      <Trash2 size={16} />
                     </button>
-                    <b>{i.qty}</b>
-                    <button onClick={() => cart.setQty(i.id, i.qty + 1)} aria-label="Tambah">
-                      <Plus size={14} />
-                    </button>
-                  </span>
-                  <span className="ci-price">{formatIDR(i.price * i.qty)}</span>
-                  <button className="ci-remove" onClick={() => cart.remove(i.id)} aria-label={`Hapus ${i.name}`}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))
+                    {kurangStok ? (
+                      <div
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 6,
+                          padding: "6px 10px",
+                          borderRadius: 8,
+                          background: "var(--danger-bg)",
+                          color: "var(--danger-ink)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                        }}
+                      >
+                        <span>Stok cabang hanya tersedia {saldo} unit (diminta {i.qty} unit).</span>
+                        <Link className="btn btn-ghost btn-sm" to={`/pemesanan?productId=${i.id}`}>
+                          <ClipboardList size={14} />
+                          Buat PO
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
             )}
           </section>
         </div>
@@ -273,7 +349,10 @@ export default function CheckoutPage() {
                 <button
                   key={m.id}
                   className={`pay-opt ${cart.method === m.id ? "on" : ""}`}
-                  onClick={() => cart.setMethod(m.id)}
+                  onClick={() => {
+                    cart.setMethod(m.id);
+                    setWarning(null);
+                  }}
                 >
                   <span className="po-ico">
                     <Icon size={18} />
@@ -287,6 +366,49 @@ export default function CheckoutPage() {
               );
             })}
           </div>
+
+          {cart.method === "Tunai" ? (
+            <div className="cash-box">
+              <div className="cash-field">
+                <div className="cash-label-row">
+                  <label htmlFor="cash-paid-input">Jumlah Dibayar</label>
+                  <button
+                    type="button"
+                    className="cash-exact-btn"
+                    onClick={() => {
+                      cart.setCashInput(String(cart.total));
+                      setWarning(null);
+                    }}
+                  >
+                    Uang Pas
+                  </button>
+                </div>
+                <div className="cash-input-wrap">
+                  <span className="cash-prefix">Rp</span>
+                  <input
+                    id="cash-paid-input"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder={cart.total.toLocaleString("id-ID")}
+                    value={cart.cashInput}
+                    onChange={(e) => {
+                      cart.setCashInput(e.target.value);
+                      setWarning(null);
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className={`cash-change-row ${cart.cashShortfall > 0 ? "is-short" : ""}`}>
+                <span>{cart.cashShortfall > 0 ? "Kurang Bayar" : "Kembalian"}</span>
+                <b>
+                  {cart.cashShortfall > 0
+                    ? `- ${formatIDR(cart.cashShortfall)}`
+                    : formatIDR(cart.cashChange)}
+                </b>
+              </div>
+            </div>
+          ) : null}
 
           {warning ? (
             <div className="notice">

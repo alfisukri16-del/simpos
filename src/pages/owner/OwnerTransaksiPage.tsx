@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { ArrowRight, TriangleAlert, X } from "lucide-react";
-import { BRANCHES, useSharedStore } from "../../store/sharedStore";
+import { useSharedStore } from "../../store/sharedStore";
 import { inPeriod, periodRange, type PeriodKey } from "../../store/reports";
-import { Chip, PageHeader, SearchBox, StatusPill, formatIDR } from "../../components/ui";
+import { PageHeader, SearchBox, StatCard, StatusPill, formatIDR } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -11,8 +11,8 @@ const PERIODS: PeriodKey[] = ["semua", "hari", "mingguan", "bulanan", "tahunan",
 const PERIOD_LABEL: Record<PeriodKey, string> = {
   semua: "Semua waktu",
   hari: "Hari ini",
-  mingguan: "7 hari",
-  bulanan: "30 hari",
+  mingguan: "Minggu ini",
+  bulanan: "Bulan ini",
   tahunan: "Tahun ini",
   custom: "Rentang",
 };
@@ -43,6 +43,7 @@ export default function OwnerTransaksiPage() {
   );
 
   const sukses = rows.filter((t) => t.status === "Selesai");
+  const pending = rows.filter((t) => t.status === "Pending");
   const omzet = sukses.reduce((a, t) => a + t.total, 0);
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const view = rows.slice((page - 1) * PAGE, page * PAGE);
@@ -55,7 +56,7 @@ export default function OwnerTransaksiPage() {
       <PageHeader
         overline="PENGAWASAN — TRANSAKSI"
         title="Monitoring Transaksi"
-        desc="Daftar transaksi Kasir read-only. Pembatalan hanya oleh Kasir; hanya status Selesai yang dihitung sebagai penjualan."
+        desc="Transaksi Kasir dari seluruh cabang. Hanya transaksi Selesai yang dihitung sebagai penjualan."
       />
 
       <div className="toolbar">
@@ -67,23 +68,24 @@ export default function OwnerTransaksiPage() {
             resetPage();
           }}
         />
-        <div className="toolbar-chips">
+        <select
+          className="select-pill"
+          aria-label="Periode"
+          value={period}
+          onChange={(e) => {
+            setPeriod(e.target.value as PeriodKey);
+            resetPage();
+          }}
+        >
           {PERIODS.map((k) => (
-            <Chip
-              key={k}
-              active={period === k}
-              onClick={() => {
-                setPeriod(k);
-                resetPage();
-              }}
-            >
+            <option key={k} value={k}>
               {PERIOD_LABEL[k]}
-            </Chip>
+            </option>
           ))}
-        </div>
+        </select>
         <select className="select-pill" aria-label="Cabang" value={branch} onChange={(e) => { setBranch(e.target.value); resetPage(); }}>
           <option value="all">Semua Cabang</option>
-          {BRANCHES.map((b) => (
+          {store.branches.filter((b) => b.type === "Cabang").map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
             </option>
@@ -115,26 +117,30 @@ export default function OwnerTransaksiPage() {
             <input type="date" value={cTo} onChange={(e) => { setCTo(e.target.value); resetPage(); }} />
           </label>
           <span className="tt-sub" style={{ fontWeight: 600 }}>
-            Batas inklusif · {range.label}
+            Periode: {range.label}
           </span>
         </div>
       ) : null}
 
-      <div className="stat-row" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
-        <div className="stat-card tone-green">
-          <div className="stat-body">
-            <div className="stat-label">Transaksi sukses (filter aktif)</div>
-            <div className="stat-value">{sukses.length}</div>
-            <div className="stat-caption">dari {rows.length} baris tampil</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-body">
-            <div className="stat-label">Omzet sukses (filter aktif)</div>
-            <div className="stat-value" style={{ fontSize: 24 }}>{formatIDR(omzet)}</div>
-            <div className="stat-caption">tanpa duplikasi · {range.label}</div>
-          </div>
-        </div>
+      <div className="stat-row" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+        <StatCard
+          label="Transaksi Sukses"
+          value={String(sukses.length)}
+          caption={`dari ${rows.length} transaksi`}
+          tone="green"
+        />
+        <StatCard
+          label="Pending"
+          value={String(pending.length)}
+          caption="Belum selesai"
+          tone="amber"
+        />
+        <StatCard
+          label="Total Omzet"
+          value={formatIDR(omzet)}
+          caption={`Transaksi selesai · ${range.label}`}
+          tone="violet"
+        />
       </div>
 
       <div className="table-wrap">
@@ -143,6 +149,7 @@ export default function OwnerTransaksiPage() {
             <tr>
               <th>NO. TRANSAKSI</th>
               <th>TANGGAL</th>
+              <th>CABANG</th>
               <th>PELANGGAN</th>
               <th>METODE</th>
               <th className="tt-center">TOTAL</th>
@@ -159,6 +166,7 @@ export default function OwnerTransaksiPage() {
                 <td>
                   <div className="tt-sub" style={{ marginTop: 0 }}>{t.date}{t.time ? ` · ${t.time}` : ""}</div>
                 </td>
+                <td>{store.branches.find((b) => b.id === (t.branchId ?? "cabang-padang"))?.name ?? "Cabang Padang"}</td>
                 <td>
                   <div className="tt-num" style={{ fontSize: 13 }}>{t.customer}</div>
                 </td>
@@ -179,7 +187,7 @@ export default function OwnerTransaksiPage() {
             ))}
             {view.length === 0 ? (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={8}>
                   <div className="empty-note">Tidak ada transaksi pada filter ini.</div>
                 </td>
               </tr>
@@ -201,24 +209,57 @@ export default function OwnerTransaksiPage() {
 
       {detail ? (
         <div className="overlay" onClick={() => setDetailNo(null)}>
-          <div className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+          <div className="drawer" key={detail.no} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             <div className="drawer-head">
               <div>
                 <h2>{detail.no}</h2>
-                <div className="section-desc">Read-only · pembatalan transaksi hanya dapat dilakukan Kasir</div>
+                <div className="section-desc">Rincian transaksi dari Kasir.</div>
               </div>
               <button className="icon-pill" aria-label="Tutup" onClick={() => setDetailNo(null)}>
                 <X size={18} />
               </button>
             </div>
+
+            <div className="trace-summary-card">
+              <div className="trace-summary-top">
+                <div>
+                  <b>{detail.customer}</b>
+                  <span>
+                    {detail.date}
+                    {detail.time ? ` · ${detail.time}` : ""}
+                  </span>
+                </div>
+                <StatusPill label={detail.status} />
+              </div>
+              <div className="trace-summary-meta">
+                <div className="trace-meta-item">
+                  <span>Metode</span>
+                  <b>{detail.method ?? "—"}</b>
+                </div>
+                <div className="trace-meta-item">
+                  <span>Item</span>
+                  <b>{(detail.products ?? []).reduce((a, p) => a + p.qty, 0)} unit</b>
+                </div>
+                <div className="trace-meta-item">
+                  <span>Total</span>
+                  <b>{formatIDR(detail.total)}</b>
+                </div>
+              </div>
+            </div>
+
             <div className="detail-rows">
               <div className="detail-row"><span>Tanggal</span><b>{detail.date}{detail.time ? ` · ${detail.time}` : ""}</b></div>
+              <div className="detail-row"><span>Cabang</span><b>{store.branches.find((b) => b.id === (detail.branchId ?? "cabang-padang"))?.name ?? "Cabang Padang"}</b></div>
               <div className="detail-row"><span>Pelanggan</span><b>{detail.customer}</b></div>
               <div className="detail-row"><span>Metode</span><b>{detail.method ?? "—"}</b></div>
-              <div className="detail-row"><span>Status</span><StatusPill label={detail.status} /></div>
+              <div className="detail-row"><span>Status transaksi</span><StatusPill label={detail.status} /></div>
+              <div className="detail-row">
+                <span>Status pembayaran</span>
+                <StatusPill label={detail.status === "Selesai" ? "Lunas" : detail.status === "Pending" ? "Pending" : "Dibatalkan"} />
+              </div>
               <div className="detail-row"><span>Total</span><b>{formatIDR(detail.total)}</b></div>
             </div>
-            <div className="mini-label">ITEM</div>
+            <div className="mini-label">RINCIAN ITEM</div>
             {(detail.products ?? []).map((p) => (
               <div key={p.name} className="todo-row">
                 <div className="todo-body">

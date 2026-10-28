@@ -1,27 +1,45 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Check, Glasses, History, Printer, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Check, Eye, Glasses, History, Package, Printer, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import { Steps, formatIDR } from "../components/ui";
+import { useSharedStore } from "../store/sharedStore";
+import { getSession } from "../store/session";
+import { formatIDR } from "../components/ui";
+import MRLogo from "../components/MRLogo";
 import "../styles/pages.css";
+import "../styles/admin.css";
+
+function ProductIcon({ category }: { category: string }) {
+  if (category === "Aksesoris") return <Package size={20} strokeWidth={1.7} />;
+  if (category === "Lensa") return <Eye size={20} strokeWidth={1.7} />;
+  return <Glasses size={20} strokeWidth={1.7} />;
+}
 
 export default function TransaksiBerhasilPage() {
   const cart = useCart();
+  const shared = useSharedStore();
   const navigate = useNavigate();
+  const session = getSession();
+  const [strukOpen, setStrukOpen] = useState(false);
   const r = cart.receipt;
 
-  const items = r?.items ?? [
-    { id: "d1", name: "Titanium Classic", brand: "Ray-Ban", category: "Frame", price: 1_850_000, qty: 1 },
-    { id: "d2", name: "Lensa Blue Control", brand: "Hoya", category: "Lensa", price: 1_250_000, qty: 1 },
-  ];
-  const subtotal = r?.subtotal ?? 3_100_000;
-  const total = r?.total ?? subtotal;
+  if (!r) return <Navigate to="/riwayat-transaksi" replace />;
+
+  const items = r.items;
+  const subtotal = r.subtotal;
+  const discount = r.discount;
+  const total = r.total;
+  const trxNo = r.no;
+  const trxDate = r.date;
+  const trxTime = r.time;
+  const customerName = r.customer?.name ?? "Pelanggan Kasir";
+  const method = r.method;
+  const paid = method === "Tunai" ? r.paid : total;
+  const change = method === "Tunai" ? r.change : 0;
+  const linkedPo = r.poId ? shared.pos.find((p) => p.id === r.poId) : undefined;
 
   return (
     <div className="success page">
-      <div style={{ display: "flex", justifyContent: "flex-end", padding: "6px 6px 0" }}>
-        <Steps current={3} />
-      </div>
-
       <div className="success-hero">
         <span className="success-badge">
           <Check size={38} strokeWidth={3} />
@@ -38,29 +56,31 @@ export default function TransaksiBerhasilPage() {
           <div>
             <div className="info-row">
               <span>No. Transaksi</span>
-              <b>{r?.no ?? "TRX-20250118-0032"}</b>
+              <b>{trxNo}</b>
             </div>
             <div className="info-row">
               <span>Tanggal &amp; Jam</span>
               <b>
-                {r ? `${r.date}, ${r.time} WIB` : "18 Jan 2025, 14:32 WIB"}
+                {trxDate}, {trxTime} WIB
               </b>
             </div>
             <div className="info-row">
               <span>Kasir</span>
-              <b>Korena Saif</b>
+              <b>{session?.name ?? "Kasir"}</b>
             </div>
             <div className="info-row">
               <span>Nama Pelanggan</span>
-              <b>{r?.customer?.name ?? "Andi Saputra"}</b>
+              <b>{customerName}</b>
             </div>
+            {linkedPo ? (
+              <div className="info-row">
+                <span>Pengambilan PO</span>
+                <b>{linkedPo.number}</b>
+              </div>
+            ) : null}
             <div className="info-row">
               <span>Metode Pembayaran</span>
-              <b>{r?.method ?? "Tunai"}</b>
-            </div>
-            <div className="info-row">
-              <span>Total Pembayaran</span>
-              <b>{formatIDR(total)}</b>
+              <b>{method}</b>
             </div>
             <div className="info-row">
               <span>Status</span>
@@ -80,7 +100,7 @@ export default function TransaksiBerhasilPage() {
             {items.map((i) => (
               <div key={i.id} className="receipt-line">
                 <span className="rl-ico">
-                  <Glasses size={20} strokeWidth={1.7} />
+                  <ProductIcon category={i.category} />
                 </span>
                 <span className="rl-body">
                   <b>{i.name}</b>
@@ -106,7 +126,7 @@ export default function TransaksiBerhasilPage() {
                 Diskon
                 {r?.discountPercent ? ` (${r.discountPercent}%)` : ""}
               </span>
-              <b>{formatIDR(r?.discount ?? 0)}</b>
+              <b>{formatIDR(discount)}</b>
             </div>
             <div className="info-row">
               <span>
@@ -114,38 +134,138 @@ export default function TransaksiBerhasilPage() {
               </span>
               <b>{formatIDR(total)}</b>
             </div>
+            {method === "Tunai" ? (
+              <>
+                <div className="info-row">
+                  <span>Jumlah Dibayar</span>
+                  <b>{formatIDR(paid)}</b>
+                </div>
+                <div className="info-row">
+                  <span>Kembalian</span>
+                  <b style={{ color: "var(--ok-ink)" }}>{formatIDR(change)}</b>
+                </div>
+              </>
+            ) : null}
           </div>
         </section>
       </div>
 
-      <div className="action-row">
-        <div className="receipt-note">
-          <span className="rn-ico">
-            <ShieldCheck size={22} />
-          </span>
-          <div>
-            <b>Data Tersimpan dengan Aman</b>
-            <p>
-              Data transaksi, produk, dan pembayaran telah berhasil disimpan ke sistem. Anda dapat menghubungi
-              pelanggan jika diperlukan.
-            </p>
-          </div>
-        </div>
-
+      <div className="action-row success-actions">
         <div className="btn-group">
-          <button className="btn btn-ghost" onClick={() => window.print()}>
+          <button className="btn btn-ghost" onClick={() => setStrukOpen(true)}>
             <Printer size={16} />
             Cetak Struk
-          </button>
-          <button className="btn btn-primary" onClick={() => navigate("/transaksi-baru")}>
-            Transaksi Baru
           </button>
           <Link className="btn btn-ghost" to="/riwayat-transaksi">
             <History size={16} />
             Lihat Riwayat
           </Link>
+          <button className="btn btn-primary" onClick={() => navigate("/transaksi-baru")}>
+            Transaksi Baru
+          </button>
         </div>
       </div>
+
+      {strukOpen ? (
+        <div className="overlay" onClick={() => setStrukOpen(false)}>
+          <div className="drawer struk-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="drawer-head">
+              <div>
+                <h2>Struk Transaksi</h2>
+                <div className="section-desc">{trxNo}</div>
+              </div>
+              <button className="icon-pill" aria-label="Tutup" onClick={() => setStrukOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="struk-print" id="struk-print">
+              <div className="struk-brand">
+                <div className="struk-logo">
+                  <MRLogo size={44} />
+                </div>
+                <b>{shared.settings.storeName.split("—")[0].trim()}</b>
+                <span>{session?.branch ?? "Cabang"} · {shared.settings.storePhone}</span>
+                <span>{shared.settings.storeAddress}</span>
+              </div>
+              <div className="struk-meta">
+                <div>
+                  <span>No. Nota</span>
+                  <b>{trxNo}</b>
+                </div>
+                <div>
+                  <span>Tanggal</span>
+                  <b>
+                    {trxDate}, {trxTime}
+                  </b>
+                </div>
+                <div>
+                  <span>Kasir</span>
+                  <b>{session?.name ?? "Kasir"}</b>
+                </div>
+                <div>
+                  <span>Pelanggan</span>
+                  <b>{customerName}</b>
+                </div>
+              </div>
+              <div className="struk-items">
+                {items.map((p) => (
+                  <div className="struk-line" key={p.id}>
+                    <span>
+                      {p.name}
+                      <small>
+                        {p.qty} × {formatIDR(p.price)}
+                      </small>
+                    </span>
+                    <b>{formatIDR(p.qty * p.price)}</b>
+                  </div>
+                ))}
+              </div>
+              <div className="struk-totals">
+                <div>
+                  <span>Subtotal</span>
+                  <b>{formatIDR(subtotal)}</b>
+                </div>
+                <div>
+                  <span>Diskon</span>
+                  <b>{formatIDR(discount)}</b>
+                </div>
+                <div className="struk-grand">
+                  <span>Total</span>
+                  <b>{formatIDR(total)}</b>
+                </div>
+                {method === "Tunai" ? (
+                  <>
+                    <div>
+                      <span>Tunai (Dibayar)</span>
+                      <b>{formatIDR(paid)}</b>
+                    </div>
+                    <div>
+                      <span>Kembalian</span>
+                      <b>{formatIDR(change)}</b>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+              <div className="struk-foot">
+                <span>Metode: {method}</span>
+                <span>Status: Lunas</span>
+                <span>Terima kasih · Barang yang sudah dibeli tidak dapat ditukar</span>
+              </div>
+            </div>
+
+            <div className="drawer-foot">
+              <button className="btn btn-ghost" onClick={() => setStrukOpen(false)}>
+                Tutup
+              </button>
+              <button className="btn btn-primary" onClick={() => window.print()}>
+                <Printer size={16} />
+                Cetak Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

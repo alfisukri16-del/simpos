@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Glasses, LogOut, Menu as MenuIcon, Search } from "lucide-react";
+import { LogOut, Menu as MenuIcon, Search } from "lucide-react";
 import { ADMIN_NAV, DEMO_ADMIN } from "../data/admin";
 import { clearSession, getSession } from "../store/session";
+import MRLogo from "./MRLogo";
 import NotificationBell from "./NotificationBell";
 import "../styles/layout.css";
 import "../styles/admin.css";
@@ -22,6 +23,7 @@ export default function AdminLayout() {
   const showSearch = location.pathname === "/admin/dashboard";
   const session = readSession();
 
+
   const logout = () => {
     clearSession();
     navigate("/admin/login");
@@ -33,9 +35,7 @@ export default function AdminLayout() {
       <div className="app-grid">
         <aside className={`sidebar ${open ? "open" : ""}`}>
           <div className="sidebar-brand">
-            <span className="brand-badge">
-              <Glasses size={24} strokeWidth={2.1} />
-            </span>
+            <MRLogo size={44} />
             <span className="brand-text">
               <b>Optik Mekar Jaya</b>
               <span>Sistem Informasi Optik</span>

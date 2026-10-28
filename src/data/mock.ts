@@ -98,9 +98,12 @@ export type Transaction = {
   type: "Pembelian" | "Pemesanan";
   total: number;
   discount?: number; // potongan rupiah pada transaksi kasir (0/kosong = tanpa diskon)
+  paid?: number; // jumlah uang dibayar pada pembayaran tunai
+  change?: number; // kembalian pada pembayaran tunai
   status: TrxStatus;
   branchId?: string; // backfill 'cabang-padang' di shared store; tanpa efek render
   method?: string; // metode pembayaran tercatat (transaksi baru); seed lama "-"
+  poId?: string; // PO yang diambil melalui transaksi ini
   detail?: "resep" | "struk" | "produk";
   products?: Array<{ id?: string; name: string; brand: string; qty: number; price: number }>;
   cancelReason?: string;
@@ -112,47 +115,47 @@ export type Transaction = {
 export const TRANSACTIONS: Transaction[] = [
   {
     id: "T1", no: "TRX-20260812-001", date: "12 Agu 2026", time: "14:23", customer: "Rian Pratama", phone: "085277129011",
-    type: "Pembelian", total: 800_000, status: "Selesai",
+    type: "Pembelian", method: "Tunai", paid: 800_000, change: 0, total: 800_000, status: "Selesai",
     products: [{ name: "Paket Case & Lap", brand: "Optik Mekar Jaya", qty: 1, price: 150_000 }, { name: "Lensa Single Vision", brand: "Essilor", qty: 1, price: 650_000 }],
   },
   {
     id: "T2", no: "TRX-20260812-002", date: "12 Agu 2026", time: "11:10", customer: "Siti Nurhaliza", phone: "081234567890",
-    type: "Pembelian", total: 1_200_000, status: "Selesai",
+    type: "Pembelian", method: "QRIS", total: 1_200_000, status: "Selesai",
     products: [{ name: "Frame Bella Round", brand: "Vogue", qty: 1, price: 1_200_000 }],
   },
   {
     id: "T3", no: "TRX-20260811-003", date: "11 Agu 2026", time: "16:45", customer: "Andi Saputra", phone: "089612345678",
-    type: "Pemesanan", total: 950_000, status: "Pending",
+    type: "Pemesanan", method: "Transfer Bank", total: 950_000, status: "Selesai",
     products: [{ name: "Lensa Progressive", brand: "Zeiss", qty: 1, price: 950_000 }],
   },
   {
     id: "T4", no: "TRX-20260811-002", date: "11 Agu 2026", time: "13:20", customer: "Maya Lestari", phone: "082199887766",
-    type: "Pembelian", total: 450_000, status: "Selesai", detail: "resep",
+    type: "Pembelian", method: "Tunai", paid: 500_000, change: 50_000, total: 450_000, status: "Selesai", detail: "resep",
     products: [{ name: "Lensa Single Vision", brand: "Essilor", qty: 1, price: 450_000 }],
   },
   {
     id: "T5", no: "TRX-20260810-001", date: "10 Agu 2026", time: "10:05", customer: "Dedi Rahman", phone: "081366778899",
-    type: "Pembelian", total: 1_350_000, status: "Selesai", detail: "produk",
+    type: "Pembelian", method: "Kartu Debit/Kredit", total: 1_350_000, status: "Selesai", detail: "produk",
     products: [{ name: "3Clear Black Round", brand: "Makar Eyewear", qty: 1, price: 450_000 }, { name: "Lensa Blue Control", brand: "Hoya", qty: 1, price: 900_000 }],
   },
   {
     id: "T6", no: "TRX-20260809-004", date: "09 Agu 2026", time: "17:30", customer: "Fitri Ananda", phone: "085122334455",
-    type: "Pembelian", total: 600_000, status: "Dibatalkan",
+    type: "Pembelian", method: "Tunai", total: 600_000, status: "Dibatalkan",
     products: [{ name: "3Clear Black Round", brand: "Makar Eyewear", qty: 1, price: 450_000 }],
   },
   {
     id: "T7", no: "TRX-20260809-003", date: "09 Agu 2026", time: "12:15", customer: "Zulfa Ramadhani", phone: "082311223344",
-    type: "Pemesanan", total: 750_000, status: "Pending",
+    type: "Pemesanan", method: "Transfer Bank", total: 750_000, status: "Selesai",
     products: [{ name: "Lensa Single Vision", brand: "Zeiss", qty: 1, price: 350_000 }],
   },
   {
     id: "T8", no: "TRX-20260808-002", date: "08 Agu 2026", time: "15:40", customer: "Hendra Wijaya", phone: "081299876665",
-    type: "Pembelian", total: 950_000, status: "Selesai",
+    type: "Pembelian", method: "QRIS", total: 950_000, status: "Selesai",
     products: [{ name: "Frame AirFlex", brand: "Excellence", qty: 1, price: 800_000 }],
   },
   {
     id: "T9", no: "TRX-20260808-001", date: "08 Agu 2026", time: "09:20", customer: "Nadia Putri", phone: "082273459988",
-    type: "Pembelian", total: 500_000, status: "Selesai",
+    type: "Pembelian", method: "Tunai", paid: 500_000, change: 0, total: 500_000, status: "Selesai",
     products: [{ name: "Cleaning Kit", brand: "Makar Eyewear", qty: 1, price: 90_000 }, { name: "Paket Case & Lap", brand: "Optik Mekar Jaya", qty: 1, price: 150_000 }],
   },
   /* Riwayat lebih lama — dipakai grafik "periode sebelumnya" di Dashboard Pemilik.
@@ -236,14 +239,14 @@ export const PAYMENTS: Array<{
 export type ResepRecord = {
   id: string; customer: string; initials: string; date: string;
   od: { sph: string; cyl: string; axis: string }; os: { sph: string; cyl: string; axis: string };
-  pd: string; add: string; status: "Aktif" | "Expired" | "Kedaluwarsa";
+  pd: string; add: string; note?: string; status: "Aktif" | "Expired" | "Kedaluwarsa";
 };
 
 export const RESEP_RECORDS: ResepRecord[] = [
-  { id: "RX-001", customer: "Andi Saputra", initials: "AS", date: "12 Mar 2026", od: { sph: "-1.50", cyl: "-0.75", axis: "180" }, os: { sph: "-1.25", cyl: "-0.50", axis: "170" }, pd: "32.0", add: "+1.00", status: "Aktif" },
-  { id: "RX-002", customer: "Rian Pratama", initials: "RP", date: "02 Feb 2026", od: { sph: "-2.00", cyl: "-0.50", axis: "175" }, os: { sph: "-1.75", cyl: "-0.25", axis: "5" }, pd: "31.5", add: "+1.25", status: "Aktif" },
-  { id: "RX-003", customer: "Siti Maulida", initials: "SM", date: "20 Jan 2026", od: { sph: "+1.00", cyl: "-0.75", axis: "90" }, os: { sph: "+1.25", cyl: "-0.50", axis: "85" }, pd: "30.5", add: "+2.00", status: "Aktif" },
-  { id: "RX-004", customer: "Nadia Amelia", initials: "NA", date: "05 Jan 2026", od: { sph: "-0.75", cyl: "-1.00", axis: "160" }, os: { sph: "-0.50", cyl: "-0.75", axis: "15" }, pd: "32.5", add: "-", status: "Aktif" },
-  { id: "RX-005", customer: "Dedi Rahman", initials: "DR", date: "30 Nov 2025", od: { sph: "-3.25", cyl: "-0.50", axis: "180" }, os: { sph: "-3.00", cyl: "-0.25", axis: "175" }, pd: "33.0", add: "+1.75", status: "Expired" },
-  { id: "RX-006", customer: "Dimas Hidayat", initials: "DH", date: "18 Des 2025", od: { sph: "-0.25", cyl: "-0.25", axis: "10" }, os: { sph: "-0.50", cyl: "-0.25", axis: "170" }, pd: "31.0", add: "-", status: "Expired" },
+  { id: "RX-001", customer: "Andi Saputra", initials: "AS", date: "12 Mar 2026", od: { sph: "-1.50", cyl: "-0.75", axis: "180" }, os: { sph: "-1.25", cyl: "-0.50", axis: "170" }, pd: "32.0", add: "+1.00", note: "Pemeriksaan komputer & lensa baca", status: "Aktif" },
+  { id: "RX-002", customer: "Rian Pratama", initials: "RP", date: "02 Feb 2026", od: { sph: "-2.00", cyl: "-0.50", axis: "175" }, os: { sph: "-1.75", cyl: "-0.25", axis: "5" }, pd: "31.5", add: "+1.25", note: "Lensa progressive harian", status: "Aktif" },
+  { id: "RX-003", customer: "Siti Maulida", initials: "SM", date: "20 Jan 2026", od: { sph: "+1.00", cyl: "-0.75", axis: "90" }, os: { sph: "+1.25", cyl: "-0.50", axis: "85" }, pd: "30.5", add: "+2.00", note: "Resep dokter mata (baca & jalan)", status: "Aktif" },
+  { id: "RX-004", customer: "Nadia Amelia", initials: "NA", date: "05 Jan 2026", od: { sph: "-0.75", cyl: "-1.00", axis: "160" }, os: { sph: "-0.50", cyl: "-0.75", axis: "15" }, pd: "32.5", add: "-", note: "Lensa blue control komputer", status: "Aktif" },
+  { id: "RX-005", customer: "Dedi Rahman", initials: "DR", date: "30 Nov 2025", od: { sph: "-3.25", cyl: "-0.50", axis: "180" }, os: { sph: "-3.00", cyl: "-0.25", axis: "175" }, pd: "33.0", add: "+1.75", note: "Pemeriksaan rutin tahunan", status: "Expired" },
+  { id: "RX-006", customer: "Dimas Hidayat", initials: "DH", date: "18 Des 2025", od: { sph: "-0.25", cyl: "-0.25", axis: "10" }, os: { sph: "-0.50", cyl: "-0.25", axis: "170" }, pd: "31.0", add: "-", note: "Lensa single vision anti-radiasi", status: "Expired" },
 ];

@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { FilePlus2, Settings2, X } from "lucide-react";
+import { FilePlus2, Settings2 } from "lucide-react";
 import { useAdminStore } from "../../store/sharedStore";
 import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
@@ -13,11 +13,6 @@ export default function AdminStokPage() {
   const [minFor, setMinFor] = useState<string | null>(null);
   const [minVal, setMinVal] = useState("");
   const [minError, setMinError] = useState("");
-  const [askFor, setAskFor] = useState<string | null>(null);
-  const [askQty, setAskQty] = useState("");
-  const [askNote, setAskNote] = useState("");
-  const [askError, setAskError] = useState("");
-  const [askDone, setAskDone] = useState(false);
 
   const rows = useMemo(
     () =>
@@ -39,25 +34,6 @@ export default function AdminStokPage() {
     }
     if (minFor) store.setMinimum(minFor, v);
     setMinFor(null);
-  };
-
-  const submitAsk = (e: FormEvent) => {
-    e.preventDefault();
-    const qty = Number(askQty);
-    if (!Number.isInteger(qty) || qty <= 0) {
-      setAskError("Jumlah harus bilangan bulat lebih dari 0.");
-      return;
-    }
-    if (askFor) store.createRequest(askFor, qty, askNote.trim());
-    setAskDone(true);
-  };
-
-  const closeAsk = () => {
-    setAskFor(null);
-    setAskQty("");
-    setAskNote("");
-    setAskError("");
-    setAskDone(false);
   };
 
   return (
@@ -119,19 +95,10 @@ export default function AdminStokPage() {
                       <Settings2 size={14} />
                       Atur Minimum
                     </button>
-                    <button
-                      className="link-action"
-                      onClick={() => {
-                        setAskFor(p.id);
-                        setAskQty("");
-                        setAskNote("");
-                        setAskError("");
-                        setAskDone(false);
-                      }}
-                    >
+                    <Link className="link-action" to={`/admin/pengajuan?product=${p.id}`}>
                       <FilePlus2 size={14} />
                       Ajukan Stok
-                    </button>
+                    </Link>
                   </span>
                 </td>
               </tr>
@@ -147,7 +114,7 @@ export default function AdminStokPage() {
         </table>
         <div className="table-foot">
           <span className="foot-note">
-            {store.lowStock.length} produk menipis · saldo ≤ minimum · data demo
+            {store.lowStock.length} produk menipis · saldo ≤ minimum
           </span>
         </div>
       </div>
@@ -176,63 +143,6 @@ export default function AdminStokPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      ) : null}
-
-      {askFor ? (
-        <div className="overlay" onClick={closeAsk}>
-          <div className="confirm" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            {askDone ? (
-              <>
-                <h2>Pengajuan terkirim</h2>
-                <p>
-                  Pengajuan stok tercatat dan menunggu tinjauan Pemilik. Pantau statusnya di halaman
-                  Pengajuan Stok.
-                </p>
-                <div className="drawer-foot">
-                  <button className="btn btn-ghost" onClick={closeAsk}>
-                    Tutup
-                  </button>
-                  <Link className="btn btn-primary" to="/admin/pengajuan" onClick={closeAsk}>
-                    Buka Pengajuan
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="drawer-head" style={{ padding: 0 }}>
-                  <h2>Ajukan Stok</h2>
-                  <button className="icon-pill" aria-label="Tutup" onClick={closeAsk}>
-                    <X size={18} />
-                  </button>
-                </div>
-                <p style={{ marginTop: 8 }}>{store.productOf(askFor)?.name} · Cabang Padang</p>
-                <form onSubmit={submitAsk} noValidate>
-                  {askError ? (
-                    <div className="form-error" role="alert">
-                      {askError}
-                    </div>
-                  ) : null}
-                  <label className="afield">
-                    <span>Jumlah dibutuhkan</span>
-                    <input inputMode="numeric" value={askQty} onChange={(e) => setAskQty(e.target.value)} placeholder="cth. 6" />
-                  </label>
-                  <label className="afield">
-                    <span>Keterangan (opsional)</span>
-                    <input value={askNote} onChange={(e) => setAskNote(e.target.value)} placeholder="cth. permintaan pelanggan" />
-                  </label>
-                  <div className="drawer-foot">
-                    <button type="button" className="btn btn-ghost" onClick={closeAsk}>
-                      Batal
-                    </button>
-                    <button type="submit" className="btn btn-primary">
-                      Simpan Draf
-                    </button>
-                  </div>
-                </form>
-              </>
-            )}
           </div>
         </div>
       ) : null}

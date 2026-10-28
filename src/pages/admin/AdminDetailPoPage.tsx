@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CheckCircle2, Glasses, Lock, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Glasses, Lock, TriangleAlert } from "lucide-react";
 import { DEMO_ADMIN } from "../../data/admin";
 import { useSharedStore } from "../../store/sharedStore";
 import type { PoStatus } from "../../data/mock";
@@ -21,15 +21,44 @@ export default function AdminDetailPoPage() {
   const [cancelReason, setCancelReason] = useState("");
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
-  const order = store.pos.find((o) => o.id === id) ?? store.pos[0];
+  const order = store.pos.find((o) => o.id === id);
+  if (!order) {
+    return (
+      <div className="page">
+        <PageHeader
+          crumbs={
+            <>
+              <Link to="/admin/dashboard">Admin</Link> › <Link to="/admin/pemesanan">Pemesanan (PO)</Link> › <b>Detail PO</b>
+            </>
+          }
+          overline="OPERASIONAL — DETAIL PO"
+          title="PO Tidak Ditemukan"
+          desc={`Nomor PO "${id ?? "-"}" tidak ada. Periksa kembali daftar pemesanan.`}
+          actions={
+            <Link className="btn btn-ghost" to="/admin/pemesanan">
+              <ArrowLeft size={16} />
+              Daftar PO
+            </Link>
+          }
+        />
+        <div className="notice" role="alert">
+          <TriangleAlert size={16} />
+          PO tidak ditemukan.
+        </div>
+      </div>
+    );
+  }
   const current = Math.max(0, FLOW.indexOf(order.status));
   const cancelled = order.status === "Dibatalkan";
-  const next = order.status === "Dipesan" || order.status === "Diproses" ? (order.status === "Dipesan" ? "Diproses" : "Sudah Datang") : null;
+  const next: PoStatus | null =
+    order.status === "Dipesan" ? "Diproses" : order.status === "Diproses" ? "Sudah Datang" : null;
+  const canCancel = order.status === "Dipesan" || order.status === "Diproses";
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!next) return;
-    const r = store.transitionPO(order.id, next, note.trim(), DEMO_ADMIN.name);
+    const defaultNote = next === "Sudah Datang" ? "Barang tersedia di cabang" : "Produk disiapkan";
+    const r = store.transitionPO(order.id, next, note.trim() || defaultNote, DEMO_ADMIN.name);
     setResult(r);
     if (r.ok) setNote("");
   };
@@ -51,7 +80,7 @@ export default function AdminDetailPoPage() {
         }
         overline="OPERASIONAL — DETAIL PO"
         title="Detail Pemesanan"
-        desc="Periksa frame/lensa dan snapshot resep. Aksi status tercatat beserta aktor dan waktu."
+        desc="Periksa frame/lensa dan snapshot resep. Aksi status tercatat beserta aktor dan waktu serta tersinkron ke Kasir."
         actions={
           <Link className="btn btn-ghost" to="/admin/pemesanan">
             <ArrowLeft size={16} />
@@ -83,19 +112,22 @@ export default function AdminDetailPoPage() {
         <div className="section-head">
           <div>
             <h2>Progres Pemesanan</h2>
-            <div className="section-desc">Timeline beserta aktor — tersimpan lintas reload</div>
+            <div className="section-desc">Timeline beserta aktor — tersimpan lintas reload &amp; tersinkron ke Kasir</div>
           </div>
         </div>
         <div className="progress" style={{ opacity: cancelled ? 0.45 : 1 }}>
-          {FLOW.map((step, i) => (
-            <div key={step} className={`pnode ${i < current ? "done" : ""} ${i === current ? "current" : ""}`}>
-              <span className="pdot">{i + 1}</span>
-              <b>{step}</b>
-              <span>
-                {order.timeline.find((t) => t.to === step)?.at ?? (i === current ? order.createdAt : "—")}
-              </span>
-            </div>
-          ))}
+          {FLOW.map((step, i) => {
+            const done = i < current || order.status === "Selesai";
+            return (
+              <div key={step} className={`pnode ${done ? "done" : ""} ${i === current && order.status !== "Selesai" ? "current" : ""}`}>
+                <span className="pdot">{done ? <Check size={14} strokeWidth={3} /> : i + 1}</span>
+                <b>{step}</b>
+                <span>
+                  {order.timeline.find((t) => t.to === step)?.at ?? (i === current ? order.createdAt : "—")}
+                </span>
+              </div>
+            );
+          })}
         </div>
         {cancelled ? (
           <div className="notice" role="status">
@@ -216,11 +248,19 @@ export default function AdminDetailPoPage() {
             <>
               <form onSubmit={submit} className="drawer-form" noValidate>
                 <div className="tt-sub" style={{ fontWeight: 600, marginTop: 0 }}>
-                  Status saat ini: <b style={{ color: "var(--ink)" }}>{order.status}</b> → {next}
+                  Status saat ini: <b style={{ color: "var(--ink)" }}>{order.status}</b> → <b style={{ color: "var(--accent)" }}>{next}</b>
                 </div>
                 <label className="afield">
                   <span>Catatan proses (opsional)</span>
-                  <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="cth. lensa selesai dipotong" />
+                  <input
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder={
+                      next === "Sudah Datang"
+                        ? "cth. barang sudah diterima di cabang"
+                        : "cth. lensa selesai dipotong"
+                    }
+                  />
                 </label>
                 <button type="submit" className="btn btn-primary full">
                   {NEXT_LABEL[order.status]}
@@ -228,36 +268,38 @@ export default function AdminDetailPoPage() {
                 </button>
               </form>
 
-              <div className="section-head" style={{ marginTop: 8 }}>
-                <h2>Batalkan PO</h2>
-              </div>
-              <form onSubmit={doCancel} className="drawer-form" noValidate>
-                <div className="tt-sub" style={{ fontWeight: 600, marginTop: 0 }}>
-                  Hanya bisa sebelum barang datang. Alasan tercatat di timeline &amp; audit.
-                </div>
-                <label className="afield">
-                  <span>Alasan pembatalan (wajib)</span>
-                  <input
-                    value={cancelReason}
-                    onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="cth. pelanggan membatalkan pesanan"
-                  />
-                </label>
-                <button type="submit" className="btn btn-danger full" disabled={cancelReason.trim().length < 3}>
-                  Batalkan PO
-                </button>
-              </form>
+              {canCancel ? (
+                <>
+                  <div className="section-head" style={{ marginTop: 8 }}>
+                    <h2>Batalkan PO</h2>
+                  </div>
+                  <form onSubmit={doCancel} className="drawer-form" noValidate>
+                    <div className="tt-sub" style={{ fontWeight: 600, marginTop: 0 }}>
+                      Hanya bisa sebelum barang datang. Alasan tercatat di timeline &amp; audit.
+                    </div>
+                    <label className="afield">
+                      <span>Alasan pembatalan (wajib)</span>
+                      <input
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="cth. pelanggan membatalkan pesanan"
+                      />
+                    </label>
+                    <button type="submit" className="btn btn-danger full" disabled={cancelReason.trim().length < 3}>
+                      Batalkan PO
+                    </button>
+                  </form>
+                </>
+              ) : null}
             </>
           ) : (
-            <div className="notice">
-              <Lock size={16} />
+            <div className={order.status === "Selesai" ? "notice notice-ok" : "notice"}>
+              {order.status === "Selesai" ? <CheckCircle2 size={16} /> : <Lock size={16} />}
               {order.status === "Selesai"
-                ? "PO sudah Selesai. Transisi Selesai oleh Admin belum diputuskan (PRD terbuka) — tombol tidak disediakan."
-                : order.status === "Sudah Datang"
-                  ? "Barang sudah datang. PO tidak dapat dibatalkan — gunakan penyesuaian stok bila perlu."
-                  : order.status === "Dibatalkan"
-                    ? "PO sudah dibatalkan. Tidak ada aksi lanjutan."
-                    : "Tidak ada aksi lanjutan untuk status ini."}
+                ? `PO selesai melalui transaksi pengambilan${order.linkedTrx ? ` ${order.linkedTrx}` : ""}.`
+                : order.status === "Dibatalkan"
+                  ? "PO sudah dibatalkan. Tidak ada aksi lanjutan."
+                  : "Barang sudah datang dan siap diambil. PO diselesaikan oleh Kasir melalui transaksi pengambilan."}
             </div>
           )}
           <div className="section-head" style={{ marginTop: 8 }}>

@@ -1,29 +1,112 @@
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Check, Glasses } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Check, ClipboardCheck, Glasses, ShoppingBag, TriangleAlert } from "lucide-react";
 import { type PoStatus } from "../data/mock";
 import { useSharedStore } from "../store/sharedStore";
-import { RESEP_MAP } from "../data/customers";
+import { useCart } from "../context/CartContext";
 import { Avatar, PageHeader, StatusPill } from "../components/ui";
 import "../styles/pages.css";
 import "../styles/admin.css";
 
 const FLOW: PoStatus[] = ["Dipesan", "Diproses", "Sudah Datang", "Selesai"];
 const FLOW_DESC: Record<PoStatus, string> = {
-  Dipesan: "Menunggu proses",
-  Diproses: "Menunggu proses",
-  "Sudah Datang": "Menunggu barang",
-  Selesai: "Belum selesai",
-  Dibatalkan: "Dibatalkan oleh Admin",
+  Dipesan: "Menunggu diproses Admin Cabang",
+  Diproses: "Sedang disiapkan Admin Cabang",
+  "Sudah Datang": "Barang tersedia & siap diambil pelanggan",
+  Selesai: "Pesanan selesai & telah diambil pelanggan",
+  Dibatalkan: "Dibatalkan oleh Admin Cabang",
 };
 
 export default function DetailPoPage() {
   const { id } = useParams();
   const shared = useSharedStore();
-  // Status PO dari shared store — perubahan oleh Admin terbaca Kasir.
-  const order = shared.pos.find((o) => o.id === id) ?? shared.pos[0];
+  const cart = useCart();
+  const navigate = useNavigate();
+  const [pickError, setPickError] = useState<string | null>(null);
+
+  const order = shared.pos.find((o) => o.id === id);
+  if (!order) {
+    return (
+      <div className="page">
+        <PageHeader
+          crumbs={
+            <>
+              <Link to="/dashboard">Kasir</Link> › <Link to="/pemesanan">Pemesanan (PO)</Link> › <b>Detail PO</b>
+            </>
+          }
+          overline="DETAIL PEMESANAN"
+          title="PO Tidak Ditemukan"
+          desc={`Nomor PO "${id ?? "-"}" tidak ada di cabang ini. Periksa kembali daftar pemesanan.`}
+          actions={
+            <Link className="btn btn-ghost" to="/pemesanan">
+              <ArrowLeft size={16} />
+              Daftar PO
+            </Link>
+          }
+        />
+        <div className="notice" role="alert">
+          <TriangleAlert size={16} />
+          PO tidak ditemukan atau sudah tidak tersedia.
+        </div>
+      </div>
+    );
+  }
+
   const current = Math.max(0, FLOW.indexOf(order.status));
   const cancelled = order.status === "Dibatalkan";
-  const resep = RESEP_MAP["C-02"];
+  const matchedCustomer = shared.customers.find((c) => c.name === order.customer);
+  const resep = order.resepSnapshot;
+  const linkedTrx = order.linkedTrx
+    ? shared.transactions.find((t) => t.no === order.linkedTrx)
+    : undefined;
+  const canPickup = order.status === "Sudah Datang" && !order.linkedTrx;
+
+  const pickup = () => {
+    const missing: string[] = [];
+    const picked: Array<{ product: NonNullable<ReturnType<typeof shared.productForPOItem>>; qty: number }> = [];
+    for (const it of order.items) {
+      const product =
+        (order.items.length === 1 && order.productId ? shared.productOf(order.productId) : undefined) ??
+        shared.productForPOItem(it.name);
+      if (!product) {
+        missing.push(it.name);
+        continue;
+      }
+      picked.push({ product, qty: it.qty });
+    }
+    if (missing.length) {
+      setPickError(`Produk tidak ditemukan di katalog: ${missing.join(", ")}. Hubungi Admin untuk melengkapi produk.`);
+      return;
+    }
+    const customer =
+      matchedCustomer ?? {
+        id: `po-${order.id}`,
+        code: order.number,
+        name: order.customer,
+        initials: order.initials,
+        phone: order.phone,
+        email: "",
+        tier: "Reguler" as const,
+        hasResep: Boolean(order.resep),
+        poActive: 0,
+        branch: "Padang",
+      };
+    cart.clear();
+    cart.setCustomer(customer);
+    for (const { product, qty } of picked) {
+      for (let i = 0; i < qty; i += 1) {
+        cart.add({
+          id: product.id,
+          name: product.name,
+          brand: product.brand,
+          category: product.type,
+          price: product.price,
+        });
+      }
+    }
+    cart.setPoId(order.id);
+    navigate("/checkout");
+  };
 
   return (
     <div className="page">
@@ -35,22 +118,46 @@ export default function DetailPoPage() {
         }
         overline="DETAIL PEMESANAN"
         title="Detail Pemesanan"
-        desc="Pantau pesanan pelanggan dan perkembangan status dari Admin Cabang."
+        desc="Informasi pesanan pelanggan dan tahapan status yang diperbarui oleh Admin Cabang."
         actions={
-          <span style={{ display: "inline-flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-            {order.status === "Sudah Datang" ? (
-              <span className="btn btn-ghost btn-disabled" title="Aturan penyelesaian PO menunggu persetujuan klien">
-                Tandai Selesai
-                <em className="nav-soon">Needs client approval</em>
-              </span>
-            ) : null}
+          <>
             <Link className="btn btn-ghost" to="/pemesanan">
               <ArrowLeft size={16} />
               Daftar PO
             </Link>
-          </span>
+            {canPickup ? (
+              <button type="button" className="btn btn-primary" onClick={pickup}>
+                <ShoppingBag size={16} />
+                Proses Pengambilan
+              </button>
+            ) : null}
+          </>
         }
       />
+
+      {pickError ? (
+        <div className="notice" role="alert">
+          <TriangleAlert size={16} />
+          {pickError}
+        </div>
+      ) : null}
+
+      {canPickup ? (
+        <div className="notice notice-ok" role="status">
+          <ClipboardCheck size={16} />
+          Barang sudah datang. Proses pengambilan akan membuka checkout dengan produk PO dan pelanggan terisi otomatis.
+        </div>
+      ) : null}
+
+      {linkedTrx ? (
+        <div className="notice notice-ok" role="status">
+          <Check size={16} />
+          PO ini diselesaikan oleh transaksi <b>{linkedTrx.no}</b> ({linkedTrx.date}, {linkedTrx.time}).
+          <Link className="link-action" to="/riwayat-transaksi">
+            Lihat riwayat
+          </Link>
+        </div>
+      ) : null}
 
       <div className="po-status-card">
         <div>
@@ -71,21 +178,31 @@ export default function DetailPoPage() {
         <div className="section-head">
           <div>
             <h2>Progres Pemesanan</h2>
-            <div className="section-desc">Status diperbarui oleh Admin Cabang</div>
+            <div className="section-desc">Status diperbarui oleh Admin Cabang secara real-time</div>
           </div>
         </div>
         <div className="progress" style={{ opacity: cancelled ? 0.45 : 1 }}>
-          {FLOW.map((step, i) => (
-            <div key={step} className={`pnode ${i < current ? "done" : ""} ${i === current ? "current" : ""}`}>
-              <span className="pdot">{i < current ? <Check size={14} strokeWidth={3} /> : i + 1}</span>
-              <b>{step}</b>
-              <span>{i === current ? order.createdAt.split(" · ")[0] + ", 14.24" : FLOW_DESC[step]}</span>
-            </div>
-          ))}
+          {FLOW.map((step, i) => {
+            const done = i < current || order.status === "Selesai";
+            const stepLog = order.timeline.find((t) => t.to === step);
+            return (
+              <div
+                key={step}
+                className={`pnode ${done ? "done" : ""} ${i === current && order.status !== "Selesai" ? "current" : ""}`}
+              >
+                <span className="pdot">{done ? <Check size={14} strokeWidth={3} /> : i + 1}</span>
+                <b>{step}</b>
+                <span>{stepLog?.at ?? (i === current ? order.createdAt : FLOW_DESC[step])}</span>
+              </div>
+            );
+          })}
         </div>
         {cancelled ? (
           <div className="notice" role="status">
-            PO ini dibatalkan oleh Admin Cabang. Hubungi Admin bila butuh pesanan baru.
+            PO ini dibatalkan oleh Admin Cabang.
+            {order.timeline.find((t) => t.to === "Dibatalkan")?.note
+              ? ` Alasan: ${order.timeline.find((t) => t.to === "Dibatalkan")?.note}`
+              : ""}
           </div>
         ) : null}
       </section>
@@ -97,12 +214,12 @@ export default function DetailPoPage() {
               <h2>Data Pelanggan</h2>
             </div>
             <div className="cust-card">
-              <Avatar initials="RP" size={46} />
+              <Avatar initials={order.initials} size={46} />
               <div className="cc-body">
-                <b>Rian Pratama</b>
+                <b>{order.customer}</b>
                 <div className="cc-meta">
-                  <span>PLG-0001</span>
-                  <span>0852 7712 9011</span>
+                  {matchedCustomer ? <span>{matchedCustomer.code}</span> : null}
+                  <span>{order.phone}</span>
                 </div>
               </div>
             </div>
@@ -133,40 +250,47 @@ export default function DetailPoPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <section className="co-card">
             <div className="section-head">
-              <h2>Resep Mata</h2>
+              <h2>Resep Mata (Snapshot PO)</h2>
             </div>
             {resep ? (
-              <table className="rx-table">
-                <thead>
-                  <tr>
-                    <th>MATA</th>
-                    <th>SPH</th>
-                    <th>CYL</th>
-                    <th>AXIS</th>
-                    <th>ADD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>OD (Kanan)</td>
-                    <td>{resep.od.sph}</td>
-                    <td>{resep.od.cyl}</td>
-                    <td>{resep.od.axis}</td>
-                    <td>{resep.add ?? "-"}</td>
-                  </tr>
-                  <tr>
-                    <td>OS (Kiri)</td>
-                    <td>{resep.os.sph}</td>
-                    <td>{resep.os.cyl}</td>
-                    <td>{resep.os.axis}</td>
-                    <td>{resep.add ?? "-"}</td>
-                  </tr>
-                </tbody>
-              </table>
-            ) : null}
-            <div className="tt-sub" style={{ fontWeight: 600 }}>
-              Resep tersimpan bersama pesanan ini.
-            </div>
+              <>
+                <table className="rx-table">
+                  <thead>
+                    <tr>
+                      <th>MATA</th>
+                      <th>SPH</th>
+                      <th>CYL</th>
+                      <th>AXIS</th>
+                      <th>ADD</th>
+                      <th>PD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>OD (Kanan)</td>
+                      <td>{resep.od.sph}</td>
+                      <td>{resep.od.cyl}</td>
+                      <td>{resep.od.axis}</td>
+                      <td>{resep.add ?? "-"}</td>
+                      <td>{resep.pd}</td>
+                    </tr>
+                    <tr>
+                      <td>OS (Kiri)</td>
+                      <td>{resep.os.sph}</td>
+                      <td>{resep.os.cyl}</td>
+                      <td>{resep.os.axis}</td>
+                      <td>{resep.add ?? "-"}</td>
+                      <td>{resep.pd}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div className="tt-sub" style={{ fontWeight: 600 }}>
+                  Ukuran lensa tersimpan pada detail PO ini ({resep.at}).
+                </div>
+              </>
+            ) : (
+              <div className="empty-note">PO ini tidak menyertakan resep mata.</div>
+            )}
           </section>
 
           <section className="co-card">
@@ -176,11 +300,11 @@ export default function DetailPoPage() {
             <div>
               <div className="note-line">
                 <i />
-                Pembuatan lensa mengikuti resep terlampir.
+                {order.note}
               </div>
               <div className="note-line">
                 <i />
-                Hubungi pelanggan saat pesanan tersedia.
+                Hubungi pelanggan ({order.phone}) saat pesanan berstatus Sudah Datang.
               </div>
             </div>
           </section>
@@ -188,7 +312,7 @@ export default function DetailPoPage() {
       </div>
 
       <div className="tt-sub" style={{ padding: "0 6px", fontWeight: 600 }}>
-        Kasir dapat memantau PO. Proses dan perubahan status ditangani Admin Cabang.
+        Kasir mencatat pemesanan dan memantau status PO. Pemrosesan dan pembaruan status PO ditangani oleh Admin Cabang.
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
-import { BRANCHES, useSharedStore, type ProductType } from "../../store/sharedStore";
+import { useSharedStore, type ProductType } from "../../store/sharedStore";
 import { exportPdf, exportXlsx, inPeriod, periodRange, rp, stamp, type PeriodKey } from "../../store/reports";
 import { Chip, PageHeader, SearchBox, StatusPill, formatIDR } from "../../components/ui";
 import "../../styles/pages.css";
@@ -15,14 +15,14 @@ const KINDS: Array<{ id: Kind; label: string }> = [
 ];
 const PERIODS: PeriodKey[] = ["semua", "hari", "mingguan", "bulanan", "tahunan", "custom"];
 const PERIOD_LABEL: Record<PeriodKey, string> = {
-  semua: "Semua waktu", hari: "Hari ini", mingguan: "7 hari", bulanan: "30 hari", tahunan: "Tahun ini", custom: "Rentang",
+  semua: "Semua waktu", hari: "Hari ini", mingguan: "Minggu ini", bulanan: "Bulan ini", tahunan: "Tahun ini", custom: "Rentang",
 };
 const PAGE = 10;
 
-const branchLabel = (id?: string) => BRANCHES.find((b) => b.id === id)?.name ?? (id === "cabang-padang" ? "Cabang Padang" : id ?? "Cabang Padang");
-
 export default function OwnerLaporanPage() {
   const store = useSharedStore();
+  const branchLabel = (id?: string) =>
+    store.branches.find((b) => b.id === id)?.name ?? (id === "cabang-padang" ? "Cabang Padang" : id ?? "Cabang Padang");
   const [kind, setKind] = useState<Kind>("transaksi");
   const [q, setQ] = useState("");
   const [branch, setBranch] = useState("all");
@@ -45,24 +45,25 @@ export default function OwnerLaporanPage() {
       const v = b ?? loc ?? "cabang-padang";
       return branch === "all" ? true : v === branch;
     };
+    const typeOfName = (name?: string) => store.products.find((p) => p.name === name)?.type;
+    const inJenis = (type?: string) => jenis === "Semua" || type === jenis;
     if (kind === "transaksi") {
       const rows = store.transactions
         .filter((t) => inB(t.branchId))
+        .filter((t) => jenis === "Semua" || (t.products ?? []).some((p) => typeOfName(p.name) === jenis))
         .filter((t) => inPeriod(`${t.date}${t.time ? `, ${t.time}` : ""}`, range.from, range.to))
         .filter((t) => `${t.no} ${t.customer}`.toLowerCase().includes(q.toLowerCase()));
       const ok = rows.filter((t) => t.status === "Selesai");
       return {
         head: ["No. Transaksi", "Tanggal", "Cabang", "Pelanggan", "Metode", "Status", "Total (Rp)"],
-        body: rows.map((t) => [t.no, `${t.date}${t.time ? ` ${t.time}` : ""}`, branchLabel(t.branchId), t.customer, t.method ?? "—", t.status, t.total]),
+        body: rows.map((t) => [t.no, `${t.date}${t.time ? ` · ${t.time}` : ""}`, branchLabel(t.branchId), t.customer, t.method ?? "—", t.status, t.total]),
         total: ["", "", "", "", "", `${ok.length} sukses`, ok.reduce((a, t) => a + t.total, 0)] as Array<string | number>,
         summary: `${ok.length} sukses · ${formatIDR(ok.reduce((a, t) => a + t.total, 0))}`,
       };
     }
     if (kind === "stok") {
-      const rows = [
-        ...store.stock.map((s) => ({ ...s, loc: "cabang-padang" as const })),
-        ...store.centralStock.map((s) => ({ ...s, loc: "pusat" as const })),
-      ]
+      const rows = store.branches
+        .flatMap((b) => store.stockForBranch(b.id).map((s) => ({ ...s, loc: b.id })))
         .map(({ loc: l, ...s }) => ({ l, s, p: store.productOf(s.productId)! }))
         .filter(({ p }) => p && p.status === "Aktif")
         .filter(({ p }) => (jenis === "Semua" ? true : p.type === jenis))
@@ -71,7 +72,7 @@ export default function OwnerLaporanPage() {
       const low = rows.filter(({ s }) => s.saldo <= s.minimum).length;
       return {
         head: ["Lokasi", "Kode", "Produk", "Jenis", "Stok", "Minimum", "Status"],
-        body: rows.map(({ l, s, p }) => [l, p.code, p.name, p.type, s.saldo, s.minimum, s.saldo <= s.minimum ? "Menipis" : "Aman"]),
+        body: rows.map(({ l, s, p }) => [branchLabel(l), p.code, p.name, p.type, s.saldo, s.minimum, s.saldo <= s.minimum ? "Menipis" : "Aman"]),
         total: ["", "", "", "", rows.reduce((a, { s }) => a + s.saldo, 0), "", `${low} menipis`] as Array<string | number>,
         summary: `${rows.length} baris · ${low} menipis`,
       };
@@ -79,6 +80,7 @@ export default function OwnerLaporanPage() {
     if (kind === "po") {
       const rows = store.pos
         .filter((o) => inB(o.branchId))
+        .filter((o) => inJenis(typeOfName(o.productLabel)))
         .filter((o) => inPeriod(o.createdAt, range.from, range.to))
         .filter((o) => `${o.number} ${o.customer}`.toLowerCase().includes(q.toLowerCase()));
       return {
@@ -91,6 +93,7 @@ export default function OwnerLaporanPage() {
     // aktivitas: fisik (mutasi) + workflow (alokasi/penerimaan) berlabel
     const mrows = store.mutations
       .filter((m) => inB(m.branchId))
+      .filter((m) => inJenis(store.productOf(m.productId)?.type))
       .filter((m) => inPeriod(m.at, range.from, range.to))
       .map((m) => {
         const p = store.productOf(m.productId);
@@ -102,6 +105,7 @@ export default function OwnerLaporanPage() {
       });
     const rrows = store.receipts
       .filter((r) => inB(r.branchId))
+      .filter((r) => inJenis(store.productOf(r.productId)?.type))
       .filter((r) => inPeriod(r.at, range.from, range.to))
       .map((r) => {
         const p = store.productOf(r.productId);
@@ -113,13 +117,14 @@ export default function OwnerLaporanPage() {
       });
     const drows = store.distributions
       .filter((d) => inB(d.branchId))
+      .filter((d) => d.lines.some((l) => inJenis(store.productOf(l.productId)?.type)))
       .filter((d) => inPeriod(d.date, range.from, range.to))
       .flatMap((d) =>
-        d.lines.map((l) => {
+        d.lines.filter((l) => inJenis(store.productOf(l.productId)?.type)).map((l) => {
           const p = store.productOf(l.productId);
           return {
             sort: d.date,
-            row: [d.date, d.id, "Alokasi (reservasi)", p?.name ?? l.productId, branchLabel(d.branchId), l.qtyAlokasi, d.status, d.actor ?? "seed"] as Array<string | number>,
+            row: [d.date, d.id, "Alokasi (reservasi)", p?.name ?? l.productId, branchLabel(d.branchId), l.qtyAlokasi, d.status, d.actor ?? "Sistem"] as Array<string | number>,
             hay: `${d.id} ${p?.name ?? ""}`,
           };
         }),
@@ -129,7 +134,7 @@ export default function OwnerLaporanPage() {
       head: ["Waktu", "Referensi", "Kejadian", "Produk", "Lokasi", "Qty", "Sumber/Status", "Aktor"],
       body: all.map((r) => r.row),
       total: ["", "", `${all.length} kejadian`, "", "", "", "", ""] as Array<string | number>,
-      summary: `${all.length} kejadian · alokasi = reservasi (bukan barang diterima)`,
+      summary: `${all.length} kejadian · mutasi, penerimaan, dan alokasi`,
     };
   }, [store, kind, branch, jenis, range.from, range.to, q]);
 
@@ -155,7 +160,7 @@ export default function OwnerLaporanPage() {
           fmt === "xlsx"
             ? exportXlsx(title, meta, data.head, data.body, data.total, `${fileBase}.xlsx`)
             : exportPdf(title, meta, data.head, data.body, data.total, `${fileBase}.pdf`);
-        setSaved(`Tersimpan: ${name} (${data.body.length} baris, total cocok tampilan).`);
+        setSaved(`Tersimpan: ${name} (${data.body.length} baris).`);
       } catch (e) {
         setSaved(`Gagal mengekspor: ${e instanceof Error ? e.message : e}`);
       }
@@ -168,7 +173,7 @@ export default function OwnerLaporanPage() {
       <PageHeader
         overline="PENGAWASAN — LAPORAN"
         title="Laporan Operasional"
-        desc="Filter dan ekspor dari sumber data yang sama. Ekspor mencakup seluruh hasil filter (bukan hanya halaman tampil)."
+        desc="Rekap transaksi, stok, pemesanan, dan aktivitas barang seluruh cabang. Filter berdasarkan cabang, jenis produk, dan periode, lalu ekspor ke Excel atau PDF."
       />
 
       <div className="toolbar">
@@ -207,23 +212,22 @@ export default function OwnerLaporanPage() {
                 resetAll();
               }}
             >
-              {k === "semua" ? "Semua waktu" : k === "hari" ? "Hari ini" : k === "mingguan" ? "7 hari" : k === "bulanan" ? "30 hari" : k === "tahunan" ? "Tahun ini" : "Rentang"}
+              {PERIOD_LABEL[k]}
             </Chip>
           ))}
         </div>
         <select className="select-pill" aria-label="Cabang" value={branch} onChange={(e) => { setBranch(e.target.value); resetAll(); }}>
           <option value="all">Semua Cabang</option>
-          {BRANCHES.map((b) => (
+          {store.branches.map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
         </select>
-        {kind === "stok" ? (
-          <select className="select-pill" aria-label="Jenis" value={jenis} onChange={(e) => { setJenis(e.target.value as typeof jenis); resetAll(); }}>
-            <option value="Semua">Frame + Lensa</option>
-            <option value="Frame">Frame</option>
-            <option value="Lensa">Lensa</option>
-          </select>
-        ) : null}
+        <select className="select-pill" aria-label="Jenis" value={jenis} onChange={(e) => { setJenis(e.target.value as typeof jenis); resetAll(); }}>
+          <option value="Semua">Semua jenis</option>
+          <option value="Frame">Frame</option>
+          <option value="Lensa">Lensa</option>
+          <option value="Aksesoris">Aksesoris</option>
+        </select>
       </div>
 
       {period === "custom" ? (
@@ -286,14 +290,14 @@ export default function OwnerLaporanPage() {
             {view.length === 0 ? (
               <tr>
                 <td colSpan={data.head.length}>
-                  <div className="empty-note">Tidak ada data pada filter ini — ekspor akan menghasilkan file dengan keterangan kosong.</div>
+                  <div className="empty-note">Tidak ada data pada filter ini.</div>
                 </td>
               </tr>
             ) : null}
           </tbody>
         </table>
         <div className="table-foot">
-          <span className="foot-note">Halaman {page} dari {pages} · {data.body.length} baris (ekspor: semua baris)</span>
+          <span className="foot-note">Halaman {page} dari {pages} · {data.body.length} baris</span>
           <div className="foot-actions">
             <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Sebelumnya</button>
             <button className="btn btn-ghost btn-sm" disabled={page >= pages} onClick={() => setPage(page + 1)}>Berikutnya</button>

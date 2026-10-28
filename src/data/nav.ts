@@ -1,12 +1,11 @@
-import type { LucideIcon } from "lucide-react";
 import {
   LayoutGrid,
   ShoppingCart,
   ClipboardList,
   History,
-  CreditCard,
   Users,
   Glasses,
+  type LucideIcon,
 } from "lucide-react";
 
 export type NavItem = {
@@ -20,7 +19,6 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: "Transaksi Baru", to: "/transaksi-baru", icon: ShoppingCart },
   { label: "Pemesanan (PO)", to: "/pemesanan", icon: ClipboardList },
   { label: "Riwayat Transaksi", to: "/riwayat-transaksi", icon: History },
-  { label: "Pembayaran", to: "/pembayaran", icon: CreditCard },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [

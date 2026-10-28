@@ -12,7 +12,7 @@ const FILTERS: Array<"Semua" | PoStatus> = ["Semua", "Dipesan", "Diproses", "Sud
 
 export default function AdminPemesananPage() {
   const store = useSharedStore();
-  const [filter, setFilter] = useState<"Semua" | PoStatus>("Dipesan");
+  const [filter, setFilter] = useState<"Semua" | PoStatus>("Semua");
   const [query, setQuery] = useState("");
 
   const rows = useMemo(
@@ -81,10 +81,17 @@ export default function AdminPemesananPage() {
                   <StatusPill label={o.status} />
                 </td>
                 <td className="tt-right">
-                  <Link className="link-action" to={`/admin/pemesanan/${o.id}`}>
-                    Lihat detail
-                    <ChevronRight size={15} />
-                  </Link>
+                  <div className="row-actions">
+                    {o.status === "Sudah Datang" ? (
+                      <span className="tt-sub" style={{ marginTop: 0, fontWeight: 700 }}>
+                        Menunggu pengambilan Kasir
+                      </span>
+                    ) : null}
+                    <Link className="link-action" to={`/admin/pemesanan/${o.id}`}>
+                      Lihat detail
+                      <ChevronRight size={15} />
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -98,7 +105,7 @@ export default function AdminPemesananPage() {
           </tbody>
         </table>
         <div className="table-foot">
-          <span className="foot-note">Menampilkan {rows.length} dari {store.pos.length} PO · data demo</span>
+          <span className="foot-note">Menampilkan {rows.length} dari {store.pos.length} PO</span>
         </div>
       </div>
     </div>

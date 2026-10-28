@@ -77,6 +77,7 @@ export default function AdminMutasiPage() {
               <th>PRODUK</th>
               <th className="tt-center">JENIS</th>
               <th>SUMBER</th>
+              <th>LOKASI</th>
               <th className="tt-center">QTY</th>
               <th className="tt-center">SEBELUM → SESUDAH</th>
               <th>REFERENSI</th>
@@ -106,6 +107,11 @@ export default function AdminMutasiPage() {
                   <td>
                     <span className="type-chip">{m.sumber}</span>
                   </td>
+                  <td>
+                    <span className="tt-sub" style={{ marginTop: 0 }}>
+                      {m.sumber === "Penerimaan" ? `Pusat → ${DEMO_ADMIN.branch}` : DEMO_ADMIN.branch}
+                    </span>
+                  </td>
                   <td className="tt-center tt-money" style={{ color: m.arah === "IN" ? "var(--ok-ink)" : "var(--danger-ink)" }}>
                     {m.qty > 0 ? `+${m.qty}` : m.qty}
                   </td>
@@ -125,7 +131,7 @@ export default function AdminMutasiPage() {
             })}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={8}>
+                <td colSpan={9}>
                   <div className="empty-note">Tidak ada mutasi yang cocok dengan filter.</div>
                 </td>
               </tr>
@@ -134,7 +140,7 @@ export default function AdminMutasiPage() {
         </table>
         <div className="table-foot">
           <span className="foot-note">
-            Menampilkan {rows.length} dari {store.mutations.length} mutasi · data demo
+            Menampilkan {rows.length} dari {store.mutations.length} mutasi
           </span>
         </div>
       </div>

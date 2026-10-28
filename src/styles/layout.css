@@ -108,6 +108,23 @@
   border-top: 1px solid var(--line);
 }
 
+/* Pemilik punya 11 menu: rapatkan agar seluruh navigasi muat tanpa scroll. */
+.sidebar.owner-sidebar .sidebar-brand {
+  padding-bottom: 24px;
+}
+
+.sidebar.owner-sidebar .nav-item {
+  padding: 11px 14px;
+}
+
+.sidebar.owner-sidebar .nav-sep {
+  margin: 22px 12px 10px;
+}
+
+.sidebar.owner-sidebar .sidebar-foot {
+  padding-top: 14px;
+}
+
 .sidebar-foot b {
   display: block;
   font-size: 13.5px;

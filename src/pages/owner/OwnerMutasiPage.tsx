@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, X } from "lucide-react";
-import { BRANCHES, useSharedStore } from "../../store/sharedStore";
+import { ArrowRight, Check, Clock, Info, X } from "lucide-react";
+import { useSharedStore } from "../../store/sharedStore";
+import { requestState, requestStateLabel } from "../../store/requestStatus";
 import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
@@ -16,6 +17,8 @@ function parseAt(at: string): number {
   return new Date(Number(m[3]), BULAN[m[2]] ?? 0, Number(m[1]), Number(m[4]), Number(m[5])).getTime();
 }
 
+const PAGE = 10;
+
 type LedgerRow = {
   key: string;
   at: string;
@@ -25,16 +28,18 @@ type LedgerRow = {
   ref: string;
   productId: string;
   branchId: string;
+  qty: number | null;
   qtyText: string;
   actor: string;
-  trace: { requestId?: string; allocationId?: string; receiptId?: string; productId: string };
+  trace: { mutationId?: string; requestId?: string; allocationId?: string; receiptId?: string; productId: string };
 };
 
 export default function OwnerMutasiPage() {
   const store = useSharedStore();
   const [q, setQ] = useState("");
   const [loc, setLoc] = useState("all");
-  const [tipe, setTipe] = useState<"Semua" | "Fisik" | "Workflow">("Semua");
+  const [arah, setArah] = useState<"Semua" | "Masuk" | "Keluar">("Semua");
+  const [page, setPage] = useState(1);
   const [traceKey, setTraceKey] = useState<string | null>(null);
 
   const rows = useMemo<LedgerRow[]>(() => {
@@ -49,9 +54,14 @@ export default function OwnerMutasiPage() {
         ref: m.ref,
         productId: m.productId,
         branchId: m.branchId,
+        qty: m.qty,
         qtyText: m.qty > 0 ? `+${m.qty}` : `${m.qty}`,
         actor: m.actor,
-        trace: { receiptId: m.sumber === "Penerimaan" ? m.ref : undefined, productId: m.productId },
+        trace: {
+          mutationId: m.id,
+          receiptId: m.sumber === "Penerimaan" ? m.ref : undefined,
+          productId: m.productId,
+        },
       });
     }
     for (const r of store.requests) {
@@ -64,6 +74,7 @@ export default function OwnerMutasiPage() {
         ref: r.id,
         productId: r.productId,
         branchId: r.branchId,
+        qty: null,
         qtyText: `minta ${r.qty}`,
         actor: r.actor,
         trace: { requestId: r.id, productId: r.productId },
@@ -80,8 +91,9 @@ export default function OwnerMutasiPage() {
           ref: d.id,
           productId: l.productId,
           branchId: d.branchId,
+          qty: null,
           qtyText: `alokasi ${l.qtyAlokasi}`,
-          actor: d.actor ?? "Seed demo",
+          actor: d.actor ?? "Sistem",
           trace: { requestId: d.requestId, allocationId: d.id, productId: l.productId },
         });
       }
@@ -89,55 +101,107 @@ export default function OwnerMutasiPage() {
     out.sort((a, b) => b.ts - a.ts);
     return out
       .filter((r) => (loc === "all" ? true : r.branchId === loc))
-      .filter((r) => (tipe === "Semua" ? true : r.fisik === (tipe === "Fisik")))
+      .filter((r) =>
+        arah === "Semua" ? true : arah === "Masuk" ? r.qty !== null && r.qty > 0 : r.qty !== null && r.qty < 0,
+      )
       .filter((r) => {
         const p = store.productOf(r.productId);
         return `${r.ref} ${r.event} ${p?.name ?? ""} ${p?.code ?? ""}`.toLowerCase().includes(q.toLowerCase());
       });
-  }, [store, q, loc, tipe]);
+  }, [store, q, loc, arah]);
 
-  const trace = traceKey ? rows.find((r) => r.key === traceKey)?.trace : undefined;
-  const traceReq = trace?.requestId ? store.requests.find((r) => r.id === trace.requestId) : undefined;
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  const view = rows.slice((page - 1) * PAGE, page * PAGE);
+
+  const selectedRow = traceKey ? rows.find((r) => r.key === traceKey) : undefined;
+  const trace = selectedRow?.trace;
+  const directMove = trace?.mutationId ? store.mutations.find((m) => m.id === trace.mutationId) : undefined;
+
+  // Telusur dua arah: Pengajuan <-> Alokasi <-> Penerimaan <-> Mutasi
+  const initialReceipt = trace?.receiptId ? store.receipts.find((r) => r.id === trace.receiptId) : undefined;
+  const resolvedAllocId = trace?.allocationId ?? initialReceipt?.distributionId;
+  const initialAlloc = resolvedAllocId ? store.distributions.find((d) => d.id === resolvedAllocId) : undefined;
+  const resolvedRequestId = trace?.requestId ?? initialAlloc?.requestId;
+
+  const traceReq = resolvedRequestId ? store.requests.find((r) => r.id === resolvedRequestId) : undefined;
+  const traceReqAlloc = traceReq ? store.allocatedForRequest(traceReq.id, traceReq.productId) : 0;
+  const traceReqReceived = traceReq ? store.receivedForRequest(traceReq.id, traceReq.productId) : 0;
   const traceAllocs = trace
     ? store.distributions.filter(
-        (d) => d.id === trace.allocationId || (trace.requestId && d.requestId === trace.requestId),
+        (d) =>
+          (resolvedAllocId && d.id === resolvedAllocId) ||
+          (resolvedRequestId && d.requestId === resolvedRequestId),
       )
     : [];
   const traceReceipts = trace
     ? store.receipts.filter(
         (r) =>
-          r.id === trace.receiptId ||
+          (trace.receiptId && r.id === trace.receiptId) ||
           traceAllocs.some((d) => d.id === r.distributionId && r.productId === trace.productId),
       )
     : [];
   const traceMoves = trace
     ? store.mutations.filter(
         (m) =>
-          traceReceipts.some((r) => r.id === m.ref) ||
-          (m.productId === trace.productId && m.sumber === "Penjualan" && traceKey?.startsWith("M-")),
+          (directMove && m.id === directMove.id) ||
+          traceReceipts.some((r) => r.id === m.ref && m.productId === trace.productId),
       )
     : [];
+
+  const isDirectPhysical =
+    Boolean(directMove) &&
+    directMove?.sumber !== "Penerimaan" &&
+    !traceReq &&
+    traceAllocs.length === 0 &&
+    traceReceipts.length === 0;
+
+  const traceProduct = selectedRow ? store.productOf(selectedRow.productId) : undefined;
+  const traceBranchName = selectedRow
+    ? store.branches.find((b) => b.id === selectedRow.branchId)?.name ?? selectedRow.branchId
+    : "";
 
   return (
     <div className="page">
       <PageHeader
         overline="PENGAWASAN — MUTASI"
         title="Riwayat Mutasi"
-        desc="Ledger gabungan kejadian nyata. Baris fisik mengubah saldo; baris workflow (pengajuan/alokasi) tidak."
+        desc="Catatan gabungan mutasi stok dan keputusan distribusi dari seluruh lokasi."
       />
 
       <div className="toolbar">
-        <SearchBox placeholder="Cari referensi, kejadian, atau produk..." value={q} onChange={setQ} />
+        <SearchBox
+          placeholder="Cari referensi, keterangan, atau produk..."
+          value={q}
+          onChange={(v) => {
+            setQ(v);
+            setPage(1);
+          }}
+        />
         <div className="toolbar-chips">
-          {(["Semua", "Fisik", "Workflow"] as const).map((t) => (
-            <Chip key={t} active={tipe === t} onClick={() => setTipe(t)}>
+          {(["Semua", "Masuk", "Keluar"] as const).map((t) => (
+            <Chip
+              key={t}
+              active={arah === t}
+              onClick={() => {
+                setArah(t);
+                setPage(1);
+              }}
+            >
               {t}
             </Chip>
           ))}
         </div>
-        <select className="select-pill" aria-label="Lokasi" value={loc} onChange={(e) => setLoc(e.target.value)}>
+        <select
+          className="select-pill"
+          aria-label="Lokasi"
+          value={loc}
+          onChange={(e) => {
+            setLoc(e.target.value);
+            setPage(1);
+          }}
+        >
           <option value="all">Semua Lokasi</option>
-          {BRANCHES.map((b) => (
+          {store.branches.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
             </option>
@@ -149,35 +213,33 @@ export default function OwnerMutasiPage() {
         <table className="tt">
           <thead>
             <tr>
-              <th>WAKTU / ID</th>
-              <th className="tt-center">KEJADIAN</th>
-              <th>REFERENSI</th>
+              <th>TANGGAL</th>
               <th>PRODUK</th>
-              <th>LOKASI</th>
-              <th className="tt-center">QTY</th>
+              <th>CABANG</th>
+              <th className="tt-center">JENIS</th>
+              <th className="tt-center">JUMLAH</th>
+              <th>KETERANGAN</th>
               <th>AKTOR</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => {
+            {view.map((r) => {
               const p = store.productOf(r.productId);
+              const jenis = r.fisik
+                ? r.event === "Penjualan"
+                  ? "Keluar"
+                  : "Masuk"
+                : r.event === "Pengajuan Dibuat"
+                  ? "Pengajuan"
+                  : "Alokasi";
               return (
                 <tr key={r.key}>
                   <td>
                     <div className="tt-num" style={{ fontSize: 12.5 }}>
-                      {r.key.startsWith("M-") ? r.key.slice(2) : r.ref}
+                      {r.at}
                     </div>
-                    <div className="tt-sub">{r.at}</div>
-                  </td>
-                  <td className="tt-center">
-                    <StatusPill label={r.fisik ? (r.event === "Penjualan" ? "Keluar" : "Masuk") : "Diajukan"} dot={false} />
-                    <div className="tt-sub">{r.event}</div>
-                  </td>
-                  <td>
-                    <div className="tt-num" style={{ fontSize: 12.5 }}>
-                      {r.ref}
-                    </div>
+                    <div className="tt-sub">{r.key.startsWith("M-") ? r.key.slice(2) : r.ref}</div>
                   </td>
                   <td>
                     <div className="tt-num" style={{ fontSize: 13 }}>
@@ -185,8 +247,17 @@ export default function OwnerMutasiPage() {
                     </div>
                     <div className="tt-sub">{p?.code}</div>
                   </td>
-                  <td>{BRANCHES.find((b) => b.id === r.branchId)?.name ?? r.branchId}</td>
+                  <td>{store.branches.find((b) => b.id === r.branchId)?.name ?? r.branchId}</td>
+                  <td className="tt-center">
+                    <StatusPill label={jenis} dot={false} />
+                  </td>
                   <td className="tt-center tt-money">{r.qtyText}</td>
+                  <td>
+                    <div className="tt-num" style={{ fontSize: 12.5 }}>
+                      {r.event}
+                    </div>
+                    <div className="tt-sub">{r.ref}</div>
+                  </td>
                   <td>{r.actor}</td>
                   <td className="tt-right">
                     <button className="link-action" onClick={() => setTraceKey(r.key)}>
@@ -197,7 +268,7 @@ export default function OwnerMutasiPage() {
                 </tr>
               );
             })}
-            {rows.length === 0 ? (
+            {view.length === 0 ? (
               <tr>
                 <td colSpan={8}>
                   <div className="empty-note">Tidak ada kejadian yang cocok dengan filter.</div>
@@ -208,14 +279,31 @@ export default function OwnerMutasiPage() {
         </table>
         <div className="table-foot">
           <span className="foot-note">
-            Workflow ≠ mutasi fisik: tidak ada baris saldo palsu · data demo
+            Halaman {page} dari {pages} · {rows.length} kejadian · Masuk/Keluar hanya baris fisik;
+            pengajuan dan alokasi tercatat sebagai keputusan.
           </span>
+          <div className="foot-actions">
+            <button
+              className="btn btn-ghost btn-sm"
+              disabled={page <= 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Sebelumnya
+            </button>
+            <button
+              className="btn btn-ghost btn-sm"
+              disabled={page >= pages}
+              onClick={() => setPage(page + 1)}
+            >
+              Berikutnya
+            </button>
+          </div>
         </div>
       </div>
 
-      {trace ? (
+      {selectedRow && trace ? (
         <div className="overlay" onClick={() => setTraceKey(null)}>
-          <div className="drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+          <div className="drawer" key={selectedRow.key} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             <div className="drawer-head">
               <div>
                 <h2>Telusur Rantai</h2>
@@ -225,51 +313,235 @@ export default function OwnerMutasiPage() {
                 <X size={18} />
               </button>
             </div>
-            {traceReq ? (
-              <div className="todo-row">
-                <div className="todo-body">
-                  <b>Pengajuan {traceReq.id}</b>
+
+            {/* Kartu ringkasan baris yang sedang ditelusuri */}
+            <div className="trace-summary-card">
+              <div className="trace-summary-top">
+                <div>
+                  <b>{traceProduct?.name ?? selectedRow.productId}</b>
                   <span>
-                    {traceReq.at} · {traceReq.actor} · minta {traceReq.qty}
+                    {traceProduct?.code ?? selectedRow.productId} · {traceBranchName}
                   </span>
                 </div>
-                <StatusPill label={traceReq.status} dot={false} />
+                <StatusPill
+                  label={
+                    selectedRow.fisik
+                      ? selectedRow.event === "Penjualan"
+                        ? "Keluar"
+                        : "Masuk"
+                      : selectedRow.event === "Pengajuan Dibuat"
+                        ? "Pengajuan"
+                        : "Alokasi"
+                  }
+                  dot={false}
+                />
               </div>
-            ) : null}
-            {traceAllocs.map((d) => (
-              <div key={d.id} className="todo-row">
-                <div className="todo-body">
-                  <b>Alokasi {d.id}</b>
-                  <span>
-                    {d.date} · {d.actor ?? "seed"} · {d.lines.find((l) => l.productId === trace.productId)?.qtyAlokasi} unit · {d.status}
-                  </span>
+              <div className="trace-summary-meta">
+                <div className="trace-meta-item">
+                  <span>Referensi</span>
+                  <b>{selectedRow.ref}</b>
+                </div>
+                <div className="trace-meta-item">
+                  <span>Kejadian</span>
+                  <b>{selectedRow.event}</b>
+                </div>
+                <div className="trace-meta-item">
+                  <span>Kuantitas</span>
+                  <b>{selectedRow.qtyText}</b>
                 </div>
               </div>
-            ))}
-            {traceReceipts.map((r) => (
-              <div key={r.id} className="todo-row">
-                <div className="todo-body">
-                  <b>Penerimaan {r.id}</b>
+            </div>
+
+            <div className="mini-label">JEJAK RANTAI KEJADIAN</div>
+
+            {isDirectPhysical && directMove ? (
+              <>
+                <div className="trace-chain">
+                  <div className="trace-step is-done">
+                    <span className="trace-dot">
+                      <Check size={14} strokeWidth={2.6} />
+                    </span>
+                    <div className="trace-card">
+                      <div className="trace-card-body">
+                        <div className="trace-card-stage">SUMBER KEJADIAN LANGSUNG</div>
+                        <b>
+                          {directMove.sumber} · {directMove.ref}
+                        </b>
+                        <span>
+                          {directMove.at} · oleh {directMove.actor}
+                        </span>
+                      </div>
+                      <StatusPill label={directMove.arah === "IN" ? "Masuk" : "Keluar"} dot={false} />
+                    </div>
+                  </div>
+
+                  <div className="trace-step is-done">
+                    <span className="trace-dot">
+                      <Check size={14} strokeWidth={2.6} />
+                    </span>
+                    <div className="trace-card">
+                      <div className="trace-card-body">
+                        <div className="trace-card-stage">MUTASI STOK FISIK</div>
+                        <b>Mutasi {directMove.id}</b>
+                        <span>
+                          Saldo {directMove.sebelum} → <b>{directMove.sesudah} unit</b> ({traceBranchName})
+                        </span>
+                      </div>
+                      <span className="trace-qty-badge">
+                        {directMove.qty > 0 ? `+${directMove.qty}` : directMove.qty} unit
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="notice">
+                  <Info size={16} />
                   <span>
-                    {r.at} · {r.actor} · +{r.qty} unit
+                    Kejadian <b>{directMove.sumber}</b> mengubah stok fisik secara langsung tanpa melalui rantai
+                    pengajuan &amp; alokasi distribusi.
                   </span>
                 </div>
-              </div>
-            ))}
-            {traceMoves.slice(0, 5).map((m) => (
-              <div key={m.id} className="todo-row">
-                <div className="todo-body">
-                  <b>Mutasi {m.id}</b>
-                  <span>
-                    {m.at} · {m.sumber} · {m.sebelum} → {m.sesudah}
+              </>
+            ) : (
+              <div className="trace-chain">
+                {/* Tahap 1: Pengajuan */}
+                <div className={`trace-step ${traceReq ? "is-done" : "is-pending"}`}>
+                  <span className="trace-dot">
+                    {traceReq ? <Check size={14} strokeWidth={2.6} /> : "1"}
                   </span>
+                  <div className="trace-card">
+                    <div className="trace-card-body">
+                      <div className="trace-card-stage">TAHAP 1 · PENGAJUAN CABANG</div>
+                      {traceReq ? (
+                        <>
+                          <b>Pengajuan {traceReq.id}</b>
+                          <span>
+                            {traceReq.at} · {traceReq.actor} · minta {traceReq.qty} unit
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <b>Tanpa Pengajuan Terkait</b>
+                          <span>Alokasi dibuat langsung dari pusat tanpa referensi pengajuan cabang</span>
+                        </>
+                      )}
+                    </div>
+                    {traceReq ? (
+                      <StatusPill
+                        label={requestStateLabel(
+                          requestState(traceReq, traceReq.qty, traceReqAlloc, traceReqReceived),
+                        )}
+                        dot={false}
+                      />
+                    ) : null}
+                  </div>
                 </div>
-                <b style={{ fontSize: 13.5 }}>{m.qty > 0 ? `+${m.qty}` : m.qty}</b>
+
+                {/* Tahap 2: Alokasi */}
+                <div className={`trace-step ${traceAllocs.length > 0 ? "is-done" : "is-pending"}`}>
+                  <span className="trace-dot">
+                    {traceAllocs.length > 0 ? <Check size={14} strokeWidth={2.6} /> : <Clock size={14} />}
+                  </span>
+                  <div className="trace-card">
+                    <div className="trace-card-body">
+                      <div className="trace-card-stage">TAHAP 2 · ALOKASI DISTRIBUSI</div>
+                      {traceAllocs.length > 0 ? (
+                        traceAllocs.map((d) => {
+                          const line = d.lines.find((l) => l.productId === trace.productId);
+                          return (
+                            <div key={d.id} style={{ marginTop: 2 }}>
+                              <b>Alokasi {d.id}</b>
+                              <span>
+                                {d.date} · {d.actor ?? "Sistem"} · {line?.qtyAlokasi ?? 0} unit · {d.status}
+                              </span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <>
+                          <b>Belum Ada Alokasi</b>
+                          <span>Menunggu penentuan alokasi distribusi dari Pemilik</span>
+                        </>
+                      )}
+                    </div>
+                    {traceAllocs.length > 0 ? (
+                      <span className="trace-qty-badge">
+                        {traceAllocs.reduce(
+                          (acc, d) => acc + (d.lines.find((l) => l.productId === trace.productId)?.qtyAlokasi ?? 0),
+                          0,
+                        )}{" "}
+                        unit
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Tahap 3: Penerimaan */}
+                <div className={`trace-step ${traceReceipts.length > 0 ? "is-done" : "is-pending"}`}>
+                  <span className="trace-dot">
+                    {traceReceipts.length > 0 ? <Check size={14} strokeWidth={2.6} /> : <Clock size={14} />}
+                  </span>
+                  <div className="trace-card">
+                    <div className="trace-card-body">
+                      <div className="trace-card-stage">TAHAP 3 · PENERIMAAN CABANG</div>
+                      {traceReceipts.length > 0 ? (
+                        traceReceipts.map((r) => (
+                          <div key={r.id} style={{ marginTop: 2 }}>
+                            <b>Penerimaan {r.id}</b>
+                            <span>
+                              {r.at} · {r.actor} · +{r.qty} unit
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <b>Menunggu Penerimaan Fisik</b>
+                          <span>Barang belum dikonfirmasi diterima oleh Admin Cabang</span>
+                        </>
+                      )}
+                    </div>
+                    {traceReceipts.length > 0 ? (
+                      <span className="trace-qty-badge">
+                        +{traceReceipts.reduce((acc, r) => acc + r.qty, 0)} unit
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Tahap 4: Mutasi Fisik */}
+                <div className={`trace-step ${traceMoves.length > 0 ? "is-done" : "is-pending"}`}>
+                  <span className="trace-dot">
+                    {traceMoves.length > 0 ? <Check size={14} strokeWidth={2.6} /> : "4"}
+                  </span>
+                  <div className="trace-card">
+                    <div className="trace-card-body">
+                      <div className="trace-card-stage">TAHAP 4 · MUTASI STOK FISIK</div>
+                      {traceMoves.length > 0 ? (
+                        traceMoves.slice(0, 5).map((m) => (
+                          <div key={m.id} style={{ marginTop: 2 }}>
+                            <b>Mutasi {m.id}</b>
+                            <span>
+                              {m.at} · {m.sumber} · saldo {m.sebelum} → {m.sesudah}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <b>Belum Ada Mutasi Fisik</b>
+                          <span>Stok fisik belum berubah sebelum penerimaan dikonfirmasi</span>
+                        </>
+                      )}
+                    </div>
+                    {traceMoves.length > 0 ? (
+                      <span className="trace-qty-badge">
+                        {traceMoves[0].qty > 0 ? `+${traceMoves[0].qty}` : traceMoves[0].qty} unit
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
               </div>
-            ))}
-            {traceMoves.length === 0 && traceReceipts.length === 0 && traceAllocs.length === 0 && !traceReq ? (
-              <div className="empty-note">Rantai tidak lengkap untuk baris ini.</div>
-            ) : null}
+            )}
+
             <div className="drawer-foot">
               <button className="btn btn-ghost" onClick={() => setTraceKey(null)}>
                 Tutup

@@ -38,7 +38,7 @@ export const OWNER_NAV: OwnerNavGroup[] = [
   {
     title: "KEPUTUSAN",
     items: [
-      { label: "Pengajuan Barang", to: "/owner/pengajuan", icon: FilePlus2, ready: true },
+      { label: "Persetujuan Pengajuan", to: "/owner/pengajuan", icon: FilePlus2, ready: true },
       { label: "Alokasi Distribusi", to: "/owner/alokasi", icon: Truck, ready: true },
     ],
   },

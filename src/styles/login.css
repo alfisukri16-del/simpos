@@ -166,9 +166,15 @@
 
 .auth-form .sub {
   margin-top: 12px;
+  min-height: 48px;
   font-size: 15px;
   line-height: 1.6;
   color: var(--muted);
+}
+
+.auth-form .sub b {
+  color: var(--ink-2);
+  font-weight: 800;
 }
 
 .auth-form form {
@@ -355,14 +361,14 @@
     min-height: 0;
   }
   .auth-visual {
-    min-height: 440px;
-    padding: 40px 36px;
+    min-height: 360px;
+    padding: 36px 36px;
   }
   .auth-copy h1 {
-    font-size: 38px;
+    font-size: 36px;
   }
   .auth-form {
-    padding: 44px 40px 36px;
+    padding: 40px 40px 34px;
   }
   .auth-form h2 {
     font-size: 30px;
@@ -375,17 +381,86 @@
   }
 }
 
-@media (max-width: 620px) {
-  .page-bg.auth {
-    padding: 16px;
-  }
+@media (max-width: 900px) {
   .auth-visual {
-    padding: 32px 28px;
+    min-height: 320px;
+    padding: 32px 30px;
   }
   .auth-copy h1 {
-    font-size: 30px;
+    font-size: 32px;
   }
   .auth-form {
-    padding: 36px 24px 28px;
+    padding: 36px 32px 30px;
+  }
+}
+
+@media (max-width: 620px) {
+  .page-bg.auth {
+    padding: 12px;
+  }
+  .auth {
+    padding: 12px;
+  }
+  .auth-visual {
+    min-height: 240px;
+    padding: 24px 22px;
+  }
+  .auth-copy h1 {
+    font-size: 27px;
+    line-height: 1.16;
+    letter-spacing: -0.8px;
+  }
+  .auth-copy p {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .auth-tags {
+    margin-top: 16px;
+  }
+  .auth-tags span {
+    font-size: 11px;
+    letter-spacing: 2.4px;
+  }
+  .auth-form {
+    padding: 30px 22px 24px;
+  }
+  .form-brand {
+    margin-bottom: 24px;
+  }
+  .auth-form h2 {
+    font-size: 28px;
+    letter-spacing: -0.6px;
+  }
+  .auth-form .sub {
+    margin-top: 8px;
+    min-height: 0;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .auth-form form {
+    margin-top: 26px;
+  }
+  .field {
+    margin-bottom: 20px;
+  }
+  .field > label {
+    margin-bottom: 9px;
+  }
+  .input-wrap {
+    height: 54px;
+    border-radius: 13px;
+  }
+  .form-row {
+    margin: 20px 0 24px;
+  }
+  .btn-block {
+    padding: 16px;
+  }
+  .auth-help {
+    margin-top: 26px;
+  }
+  .brand-foot {
+    padding-top: 22px;
   }
 }

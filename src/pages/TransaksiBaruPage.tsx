@@ -1,41 +1,91 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight, Glasses, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Boxes,
+  Check,
+  ClipboardList,
+  Glasses,
+  Minus,
+  Plus,
+  ShoppingBag,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { CATEGORIES, type Category } from "../data/catalog";
 import { useSharedStore } from "../store/sharedStore";
 import { useCart } from "../context/CartContext";
-import { Chip, PageHeader, Steps, formatIDR } from "../components/ui";
+import { Chip, PageHeader, SearchBox, Steps, formatIDR } from "../components/ui";
 import "../styles/pages.css";
+
+const GUIDE_CATEGORIES: Category[] = ["Frame", "Lensa", "Aksesoris"];
 
 export default function TransaksiBaruPage() {
   const cart = useCart();
   const shared = useSharedStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<"Semua" | Category>("Semua");
+  const [brand, setBrand] = useState("all");
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [sort, setSort] = useState("relevan");
 
-  // Katalog dibaca dari shared store (produk kelolaan Admin ikut tampil); bentuk & UI tak berubah.
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q !== null) setQuery(q);
+  }, [searchParams]);
+
+  // Katalog + ketersediaan stok cabang dari shared store (Tugas 2 & Tugas 3 Kasir).
   const catalog = shared.products
     .filter((p) => p.status === "Aktif")
-    .map((p) => ({ id: p.id, name: p.name, brand: p.brand, category: p.type as Category, price: p.price, tag: p.tag }));
+    .map((p) => {
+      const st = shared.stockOf(p.id);
+      return {
+        id: p.id,
+        code: p.code,
+        name: p.name,
+        brand: p.brand,
+        category: p.type as Category,
+        price: p.price,
+        tag: p.tag,
+        saldo: st?.saldo,
+        minimum: st?.minimum ?? 0,
+      };
+    });
 
-  const filtered = catalog.filter((p) => (tab === "Semua" ? true : p.category === tab)).sort((a, b) => {
-    if (sort === "murah") return a.price - b.price;
-    if (sort === "mahal") return b.price - a.price;
-    return 0;
-  });
+  const brands = Array.from(new Set(catalog.map((p) => p.brand)));
+
+  const filtered = catalog
+    .filter((p) => (tab === "Semua" ? true : p.category === tab))
+    .filter((p) => (brand === "all" ? true : p.brand === brand))
+    .filter((p) => `${p.name} ${p.brand} ${p.code} ${p.category}`.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => {
+      if (sort === "murah") return a.price - b.price;
+      if (sort === "mahal") return b.price - a.price;
+      return 0;
+    });
+
+  const qtyByCategory = (cat: Category) =>
+    cart.items.filter((i) => i.category === cat).reduce((sum, i) => sum + i.qty, 0);
 
   return (
     <div className="page">
       <PageHeader
-        overline="TRANSAKSI BARU"
+        overline="TRANSAKSI BARU & CEK STOK CABANG"
         title="Pilih frame dan lensa untuk pelanggan"
-        desc="Tambahkan produk ke keranjang, lalu lanjutkan ke checkout untuk menyelesaikan transaksi."
+        desc="Periksa ketersediaan stok cabang, tambahkan produk ke keranjang, atau ajukan PO bila stok habis."
         actions={<Steps current={1} />}
       />
 
       <div className="catalog-grid">
         <div className="catalog-main">
           <div className="toolbar">
+            <SearchBox
+              placeholder="Cari nama produk, merek, atau kode barang..."
+              value={query}
+              onChange={setQuery}
+            />
             <div className="toolbar-chips">
               {CATEGORIES.map((c) => (
                 <Chip key={c} active={tab === c} onClick={() => setTab(c)}>
@@ -44,17 +94,18 @@ export default function TransaksiBaruPage() {
               ))}
             </div>
             <div style={{ marginLeft: "auto", display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <select className="select-pill" aria-label="Merek" defaultValue="all">
-                <option value="all">Merek</option>
-                <option value="rayban">Ray-Ban</option>
-                <option value="oakley">Oakley</option>
-                <option value="vogue">Vogue</option>
-              </select>
-              <select className="select-pill" aria-label="Kategori" defaultValue="all">
-                <option value="all">Kategori</option>
-                <option value="frame">Frame</option>
-                <option value="lensa">Lensa</option>
-                <option value="aksesoris">Aksesoris</option>
+              <select
+                className="select-pill"
+                aria-label="Merek"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+              >
+                <option value="all">Semua Merek</option>
+                {brands.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
               </select>
               <select
                 className="select-pill"
@@ -70,73 +121,315 @@ export default function TransaksiBaruPage() {
           </div>
 
           <div className="product-grid">
-            {filtered.map((p) => (
-              <button key={p.id} className="product-card" onClick={() => cart.add(p)}>
-                <div className="product-thumb">
-                  {p.tag ? <span className="pc-tag">{p.tag}</span> : null}
-                  <Glasses size={40} strokeWidth={1.6} />
+            {filtered.map((p) => {
+              const outOfStock = p.saldo !== undefined && p.saldo <= 0;
+              const lowStock = p.saldo !== undefined && p.saldo > 0 && p.saldo <= p.minimum;
+              const inCart = cart.items.find((i) => i.id === p.id);
+              const inCartQty = inCart?.qty ?? 0;
+              return (
+                <div
+                  key={p.id}
+                  className={`product-card ${inCartQty > 0 ? "is-selected" : ""}`}
+                  onClick={() => {
+                    if (!outOfStock && inCartQty === 0) cart.add(p);
+                  }}
+                  style={{ cursor: outOfStock ? "default" : "pointer" }}
+                >
+                  <div className="product-thumb">
+                    {p.tag ? <span className="pc-tag">{p.tag}</span> : null}
+                    {inCartQty > 0 ? (
+                      <span className="pc-in-cart-badge">
+                        <Check size={12} strokeWidth={2.8} />
+                        {inCartQty} di keranjang
+                      </span>
+                    ) : null}
+                    <Glasses size={40} strokeWidth={1.6} />
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                      <div className="pc-cat">{p.category.toUpperCase()}</div>
+                      <span
+                        className="tag-mini"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          background: outOfStock
+                            ? "var(--danger-bg)"
+                            : lowStock
+                              ? "var(--warn-bg)"
+                              : "var(--ok-bg)",
+                          color: outOfStock
+                            ? "var(--danger-ink)"
+                            : lowStock
+                              ? "var(--warn-ink)"
+                              : "var(--ok-ink)",
+                        }}
+                      >
+                        <Boxes size={11} />
+                        {p.saldo === undefined
+                          ? "Tersedia"
+                          : outOfStock
+                            ? "Stok Habis (0)"
+                            : lowStock
+                              ? `Sisa ${p.saldo} unit`
+                              : `Stok ${p.saldo} unit`}
+                      </span>
+                    </div>
+                    <div className="pc-name">{p.name}</div>
+                    <div className="pc-brand">
+                      {p.brand} · {p.code}
+                    </div>
+                  </div>
+                  <div className="pc-foot">
+                    <b>{formatIDR(p.price)}</b>
+                    {outOfStock ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/pemesanan?productId=${p.id}`);
+                        }}
+                      >
+                        <ClipboardList size={14} />
+                        Buat PO
+                      </button>
+                    ) : inCartQty > 0 ? (
+                      <div
+                        className="pc-stepper"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          aria-label={`Kurangi ${p.name}`}
+                          onClick={() => {
+                            if (inCartQty <= 1) cart.remove(p.id);
+                            else cart.setQty(p.id, inCartQty - 1);
+                          }}
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <b>{inCartQty}</b>
+                        <button
+                          type="button"
+                          aria-label={`Tambah ${p.name}`}
+                          onClick={() => cart.add(p)}
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="pc-add-pill"
+                        aria-label={`Tambah ${p.name}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cart.add(p);
+                        }}
+                      >
+                        <Plus size={15} strokeWidth={2.5} />
+                        Tambah
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <div className="pc-cat">{p.category.toUpperCase()}</div>
-                  <div className="pc-name">{p.name}</div>
-                  <div className="pc-brand">{p.brand}</div>
-                </div>
-                <div className="pc-foot">
-                  <b>{formatIDR(p.price)}</b>
-                  <span className="pc-add" aria-hidden="true">
-                    <Plus size={17} />
-                  </span>
-                </div>
-              </button>
-            ))}
+              );
+            })}
+            {filtered.length === 0 ? (
+              <div className="empty-note" style={{ gridColumn: "1 / -1" }}>
+                Tidak ada produk yang cocok dengan pencarian atau filter.
+              </div>
+            ) : null}
           </div>
         </div>
 
         <aside className="cart-panel">
-          <div className="cart-head">
-            <h2>Keranjang</h2>
-            <span className="cart-count">{cart.count} produk</span>
+          <div className="cart-head-rich">
+            <div className="cart-head-left">
+              <div className="cart-head-icon">
+                <ShoppingBag size={19} />
+                {cart.count > 0 ? <span className="cart-head-dot">{cart.count}</span> : null}
+              </div>
+              <div>
+                <h2>Keranjang Belanja</h2>
+                <p>
+                  {cart.items.length === 0
+                    ? "Belum ada produk dipilih"
+                    : `${cart.items.length} jenis · ${cart.count} unit produk`}
+                </p>
+              </div>
+            </div>
+            {cart.items.length > 0 ? (
+              <button
+                type="button"
+                className="cart-clear-btn"
+                onClick={() => cart.clear()}
+                title="Kosongkan seluruh isi keranjang"
+              >
+                <Trash2 size={13} />
+                Kosongkan
+              </button>
+            ) : (
+              <span className="cart-count">0 item</span>
+            )}
+          </div>
+
+          {/* Indikator interaktif kelengkapan paket optik (klik untuk filter katalog) */}
+          <div className="cart-guide-bar">
+            <div className="cart-guide-label">
+              <Sparkles size={12} />
+              <span>Filter Cepat Kategori Produk:</span>
+            </div>
+            <div className="cart-guide-pills">
+              {GUIDE_CATEGORIES.map((cat) => {
+                const countInCat = qtyByCategory(cat);
+                const activeTab = tab === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={`cart-guide-pill ${countInCat > 0 ? "has-item" : ""} ${activeTab ? "is-tab" : ""}`}
+                    onClick={() => setTab(activeTab ? "Semua" : cat)}
+                    title={`Klik untuk menampilkan kategori ${cat}`}
+                  >
+                    {countInCat > 0 ? <Check size={12} strokeWidth={2.8} /> : <Plus size={12} />}
+                    <span>{cat}</span>
+                    {countInCat > 0 ? <b>{countInCat}</b> : null}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {cart.items.length === 0 ? (
-            <div className="cart-empty">
-              Keranjang masih kosong.
-              <br />
-              Pilih produk untuk memulai transaksi.
+            <div className="cart-empty-rich">
+              <div className="cart-empty-art">
+                <Glasses size={28} strokeWidth={1.7} />
+              </div>
+              <b>Mulai Transaksi Baru</b>
+              <p>Pilih produk dari katalog di sebelah kiri untuk dimasukkan ke dalam keranjang.</p>
+              <div className="cart-empty-steps">
+                <div className="ces-row">
+                  <span className="ces-num">1</span>
+                  <span>Klik tombol <b>+ Tambah</b> pada kartu produk</span>
+                </div>
+                <div className="ces-row">
+                  <span className="ces-num">2</span>
+                  <span>Sesuaikan <b>jumlah unit</b> &amp; cek stok cabang</span>
+                </div>
+                <div className="ces-row">
+                  <span className="ces-num">3</span>
+                  <span>Lanjut ke <b>Checkout</b> untuk pilih pelanggan &amp; bayar</span>
+                </div>
+              </div>
             </div>
           ) : (
-            cart.items.map((i) => (
-              <div key={i.id} className="cart-item">
-                <span className="ci-ico">
-                  <Glasses size={20} strokeWidth={1.7} />
-                </span>
-                <span className="ci-body">
-                  <b>{i.name}</b>
-                  <span>
-                    {i.brand} · {i.category}
-                  </span>
-                </span>
-                <span className="ci-price">{formatIDR(i.price * i.qty)}</span>
-                <button className="ci-remove" onClick={() => cart.remove(i.id)} aria-label={`Hapus ${i.name}`}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))
+            <div className="cart-items-list">
+              {cart.items.map((i) => {
+                const saldo = shared.stockOf(i.id)?.saldo;
+                const overStock = saldo !== undefined && i.qty > saldo;
+                return (
+                  <div key={i.id} className={`cart-item-card ${overStock ? "is-overstock" : ""}`}>
+                    <div className="cic-top">
+                      <span className="ci-ico">
+                        <Glasses size={20} strokeWidth={1.7} />
+                      </span>
+                      <div className="cic-info">
+                        <div className="cic-cat-row">
+                          <span className="cic-cat">{i.category}</span>
+                          <span className="cic-unit-price">@ {formatIDR(i.price)}</span>
+                        </div>
+                        <b>{i.name}</b>
+                        <span>{i.brand}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ci-remove"
+                        onClick={() => cart.remove(i.id)}
+                        aria-label={`Hapus ${i.name}`}
+                        title="Hapus dari keranjang"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+
+                    <div className="cic-bottom">
+                      <div className="cic-stock">
+                        {saldo !== undefined ? (
+                          <span className={overStock ? "cic-stock-warn" : "cic-stock-ok"}>
+                            <Boxes size={12} />
+                            Stok cabang: {saldo} unit
+                          </span>
+                        ) : (
+                          <span className="cic-stock-ok">{i.category}</span>
+                        )}
+                      </div>
+                      <div className="cic-controls">
+                        <span className="qty-box">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (i.qty <= 1) cart.remove(i.id);
+                              else cart.setQty(i.id, i.qty - 1);
+                            }}
+                            aria-label="Kurangi"
+                          >
+                            <Minus size={13} />
+                          </button>
+                          <b>{i.qty}</b>
+                          <button
+                            type="button"
+                            onClick={() => cart.setQty(i.id, i.qty + 1)}
+                            aria-label="Tambah"
+                          >
+                            <Plus size={13} />
+                          </button>
+                        </span>
+                        <span className="ci-price">{formatIDR(i.price * i.qty)}</span>
+                      </div>
+                    </div>
+
+                    {overStock ? (
+                      <div className="cic-overstock-alert">
+                        <span>
+                          <AlertTriangle size={12} /> Melebihi stok ({saldo} unit)
+                        </span>
+                        <Link className="link-action" to={`/pemesanan?productId=${i.id}`} style={{ fontSize: 11.5 }}>
+                          Buat PO →
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
           )}
 
-          <div className="cart-total">
-            <span>Subtotal ({cart.count} produk)</span>
-            <b>{formatIDR(cart.subtotal)}</b>
+          <div className="cart-summary-box">
+            <div className="csb-row">
+              <span>Jenis Produk</span>
+              <b>{cart.items.length} produk</b>
+            </div>
+            <div className="csb-row">
+              <span>Total Kuantitas</span>
+              <b>{cart.count} unit</b>
+            </div>
+            <div className="csb-total">
+              <span>Estimasi Subtotal</span>
+              <b>{formatIDR(cart.subtotal)}</b>
+            </div>
           </div>
 
           <Link
-            className="btn btn-primary full"
+            className="btn btn-primary full cart-checkout-btn"
             to="/checkout"
             style={cart.items.length === 0 ? { opacity: 0.55, pointerEvents: "none" } : undefined}
             aria-disabled={cart.items.length === 0}
           >
             <ShoppingBag size={17} />
-            Lanjut ke Checkout
+            {cart.items.length === 0 ? "Pilih Produk Terlebih Dahulu" : `Lanjut ke Checkout (${cart.count} unit)`}
             <ArrowRight size={16} />
           </Link>
         </aside>

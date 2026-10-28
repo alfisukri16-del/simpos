@@ -164,7 +164,7 @@ export default function PembayaranPage() {
           </table>
           <div className="table-foot">
             <span className="foot-note">
-              Menampilkan {rows.length} dari {PAYMENTS.length} pembayaran · data demo
+              Menampilkan {rows.length} dari {PAYMENTS.length} pembayaran
             </span>
           </div>
         </div>

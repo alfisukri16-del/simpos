@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Glasses, LogOut, Menu as MenuIcon, Search } from "lucide-react";
+import { LogOut, Menu as MenuIcon, Search } from "lucide-react";
 import { OWNER_NAV } from "../data/owner";
 import { DEMO_OWNER, clearSession, getSession } from "../store/session";
+import MRLogo from "./MRLogo";
 import NotificationBell from "./NotificationBell";
 import "../styles/layout.css";
 import "../styles/admin.css";
@@ -26,11 +27,9 @@ export default function OwnerLayout() {
     <div className="page-bg app-shell admin">
       <div className={`scrim ${open ? "show" : ""}`} onClick={() => setOpen(false)} />
       <div className="app-grid">
-        <aside className={`sidebar ${open ? "open" : ""}`}>
+        <aside className={`sidebar owner-sidebar ${open ? "open" : ""}`}>
           <div className="sidebar-brand">
-            <span className="brand-badge">
-              <Glasses size={24} strokeWidth={2.1} />
-            </span>
+            <MRLogo size={44} />
             <span className="brand-text">
               <b>Optik Mekar Jaya</b>
               <span>Sistem Informasi Optik</span>

@@ -28,10 +28,14 @@ export function periodRange(key: PeriodKey, customFrom?: string, customTo?: stri
   switch (key) {
     case "hari":
       return { from: day(now), to: endDay(now), label: "Hari ini" };
-    case "mingguan":
-      return { from: day(new Date(now.getTime() - 6 * 86400000)), to: endDay(now), label: "7 hari terakhir" };
+    case "mingguan": {
+      const monday = new Date(now);
+      const offset = (now.getDay() + 6) % 7; // Senin = awal minggu
+      monday.setDate(now.getDate() - offset);
+      return { from: day(monday), to: endDay(now), label: "Minggu ini" };
+    }
     case "bulanan":
-      return { from: day(new Date(now.getTime() - 29 * 86400000)), to: endDay(now), label: "30 hari terakhir" };
+      return { from: new Date(now.getFullYear(), now.getMonth(), 1).getTime(), to: endDay(now), label: "Bulan ini" };
     case "tahunan":
       return { from: new Date(now.getFullYear(), 0, 1).getTime(), to: endDay(now), label: `Tahun ${now.getFullYear()}` };
     case "custom": {

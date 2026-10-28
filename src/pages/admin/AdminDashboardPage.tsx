@@ -69,6 +69,24 @@ export default function AdminDashboardPage() {
         </Link>
       </div>
 
+      <div className="action-row">
+        <div className="btn-group">
+          <Link className="btn btn-primary" to="/admin/produk/frame?new=1">
+            <Plus size={16} />
+            Tambah Produk
+          </Link>
+          <Link className="btn btn-ghost" to="/admin/penerimaan">
+            <PackageCheck size={16} />
+            Catat Penerimaan
+          </Link>
+          <Link className="btn btn-ghost" to="/admin/pengajuan?new=1">
+            <FilePlus2 size={16} />
+            Ajukan Stok
+          </Link>
+        </div>
+        <span className="foot-note">Aksi cepat harian cabang {DEMO_ADMIN.branch}.</span>
+      </div>
+
       <section className="panel">
         <div className="section-head">
           <div>
@@ -97,23 +115,7 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      <div className="action-row">
-        <div className="btn-group">
-          <Link className="btn btn-primary" to="/admin/produk/frame">
-            <Plus size={16} />
-            Tambah Produk
-          </Link>
-          <Link className="btn btn-ghost" to="/admin/penerimaan">
-            <PackageCheck size={16} />
-            Catat Penerimaan
-          </Link>
-          <Link className="btn btn-ghost" to="/admin/pengajuan">
-            <FilePlus2 size={16} />
-            Ajukan Stok
-          </Link>
-        </div>
-        <span className="foot-note">Seluruh data pada halaman ini adalah demo cabang {DEMO_ADMIN.branch}.</span>
-      </div>
+      <span className="foot-note">Seluruh data pada halaman ini adalah demo cabang {DEMO_ADMIN.branch}.</span>
     </div>
   );
 }
