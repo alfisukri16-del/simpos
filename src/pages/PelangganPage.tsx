@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 import { ChevronRight, Glasses, MessageSquare, UserPlus, Users, X } from "lucide-react";
 import { RESEP_MAP, type Customer } from "../data/customers";
 import { useSharedStore } from "../store/sharedStore";
@@ -272,10 +271,6 @@ export default function PelangganPage() {
           ) : (
             <div className="empty-note">Belum ada resep tersimpan untuk pelanggan ini.</div>
           )}
-
-          <Link className="btn btn-ghost full" to="/resep-mata">
-            Lihat Riwayat Resep
-          </Link>
         </aside>
         )}
       </div>
