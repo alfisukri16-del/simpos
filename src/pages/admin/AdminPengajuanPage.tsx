@@ -106,7 +106,6 @@ export default function AdminPengajuanPage() {
 
       <div className="toolbar">
         <SearchBox placeholder="Cari ID pengajuan atau nama produk..." value={q} onChange={setQ} />
-        <span className="foot-note">{rows.length} pengajuan menunggu keputusan Pemilik</span>
       </div>
 
       <div className="table-wrap">
