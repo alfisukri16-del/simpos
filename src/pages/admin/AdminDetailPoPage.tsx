@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Check, CheckCircle2, Glasses, Lock, TriangleAler
 import { DEMO_ADMIN } from "../../data/admin";
 import { useSharedStore } from "../../store/sharedStore";
 import type { PoStatus } from "../../data/mock";
-import { Avatar, PageHeader, StatusPill } from "../../components/ui";
+import { Avatar, PageHeader, StatusPill, formatIDR } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -193,6 +193,12 @@ export default function AdminDetailPoPage() {
               <b style={{ fontSize: 13.5 }}>×{it.qty}</b>
             </div>
           ))}
+          {order.total ? (
+            <div className="simple-total-bar" style={{ marginTop: 12 }}>
+              <span>Total Estimasi Pesanan</span>
+              <b>{formatIDR(order.total)}</b>
+            </div>
+          ) : null}
 
           <div className="section-head" style={{ marginTop: 4 }}>
             <h2>Snapshot Resep (OD/OS)</h2>

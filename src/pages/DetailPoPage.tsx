@@ -4,7 +4,7 @@ import { ArrowLeft, Check, ClipboardCheck, Glasses, ShoppingBag, TriangleAlert }
 import { type PoStatus } from "../data/mock";
 import { useSharedStore } from "../store/sharedStore";
 import { useCart } from "../context/CartContext";
-import { Avatar, PageHeader, StatusPill } from "../components/ui";
+import { Avatar, PageHeader, StatusPill, formatIDR } from "../components/ui";
 import "../styles/pages.css";
 import "../styles/admin.css";
 
@@ -66,6 +66,7 @@ export default function DetailPoPage() {
     const picked: Array<{ product: NonNullable<ReturnType<typeof shared.productForPOItem>>; qty: number }> = [];
     for (const it of order.items) {
       const product =
+        (it.productId ? shared.productOf(it.productId) : undefined) ??
         (order.items.length === 1 && order.productId ? shared.productOf(order.productId) : undefined) ??
         shared.productForPOItem(it.name);
       if (!product) {
@@ -241,9 +242,22 @@ export default function DetailPoPage() {
                   <b>{it.name}</b>
                   <span>{it.sub}</span>
                 </span>
-                <b style={{ fontSize: 13.5 }}>×{it.qty}</b>
+                <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                  <b style={{ fontSize: 13.5 }}>×{it.qty}</b>
+                  {it.price != null ? (
+                    <span style={{ fontSize: 11.5, color: "var(--muted)", fontWeight: 700 }}>
+                      {formatIDR(it.price * it.qty)}
+                    </span>
+                  ) : null}
+                </span>
               </div>
             ))}
+            {order.total ? (
+              <div className="simple-total-bar" style={{ marginTop: 12 }}>
+                <span>Total Estimasi Pesanan</span>
+                <b>{formatIDR(order.total)}</b>
+              </div>
+            ) : null}
           </section>
         </div>
 

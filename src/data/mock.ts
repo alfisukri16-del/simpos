@@ -12,7 +12,9 @@ export type PoOrder = {
   status: PoStatus;
   createdAt: string;
   note: string;
-  items: Array<{ name: string; sub: string; qty: number }>;
+  items: Array<{ name: string; sub: string; qty: number; price?: number; productId?: string }>;
+  /** Estimasi nilai pesanan (harga satuan × jumlah). */
+  total?: number;
   resep?: boolean;
 };
 

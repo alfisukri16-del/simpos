@@ -585,7 +585,13 @@ type SharedStore = StoreShape & {
   setMinimum: (productId: string, minimum: number) => void;
   createRequest: (productId: string, qty: number, note: string) => void;
   addDraft: (productId: string, qty: number, note: string) => void;
-  createPO: (input: { customerId: string; productId: string; qty: number; note: string; actor: string; resepId?: string }) => { ok: boolean; msg: string; id?: string };
+  createPO: (input: {
+    customerId: string;
+    items: Array<{ productId: string; qty: number }>;
+    note: string;
+    actor: string;
+    resepId?: string;
+  }) => { ok: boolean; msg: string; id?: string };
   /** Alokasi Owner: reservation tanpa debit fisik pusat (keputusan terbuka). */
   availableToAllocate: (productId: string) => { onHand: number; reserved: number; available: number };
   allocatedForRequest: (requestId: string, productId: string) => number;
@@ -868,17 +874,31 @@ export function SharedProvider({ children }: { children: ReactNode }) {
         });
       },
 
-      createPO: ({ customerId, productId, qty, note, actor, resepId }) => {
-        if (!Number.isInteger(qty) || qty <= 0) return { ok: false, msg: "Jumlah harus bilangan bulat lebih dari 0." };
+      createPO: ({ customerId, items, note, actor, resepId }) => {
+        if (!items.length) return { ok: false, msg: "Tambahkan minimal satu produk." };
+        for (const it of items) {
+          if (!Number.isInteger(it.qty) || it.qty <= 0) {
+            return { ok: false, msg: "Jumlah setiap produk harus bilangan bulat lebih dari 0." };
+          }
+        }
         const cust = state.customers.find((c) => c.id === customerId) ?? CUSTOMERS.find((c) => c.id === customerId);
-        const prod = state.products.find((p) => p.id === productId && p.status === "Aktif");
         if (!cust) return { ok: false, msg: "Pelanggan tidak valid." };
-        if (!prod) return { ok: false, msg: "Produk tidak valid / nonaktif." };
+
+        const lines = items.map((it) => ({
+          qty: it.qty,
+          prod: state.products.find((p) => p.id === it.productId && p.status === "Aktif"),
+        }));
+        if (lines.some((l) => !l.prod)) return { ok: false, msg: "Produk tidak valid / nonaktif." };
+
+        const first = lines[0].prod!;
+        const totalQty = lines.reduce((a, l) => a + l.qty, 0);
+        const total = lines.reduce((a, l) => a + (l.prod?.price ?? 0) * l.qty, 0);
+        const hasLensa = lines.some((l) => l.prod?.type === "Lensa");
         const at = now();
         const seq = state.pos.length + 109;
         const id = `PO-2026-0${seq}`;
         const base =
-          prod.type === "Lensa"
+          hasLensa
             ? ((resepId ? state.reseps.find((r) => r.id === resepId) : undefined) ??
               state.reseps.find((r) => r.customer === cust.name) ??
               RESEP_MAP[customerId])
@@ -891,22 +911,32 @@ export function SharedProvider({ children }: { children: ReactNode }) {
           customer: cust.name,
           initials: cust.initials,
           phone: cust.phone,
-          products: [prod.name, `${prod.type} · ${prod.brand}`],
-          productLabel: prod.name,
+          products: [
+            lines.length === 1 ? first.name : `${first.name} +${lines.length - 1} produk`,
+            lines.length === 1 ? `${first.type} · ${first.brand}` : `${lines.length} produk · ${totalQty} unit`,
+          ],
+          productLabel: lines.length === 1 ? first.name : `${first.name} +${lines.length - 1} produk`,
           status: "Dipesan",
           createdAt: `${at} WIB`,
           note: note.trim() || "Menunggu pemrosesan admin cabang.",
-          items: [{ name: prod.name, sub: `${prod.type} · ${prod.brand}`, qty }],
+          items: lines.map((l) => ({
+            name: l.prod!.name,
+            sub: `${l.prod!.type} · ${l.prod!.brand}`,
+            qty: l.qty,
+            price: l.prod!.price,
+            productId: l.prod!.id,
+          })),
+          total,
           resep: snap !== null,
           branchId: BRANCH_ID,
-          productId: prod.id,
+          productId: lines.length === 1 ? first.id : undefined,
           timeline: [{ at: `${at} WIB`, actor, from: "Baru", to: "Dipesan", note: "PO dibuat Kasir" }],
           resepSnapshot: snap,
         };
         setState((prev) => ({
           ...prev,
           pos: [po, ...prev.pos],
-          audit: audit(prev, `Buat PO ${id} (${cust.name} · ${prod.name} × ${qty})`, `PO/${id}`),
+          audit: audit(prev, `Buat PO ${id} (${cust.name} · ${lines.length} produk · ${totalQty} unit)`, `PO/${id}`),
         }));
         return { ok: true, msg: `PO ${id} tercatat dengan status Dipesan.`, id };
       },

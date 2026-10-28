@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Glasses, MessageSquare, UserPlus, Users, X } from "lucide-react";
 import { RESEP_MAP, type Customer } from "../data/customers";
 import { useSharedStore } from "../store/sharedStore";
-import { Avatar, Chip, PageHeader, SearchBox, StatCard, StatusPill, formatIDR } from "../components/ui";
+import { Avatar, Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../components/ui";
 import "../styles/pages.css";
 import "../styles/admin.css";
 
@@ -44,8 +44,6 @@ export default function PelangganPage() {
   const withResep = customers.filter((c) => hasResepOf(c)).length;
   const withPo = customers.filter((c) => poCountOf(c.name) > 0).length;
 
-  const custPos = cust ? store.pos.filter((o) => o.customer === cust.name) : [];
-  const custTrx = cust ? store.transactions.filter((t) => t.customer === cust.name) : [];
   const custActivePo = cust ? poCountOf(cust.name) : 0;
 
   const editingCustomer = editing ? customers.find((c) => c.id === editing) : null;
@@ -278,38 +276,6 @@ export default function PelangganPage() {
           <Link className="btn btn-ghost full" to="/resep-mata">
             Lihat Riwayat Resep
           </Link>
-
-          <div className="mini-label">AKTIVITAS TERKAIT</div>
-          <div>
-            {custPos[0] ? (
-              <div className="act-line">
-                <b>
-                  {custPos[0].number} — {custPos[0].status}
-                </b>
-                <span>
-                  {custPos[0].productLabel} · {custPos[0].date}
-                </span>
-              </div>
-            ) : (
-              <div className="act-line">
-                <b>Pemesanan (PO)</b>
-                <span>Belum ada riwayat PO untuk pelanggan ini</span>
-              </div>
-            )}
-            {custTrx[0] ? (
-              <div className="act-line">
-                <b>Transaksi terakhir ({custTrx[0].no})</b>
-                <span>
-                  {custTrx[0].date} · {formatIDR(custTrx[0].total)} ({custTrx[0].status})
-                </span>
-              </div>
-            ) : (
-              <div className="act-line">
-                <b>Transaksi terakhir</b>
-                <span>Belum ada riwayat transaksi tercatat</span>
-              </div>
-            )}
-          </div>
         </aside>
         )}
       </div>
