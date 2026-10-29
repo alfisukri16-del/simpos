@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Banknote,
   CalendarDays,
@@ -250,10 +250,22 @@ export default function RiwayatPage() {
       : 0;
   const today = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 
+  // Cetak struk langsung (tanpa pratinjau): render struk tersembunyi lalu buka dialog print.
   const openStrukFor = (id: string) => {
     setSelectedId(id);
     setStrukId(id);
   };
+
+  useEffect(() => {
+    if (!strukId) return;
+    const done = () => setStrukId(null);
+    window.addEventListener("afterprint", done);
+    const timer = window.setTimeout(() => window.print(), 50);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("afterprint", done);
+    };
+  }, [strukId]);
 
   const doExport = () => {
     if (rows.length === 0) {
@@ -722,39 +734,15 @@ export default function RiwayatPage() {
       </div>
 
       {strukId && active ? (
-        <div className="overlay" onClick={() => setStrukId(null)}>
-          <div className="drawer struk-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            <div className="drawer-head">
-              <div>
-                <h2>Struk Transaksi</h2>
-                <div className="section-desc">{active.no}</div>
-              </div>
-              <button className="icon-pill" aria-label="Tutup" onClick={() => setStrukId(null)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="struk-print" id="struk-print">
-              <StrukBody
-                trx={active}
-                storeName={shared.settings.storeName.split("—")[0].trim()}
-                storePhone={shared.settings.storePhone}
-                storeAddress={shared.settings.storeAddress}
-                branch={session?.branch ?? "Cabang Padang"}
-                cashier={session?.name ?? "Kasir"}
-              />
-            </div>
-
-            <div className="drawer-foot">
-              <button className="btn btn-ghost" onClick={() => setStrukId(null)}>
-                Tutup
-              </button>
-              <button className="btn btn-primary" onClick={() => window.print()}>
-                <Printer size={16} />
-                Cetak Sekarang
-              </button>
-            </div>
-          </div>
+        <div className="struk-print struk-print-hidden" id="struk-print" aria-hidden="true">
+          <StrukBody
+            trx={active}
+            storeName={shared.settings.storeName.split("—")[0].trim()}
+            storePhone={shared.settings.storePhone}
+            storeAddress={shared.settings.storeAddress}
+            branch={session?.branch ?? "Cabang Padang"}
+            cashier={session?.name ?? "Kasir"}
+          />
         </div>
       ) : null}
 

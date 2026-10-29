@@ -2152,6 +2152,15 @@ table.tt td:last-child .row-actions {
 }
 
 /* Hanya berlaku saat modal struk terbuka; halaman lain tetap tercetak normal. */
+/* Struk yang dicetak langsung tanpa pratinjau: disembunyikan di layar, tampil saat print. */
+.struk-print.struk-print-hidden {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 80mm;
+  pointer-events: none;
+}
+
 @media print {
   body:has(.struk-print) * {
     visibility: hidden !important;
