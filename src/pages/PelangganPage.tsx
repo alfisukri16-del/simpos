@@ -6,16 +6,15 @@ import { Avatar, Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../co
 import "../styles/pages.css";
 import "../styles/admin.css";
 
-type FormState = { name: string; phone: string; email: string; tier: Customer["tier"] };
+type FormState = { name: string; phone: string; email: string };
 
-const EMPTY: FormState = { name: "", phone: "", email: "", tier: "Reguler" };
+const EMPTY: FormState = { name: "", phone: "", email: "" };
 
 export default function PelangganPage() {
   const store = useSharedStore();
   const customers = store.customers;
   const [selected, setSelected] = useState(customers[1]?.id ?? customers[0]?.id ?? "");
   const [query, setQuery] = useState("");
-  const [tier, setTier] = useState<"all" | Customer["tier"]>("all");
   const [filter, setFilter] = useState<"Semua" | "Resep" | "PO">("Semua");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -29,7 +28,6 @@ export default function PelangganPage() {
     c.hasResep || store.reseps.some((r) => r.customer === c.name);
 
   const rows = customers
-    .filter((c) => (tier === "all" ? true : c.tier === tier))
     .filter((c) => {
       if (filter === "Resep" && !hasResepOf(c)) return false;
       if (filter === "PO" && poCountOf(c.name) === 0) return false;
@@ -59,7 +57,7 @@ export default function PelangganPage() {
   function startEdit() {
     if (!cust) return;
     setEditing(cust.id);
-    setForm({ name: cust.name, phone: cust.phone, email: cust.email, tier: cust.tier });
+    setForm({ name: cust.name, phone: cust.phone, email: cust.email });
     setFormError("");
     setOpen(true);
   }
@@ -113,16 +111,6 @@ export default function PelangganPage() {
               <span className="foot-note" style={{ color: "var(--muted)", fontSize: 12.5, fontWeight: 700 }}>
                 {rows.length} dari {customers.length} data
               </span>
-              <select
-                className="select-pill"
-                aria-label="Jenis pelanggan"
-                value={tier}
-                onChange={(e) => setTier(e.target.value as typeof tier)}
-              >
-                <option value="all">Semua Pelanggan</option>
-                <option value="Member">Member</option>
-                <option value="Reguler">Reguler</option>
-              </select>
             </div>
           </div>
 
@@ -218,7 +206,6 @@ export default function PelangganPage() {
 
           <div className="detail-badges">
             <span className="tag-mini">Pelanggan terdaftar</span>
-            <span className="tag-mini">{cust.tier}</span>
             {custActivePo > 0 ? <span className="tag-mini">{custActivePo} PO aktif</span> : null}
           </div>
 
@@ -328,42 +315,6 @@ export default function PelangganPage() {
                     placeholder="nama@email.com"
                   />
                 </label>
-              </div>
-
-              <div className="afield">
-                <span>Jenis Pelanggan</span>
-                <div className="tier-choice-grid">
-                  {(
-                    [
-                      {
-                        key: "Reguler",
-                        title: "Reguler",
-                        desc: "Pelanggan umum transaksi harian",
-                      },
-                      {
-                        key: "Member",
-                        title: "Member",
-                        desc: "Pelanggan tetap cabang optik",
-                      },
-                    ] as const
-                  ).map((opt) => {
-                    const active = form.tier === opt.key;
-                    return (
-                      <button
-                        key={opt.key}
-                        type="button"
-                        className={`tier-choice-card ${active ? "is-active" : ""}`}
-                        onClick={() => setForm({ ...form, tier: opt.key })}
-                      >
-                        <div className="tcc-head">
-                          <b>{opt.title}</b>
-                          <span className="tcc-dot" />
-                        </div>
-                        <p>{opt.desc}</p>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
               <div className="drawer-foot">

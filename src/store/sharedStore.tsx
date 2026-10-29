@@ -614,7 +614,6 @@ type SharedStore = StoreShape & {
     name: string;
     phone: string;
     email: string;
-    tier: Customer["tier"];
   }) => { ok: boolean; msg: string; customer?: Customer };
   createResep: (input: {
     customerId: string;
@@ -1345,7 +1344,7 @@ export function SharedProvider({ children }: { children: ReactNode }) {
         return null;
       },
 
-      upsertCustomer: ({ id, name, phone, email, tier }) => {
+      upsertCustomer: ({ id, name, phone, email }) => {
         const cleanName = name.trim();
         const digits = phone.replace(/[^0-9]/g, "");
         if (!cleanName) return { ok: false, msg: "Nama pelanggan wajib diisi." };
@@ -1368,11 +1367,11 @@ export function SharedProvider({ children }: { children: ReactNode }) {
           setState((prev) => ({
             ...prev,
             customers: prev.customers.map((c) =>
-              c.id === id ? { ...c, name: cleanName, phone: phone.trim(), email: cleanEmail, tier, initials } : c,
+              c.id === id ? { ...c, name: cleanName, phone: phone.trim(), email: cleanEmail, initials } : c,
             ),
             audit: audit(prev, `Ubah pelanggan ${existing.code}`, `PELANGGAN/${existing.code}`),
           }));
-          return { ok: true, msg: "", customer: { ...existing, name: cleanName, phone: phone.trim(), email: cleanEmail, tier, initials } };
+          return { ok: true, msg: "", customer: { ...existing, name: cleanName, phone: phone.trim(), email: cleanEmail, initials } };
         }
         const n = state.customers.length + 1;
         const code = `PLG-${String(n).padStart(4, "0")}`;
@@ -1383,7 +1382,6 @@ export function SharedProvider({ children }: { children: ReactNode }) {
           initials,
           phone: phone.trim(),
           email: cleanEmail,
-          tier,
           hasResep: false,
           poActive: 0,
           branch: "Padang",

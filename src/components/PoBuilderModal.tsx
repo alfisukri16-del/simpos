@@ -153,7 +153,7 @@ export default function PoBuilderModal({ onClose, onCreated, initialProductId }:
 
   function saveCustomer(e: FormEvent) {
     e.preventDefault();
-    const r = shared.upsertCustomer({ name: ncName, phone: ncPhone, email: ncEmail, tier: "Reguler" });
+    const r = shared.upsertCustomer({ name: ncName, phone: ncPhone, email: ncEmail });
     if (!r.ok) {
       setNcError(r.msg);
       return;

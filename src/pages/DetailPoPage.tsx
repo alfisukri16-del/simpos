@@ -87,7 +87,6 @@ export default function DetailPoPage() {
         initials: order.initials,
         phone: order.phone,
         email: "",
-        tier: "Reguler" as const,
         hasResep: Boolean(order.resep),
         poActive: 0,
         branch: "Padang",

@@ -154,7 +154,6 @@ export default function CheckoutPage() {
                   <b>{activeCustomer.name}</b>
                   <div className="cc-meta">
                     <span>{activeCustomer.code}</span>
-                    <span className="tag-mini">{activeCustomer.tier}</span>
                     <span>{activeCustomer.phone}</span>
                   </div>
                   <div className="cc-meta">{activeCustomer.email}</div>
@@ -184,7 +183,6 @@ export default function CheckoutPage() {
                           {c.code} · {c.phone}
                         </span>
                       </span>
-                      <span className="tag-mini">{c.tier}</span>
                     </button>
                   ))}
                   {results.length === 0 ? <div className="empty-note">Pelanggan tidak ditemukan.</div> : null}
