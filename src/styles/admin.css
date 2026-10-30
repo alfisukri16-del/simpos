@@ -4,9 +4,25 @@
    layout.css / pages.css / dashboard.css / login.css Kasir tanpa diubah.
    ========================================================================== */
 
-/* Group label pertama rapat ke brand */
-.admin .sidebar-nav > div:first-child .nav-sep {
-  margin-top: 18px;
+/* Group label pertama rapat ke brand & rapatkan menu Admin agar muat tanpa scroll */
+.admin .sidebar:not(.owner-sidebar) .sidebar-brand {
+  padding-bottom: 20px;
+}
+
+.admin .sidebar:not(.owner-sidebar) .nav-item {
+  padding: 10px 14px;
+}
+
+.admin .sidebar:not(.owner-sidebar) .nav-sep {
+  margin: 14px 12px 6px;
+}
+
+.admin .sidebar:not(.owner-sidebar) .sidebar-nav > div:first-child .nav-sep {
+  margin-top: 2px;
+}
+
+.admin .sidebar:not(.owner-sidebar) .sidebar-foot {
+  padding-top: 12px;
 }
 
 /* Menu Tahap-02: nonaktif, jelas bukan dead link */
@@ -614,13 +630,20 @@ a.stat-link:hover .stat-card {
 /* Dashboard Pemilik: grafik + produk terlaris */
 .dash-charts {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .dash-charts .sales-chart {
   margin-bottom: 0;
+}
+
+.dash-charts > .panel,
+.dash-lower > .panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 @media (max-width: 1180px) {
@@ -749,11 +772,11 @@ a.stat-link:hover .stat-card {
   min-width: 126px;
 }
 
-/* KPI: satu kartu utama + empat kartu pendukung/penjaga */
+/* KPI: satu kartu utama + dua kartu keputusan/pengawasan */
 .dash-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: 16px;
 }
 
 .dash-kpi {
@@ -761,7 +784,7 @@ a.stat-link:hover .stat-card {
   flex-direction: column;
   gap: 9px;
   min-height: 154px;
-  padding: 18px 17px 16px;
+  padding: 20px 22px 18px;
   border-radius: 20px;
   background: #fff;
   border: 1px solid var(--line);
@@ -776,7 +799,7 @@ a.stat-link:hover .stat-card {
 }
 
 .dash-kpi-primary {
-  grid-column: span 2;
+  grid-column: span 1;
   color: #fff;
   border-color: transparent;
   background:
@@ -976,12 +999,12 @@ a.stat-link:hover .stat-card {
   color: var(--warn-ink);
 }
 
-/* Komposisi + detail + tindakan */
+/* Detail produk terlaris + pengajuan terbaru */
 .dash-lower {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr 1.1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .dash-lower .panel {
@@ -1090,7 +1113,7 @@ a.stat-link:hover .stat-card {
   }
 
   .dash-kpi-primary {
-    grid-column: span 2;
+    grid-column: span 1;
   }
 
   .dash-lower {
@@ -1098,7 +1121,7 @@ a.stat-link:hover .stat-card {
   }
 
   .dash-lower > :last-child {
-    grid-column: span 2;
+    grid-column: auto;
   }
 }
 

@@ -12,7 +12,6 @@ import {
   Search,
   Trash2,
   User,
-  UserPlus,
   X,
 } from "lucide-react";
 import { useSharedStore, type ProductType } from "../store/sharedStore";
@@ -51,12 +50,6 @@ export default function PoBuilderModal({ onClose, onCreated, initialProductId }:
   const [custQuery, setCustQuery] = useState("");
   const [catOpen, setCatOpen] = useState(false);
   const [catQuery, setCatQuery] = useState("");
-
-  const [newCust, setNewCust] = useState(false);
-  const [ncName, setNcName] = useState("");
-  const [ncPhone, setNcPhone] = useState("");
-  const [ncEmail, setNcEmail] = useState("");
-  const [ncError, setNcError] = useState("");
 
   const custWrap = useRef<HTMLDivElement>(null);
   const custSearch = useRef<HTMLInputElement>(null);
@@ -104,12 +97,11 @@ export default function PoBuilderModal({ onClose, onCreated, initialProductId }:
       if (e.key !== "Escape") return;
       if (custOpen) return setCustOpen(false);
       if (catOpen) return setCatOpen(false);
-      if (newCust) return setNewCust(false);
       onClose();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [custOpen, catOpen, newCust, onClose]);
+  }, [custOpen, catOpen, onClose]);
 
   const rows = items.flatMap((it) => {
     const product = products.find((p) => p.id === it.productId);
@@ -149,22 +141,6 @@ export default function PoBuilderModal({ onClose, onCreated, initialProductId }:
     setItems((prev) =>
       prev.map((i) => (i.productId === id ? { ...i, qty: Math.min(999, Math.max(1, i.qty + delta)) } : i)),
     );
-  }
-
-  function saveCustomer(e: FormEvent) {
-    e.preventDefault();
-    const r = shared.upsertCustomer({ name: ncName, phone: ncPhone, email: ncEmail });
-    if (!r.ok) {
-      setNcError(r.msg);
-      return;
-    }
-    if (r.customer) setCustomerId(r.customer.id);
-    setNewCust(false);
-    setNcName("");
-    setNcPhone("");
-    setNcEmail("");
-    setNcError("");
-    setCustQuery("");
   }
 
   function submit(e: FormEvent) {
@@ -312,52 +288,7 @@ export default function PoBuilderModal({ onClose, onCreated, initialProductId }:
                       </div>
                     ) : null}
                   </div>
-
-                  <button type="button" className="btn btn-ghost po-newcust-btn" onClick={() => setNewCust((v) => !v)}>
-                    <Plus size={15} />
-                    Pelanggan Baru
-                  </button>
                 </div>
-
-                {newCust ? (
-                  <div className="po-newcust">
-                    <div className="po-newcust-head">
-                      <b>Pelanggan Baru</b>
-                      <button type="button" className="po-newcust-x" aria-label="Tutup" onClick={() => setNewCust(false)}>
-                        <X size={15} />
-                      </button>
-                    </div>
-                    <div className="po-newcust-grid">
-                      <label>
-                        <span>Nama</span>
-                        <input value={ncName} onChange={(e) => setNcName(e.target.value)} placeholder="Nama lengkap" />
-                      </label>
-                      <label>
-                        <span>No. HP</span>
-                        <input
-                          value={ncPhone}
-                          onChange={(e) => setNcPhone(e.target.value)}
-                          placeholder="cth. 0812 3456 7890"
-                          inputMode="tel"
-                        />
-                      </label>
-                      <label className="po-newcust-full">
-                        <span>Email (opsional)</span>
-                        <input value={ncEmail} onChange={(e) => setNcEmail(e.target.value)} placeholder="nama@email.com" />
-                      </label>
-                    </div>
-                    {ncError ? <div className="form-error">{ncError}</div> : null}
-                    <div className="po-newcust-actions">
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewCust(false)}>
-                        Batal
-                      </button>
-                      <button type="button" className="btn btn-primary btn-sm" onClick={saveCustomer}>
-                        <UserPlus size={15} />
-                        Simpan Pelanggan
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
               </section>
 
               <section className="po-field">
@@ -560,16 +491,6 @@ export default function PoBuilderModal({ onClose, onCreated, initialProductId }:
               <div className="po-sum-total">
                 <span>Total Estimasi</span>
                 <b>{formatIDR(total)}</b>
-              </div>
-
-              <div className="po-sum-div" />
-              <div className="po-status">
-                <span>Status PO</span>
-                <div className="po-status-box">
-                  <i />
-                  Dipesan
-                  <ChevronDown size={15} />
-                </div>
               </div>
             </aside>
           </div>

@@ -146,7 +146,7 @@ export default function PembayaranPage() {
                     </td>
                     <td className="tt-right">
                       <span className="link-action">
-                        Detail
+                        Lihat Detail
                         <ChevronRight size={15} />
                       </span>
                     </td>

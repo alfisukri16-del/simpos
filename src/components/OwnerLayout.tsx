@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, Menu as MenuIcon, Search } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { LogOut, Menu as MenuIcon } from "lucide-react";
 import { OWNER_NAV } from "../data/owner";
 import { DEMO_OWNER, clearSession, getSession } from "../store/session";
 import MRLogo from "./MRLogo";
@@ -12,9 +12,6 @@ import "../styles/admin.css";
 export default function OwnerLayout() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  // Search topbar hanya di Dashboard & Cabang; halaman Owner lain disembunyikan.
-  const showSearch = location.pathname === "/owner/dashboard" || location.pathname === "/owner/cabang";
   const s = getSession();
   const session = s && s.role === "pemilik" ? s : null;
 
@@ -24,7 +21,7 @@ export default function OwnerLayout() {
   };
 
   return (
-    <div className="page-bg app-shell admin">
+    <div className="page-bg app-shell admin notranslate" translate="no">
       <div className={`scrim ${open ? "show" : ""}`} onClick={() => setOpen(false)} />
       <div className="app-grid">
         <aside className={`sidebar owner-sidebar ${open ? "open" : ""}`}>
@@ -78,14 +75,6 @@ export default function OwnerLayout() {
             <button className="burger" aria-label="Buka menu" onClick={() => setOpen(true)}>
               <MenuIcon size={20} />
             </button>
-
-            {showSearch ? (
-              <label className="search-field">
-                <Search size={18} />
-                <input type="search" placeholder="Cari produk, cabang, atau PO..." aria-label="Pencarian" />
-                <span className="kbd">Ctrl + K</span>
-              </label>
-            ) : null}
 
             <div className="topbar-right">
               <NotificationBell role="pemilik" />

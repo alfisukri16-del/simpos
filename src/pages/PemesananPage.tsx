@@ -68,7 +68,7 @@ export default function PemesananPage() {
         <div className="notice notice-ok" role="status">
           PO {created} berhasil dicatat dengan status <b>Dipesan</b> dan diteruskan ke Admin Cabang.{" "}
           <Link className="link-action" to={`/pemesanan/${created}`}>
-            Lihat detail
+            Lihat Detail
             <ChevronRight size={15} />
           </Link>
         </div>
@@ -131,7 +131,7 @@ export default function PemesananPage() {
                   </td>
                   <td className="tt-right">
                     <Link className="link-action" to={`/pemesanan/${o.id}`}>
-                      Lihat detail
+                      Lihat Detail
                       <ChevronRight size={15} />
                     </Link>
                   </td>

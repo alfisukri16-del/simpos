@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Boxes, Building2, CheckCircle2, Pencil, Plus, X } from "lucide-react";
+import { Boxes, Building2, CheckCircle2, ChevronRight, Pencil, Plus, X } from "lucide-react";
 import { useSharedStore, type Branch, type BranchStatus } from "../../store/sharedStore";
 import { PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
@@ -66,7 +66,7 @@ export default function OwnerCabangPage() {
 
   const totalCabang = store.branches.filter((b) => b.type === "Cabang").length;
   const activeCabang = store.branches.filter((b) => b.type === "Cabang" && b.status === "Aktif").length;
-  const totalLow = rows.reduce((a, r) => a + r.low, 0);
+  const totalUnits = rows.reduce((a, r) => a + r.units, 0);
   const key = q.trim().toLowerCase();
   const filtered = rows.filter(({ b }) =>
     `${b.name} ${b.code} ${b.type} ${b.city} ${b.address} ${b.pic} ${b.phone}`.toLowerCase().includes(key),
@@ -124,27 +124,27 @@ export default function OwnerCabangPage() {
         }
       />
 
-      <div className="stat-row" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+      <div className="stat-row">
         <StatCard
           label="Total Cabang"
           value={String(totalCabang)}
-          caption={`${store.branches.length} lokasi termasuk pusat`}
+          caption={`${store.branches.length} lokasi termasuk gudang pusat`}
           icon={<Building2 size={22} />}
           tone="violet"
         />
         <StatCard
           label="Cabang Aktif"
           value={String(activeCabang)}
-          caption="Siap melayani transaksi"
+          caption="Siap melayani operasional"
           icon={<CheckCircle2 size={22} />}
           tone="green"
         />
         <StatCard
-          label="Stok Menipis"
-          value={String(totalLow)}
-          caption="Saldo ≤ minimum di semua lokasi"
+          label="Total Stok Seluruh Lokasi"
+          value={`${totalUnits} unit`}
+          caption="Akumulasi stok pusat & cabang"
           icon={<Boxes size={22} />}
-          tone="amber"
+          tone="blue"
         />
       </div>
 
@@ -172,66 +172,79 @@ export default function OwnerCabangPage() {
         <table className="tt">
           <thead>
             <tr>
-              <th>NAMA CABANG</th>
-              <th>LOKASI</th>
-              <th>PENANGGUNG JAWAB</th>
+              <th>NAMA LOKASI</th>
+              <th>ALAMAT LOKASI</th>
+              <th>PIC &amp; KONTAK</th>
               <th className="tt-center">STATUS</th>
               <th>RINGKASAN</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
           <tbody>
-            {visible.map(({ b, units, low, sales, po, req }) => (
+            {visible.map(({ b, units, sales, po, req }) => (
               <tr key={b.id}>
-                <td>
+                <td style={{ whiteSpace: "nowrap" }}>
                   <div className="cell-person">
-                    <span className="stat-icon" style={{ width: 40, height: 40, borderRadius: 13 }}>
-                      <Building2 size={19} />
+                    <span
+                      className="stat-icon"
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 13,
+                        ...(b.type === "Pusat"
+                          ? { background: "var(--info-bg)", color: "var(--info-ink)" }
+                          : {}),
+                      }}
+                    >
+                      {b.type === "Pusat" ? <Boxes size={19} /> : <Building2 size={19} />}
                     </span>
                     <span>
                       <b>{b.name}</b>
                       <span>
-                        {b.code} · {b.type}
+                        {b.code} · {b.type === "Pusat" ? "Gudang Pusat" : "Cabang Ritel"}
                       </span>
                     </span>
                   </div>
                 </td>
                 <td>
-                  <div className="stock-cell">
-                    <b>{b.city}</b>
-                    <span>{b.address}</span>
-                  </div>
+                  <div className="tt-num" style={{ fontSize: 13.5 }}>{b.city}</div>
+                  <div className="tt-sub">{b.address}</div>
                 </td>
-                <td>
-                  <div className="stock-cell">
-                    <b>{b.pic}</b>
-                    <span>{b.phone}</span>
-                  </div>
+                <td style={{ whiteSpace: "nowrap" }}>
+                  <div className="tt-num" style={{ fontSize: 13.5 }}>{b.pic}</div>
+                  <div className="tt-sub">{b.phone}</div>
                 </td>
-                <td className="tt-center">
+                <td className="tt-center" style={{ whiteSpace: "nowrap" }}>
                   <StatusPill label={b.status} />
                 </td>
-                <td>
-                  <div className="stock-cell">
-                    <b>
-                      {units} unit · {sales} transaksi
-                    </b>
-                    <span>
-                      {po} PO aktif · {req} pengajuan baru{low > 0 ? ` · ${low} stok menipis` : ""}
-                    </span>
-                  </div>
+                <td style={{ whiteSpace: "nowrap" }}>
+                  {b.type === "Pusat" ? (
+                    <>
+                      <div className="tt-num" style={{ fontSize: 13.5 }}>{units} unit stok</div>
+                      <div className="tt-sub">Gudang distribusi utama</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="tt-num" style={{ fontSize: 13.5 }}>
+                        {units} unit · {sales} transaksi
+                      </div>
+                      <div className="tt-sub">
+                        {po} PO aktif · {req} pengajuan
+                      </div>
+                    </>
+                  )}
                 </td>
                 <td className="tt-right">
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                  <span className="row-actions">
+                    <button type="button" className="link-action" onClick={() => openEdit(b)}>
+                      <Pencil size={14} />
+                      Edit
+                    </button>
                     <Link className="link-action" to={`/owner/cabang/${b.id}`}>
                       Detail
-                      <ArrowRight size={15} />
+                      <ChevronRight size={15} />
                     </Link>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(b)}>
-                      <Pencil size={14} />
-                      Ubah
-                    </button>
-                  </div>
+                  </span>
                 </td>
               </tr>
             ))}
@@ -246,16 +259,19 @@ export default function OwnerCabangPage() {
         </table>
         <div className="table-foot">
           <span className="foot-note">
-            Menampilkan {visible.length} dari {filtered.length} cabang · Halaman {safePage} dari {pages}
+            Menampilkan {visible.length} dari {filtered.length} lokasi ({totalCabang} cabang ritel · 1 gudang pusat)
+            {pages > 1 ? ` · Halaman ${safePage} dari ${pages}` : ""}
           </span>
-          <div className="foot-actions">
-            <button className="btn btn-ghost btn-sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
-              Sebelumnya
-            </button>
-            <button className="btn btn-ghost btn-sm" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)}>
-              Berikutnya
-            </button>
-          </div>
+          {pages > 1 ? (
+            <div className="foot-actions">
+              <button className="btn btn-ghost btn-sm" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>
+                Sebelumnya
+              </button>
+              <button className="btn btn-ghost btn-sm" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)}>
+                Berikutnya
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -280,54 +296,58 @@ export default function OwnerCabangPage() {
                 </div>
               ) : null}
               <label className="afield">
-                <span>Nama cabang</span>
+                <span>Nama cabang *</span>
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="cth. Cabang Bukittinggi"
                 />
               </label>
+              <div className="simple-two-col">
+                <label className="afield">
+                  <span>Kode cabang *</span>
+                  <input
+                    value={form.code}
+                    onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                    placeholder="cth. BKT"
+                    maxLength={8}
+                  />
+                </label>
+                <label className="afield">
+                  <span>Kota *</span>
+                  <input
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    placeholder="cth. Bukittinggi"
+                  />
+                </label>
+              </div>
               <label className="afield">
-                <span>Kode cabang</span>
-                <input
-                  value={form.code}
-                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                  placeholder="cth. BKT"
-                  maxLength={8}
-                />
-              </label>
-              <label className="afield">
-                <span>Kota</span>
-                <input
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  placeholder="cth. Bukittinggi"
-                />
-              </label>
-              <label className="afield">
-                <span>Alamat</span>
+                <span>Alamat *</span>
                 <input
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   placeholder="Alamat operasional cabang"
                 />
               </label>
-              <label className="afield">
-                <span>Telepon</span>
-                <input
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="cth. (0752) 123456"
-                />
-              </label>
-              <label className="afield">
-                <span>Penanggung jawab</span>
-                <input
-                  value={form.pic}
-                  onChange={(e) => setForm({ ...form, pic: e.target.value })}
-                  placeholder="Nama kepala cabang"
-                />
-              </label>
+              <div className="simple-two-col">
+                <label className="afield">
+                  <span>Penanggung jawab *</span>
+                  <input
+                    value={form.pic}
+                    onChange={(e) => setForm({ ...form, pic: e.target.value })}
+                    placeholder="Nama kepala cabang"
+                  />
+                </label>
+                <label className="afield">
+                  <span>Telepon *</span>
+                  <input
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="cth. (0752) 123456"
+                  />
+                </label>
+              </div>
               <label className="afield">
                 <span>Status operasional</span>
                 <select

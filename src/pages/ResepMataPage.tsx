@@ -17,7 +17,7 @@ export default function ResepMataPage() {
   const store = useSharedStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const reseps = store.reseps;
-  const [selected, setSelected] = useState(reseps[0]?.id ?? "");
+  const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"Semua" | "Terbaru">("Semua");
   const [open, setOpen] = useState(false);
@@ -53,7 +53,7 @@ export default function ResepMataPage() {
       .includes(query.toLowerCase());
   });
 
-  const rec = rows.find((r) => r.id === selected) ?? rows[0] ?? reseps[0];
+  const rec = selected ? reseps.find((r) => r.id === selected) : undefined;
   const matchedCustomer = rec ? store.customers.find((c) => c.name === rec.customer) : undefined;
   const uniqueCustomersWithRx = new Set(reseps.map((r) => r.customer)).size;
 
@@ -160,134 +160,164 @@ export default function ResepMataPage() {
         </div>
       ) : null}
 
-      <div className="split">
-        <section className="section-block">
-          <div className="section-head">
-            <div>
-              <h2>Daftar Resep</h2>
-              <div className="section-desc">Cari riwayat resep berdasarkan nama atau nomor HP pelanggan</div>
-            </div>
+      <section className="section-block">
+        <div className="section-head">
+          <div>
+            <h2>Daftar Resep</h2>
+            <div className="section-desc">Cari riwayat resep berdasarkan nama atau nomor HP pelanggan</div>
           </div>
+        </div>
 
-          <div className="toolbar">
-            <SearchBox
-              placeholder="Cari nama pelanggan, nomor HP, atau kode resep..."
-              value={query}
-              onChange={setQuery}
-            />
-            <div className="toolbar-chips">
-              <Chip active={filter === "Semua"} onClick={() => setFilter("Semua")}>
-                Semua
-              </Chip>
-              <Chip active={filter === "Terbaru"} onClick={() => setFilter("Terbaru")}>
-                Terbaru
-              </Chip>
-            </div>
+        <div className="toolbar">
+          <SearchBox
+            placeholder="Cari nama pelanggan, nomor HP, atau kode resep..."
+            value={query}
+            onChange={setQuery}
+          />
+          <div className="toolbar-chips">
+            <Chip active={filter === "Semua"} onClick={() => setFilter("Semua")}>
+              Semua
+            </Chip>
+            <Chip active={filter === "Terbaru"} onClick={() => setFilter("Terbaru")}>
+              Terbaru
+            </Chip>
           </div>
+        </div>
 
-          <div className="table-wrap">
-            <table className="tt">
-              <thead>
-                <tr>
-                  <th>TANGGAL</th>
-                  <th>PELANGGAN</th>
-                  <th>OD (KANAN)</th>
-                  <th>OS (KIRI)</th>
-                  <th>KETERANGAN</th>
-                  <th className="tt-right">AKSI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => {
-                  const cust = store.customers.find((c) => c.name === r.customer);
-                  return (
-                    <tr
-                      key={r.id}
-                      className={rec?.id === r.id ? "is-active" : ""}
-                      onClick={() => setSelected(r.id)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <td>
-                        <div className="tt-num">{r.date}</div>
-                        <div className="tt-sub">{r.id}</div>
-                      </td>
-                      <td>
-                        <div className="cell-person">
-                          <Avatar initials={r.initials} size={40} />
-                          <span>
-                            <b>{r.customer}</b>
-                            <span>{cust?.phone ?? r.id}</span>
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="tt-num" style={{ fontSize: 13 }}>
-                          SPH {r.od.sph}
-                        </div>
-                        <div className="tt-sub">
-                          CYL {r.od.cyl || "0.00"} · AX {r.od.axis || "-"}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="tt-num" style={{ fontSize: 13 }}>
-                          SPH {r.os.sph}
-                        </div>
-                        <div className="tt-sub">
-                          CYL {r.os.cyl || "0.00"} · AX {r.os.axis || "-"}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-2)" }}>
-                          {r.note && r.note !== "-" ? r.note : "Pemeriksaan ukuran lensa"}
-                        </div>
-                        <div className="tt-sub">
-                          PD {r.pd} mm · ADD {r.add || "-"}
-                        </div>
-                      </td>
-                      <td className="tt-right">
-                        <span className="link-action">
-                          Detail
-                          <ChevronRight size={15} />
+        <div className="table-wrap">
+          <table className="tt">
+            <thead>
+              <tr>
+                <th>TANGGAL</th>
+                <th>PELANGGAN</th>
+                <th>OD (KANAN)</th>
+                <th>OS (KIRI)</th>
+                <th>KETERANGAN</th>
+                <th className="tt-right">AKSI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const cust = store.customers.find((c) => c.name === r.customer);
+                return (
+                  <tr
+                    key={r.id}
+                    className={rec?.id === r.id ? "is-active" : ""}
+                    onClick={() => setSelected(r.id)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>
+                      <div className="tt-num">{r.date}</div>
+                      <div className="tt-sub">{r.id}</div>
+                    </td>
+                    <td>
+                      <div className="cell-person">
+                        <Avatar initials={r.initials} size={40} />
+                        <span>
+                          <b>{r.customer}</b>
+                          <span>{cust?.phone ?? r.id}</span>
                         </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6}>
-                      <div className="empty-note">Resep tidak ditemukan.</div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="tt-num" style={{ fontSize: 13 }}>
+                        SPH {r.od.sph}
+                      </div>
+                      <div className="tt-sub">
+                        CYL {r.od.cyl || "0.00"} · AX {r.od.axis || "-"}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="tt-num" style={{ fontSize: 13 }}>
+                        SPH {r.os.sph}
+                      </div>
+                      <div className="tt-sub">
+                        CYL {r.os.cyl || "0.00"} · AX {r.os.axis || "-"}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-2)" }}>
+                        {r.note && r.note !== "-" ? r.note : "Pemeriksaan ukuran lensa"}
+                      </div>
+                      <div className="tt-sub">
+                        PD {r.pd} mm · ADD {r.add || "-"}
+                      </div>
+                    </td>
+                    <td className="tt-right">
+                      <button
+                        type="button"
+                        className="link-action"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelected(r.id);
+                        }}
+                      >
+                        Lihat Detail
+                        <ChevronRight size={15} />
+                      </button>
                     </td>
                   </tr>
-                ) : null}
-              </tbody>
-            </table>
-            <div className="table-foot">
-              <span className="foot-note">
-                Menampilkan {rows.length} dari {reseps.length} resep
-              </span>
-            </div>
+                );
+              })}
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="empty-note">Resep tidak ditemukan.</div>
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+          <div className="table-foot">
+            <span className="foot-note">
+              Menampilkan {rows.length} dari {reseps.length} resep
+            </span>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {rec ? (
-          <aside className="detail-panel" key={rec.id}>
-            <div className="detail-head">
-              <Avatar initials={rec.initials} size={48} />
-              <div>
-                <b>{rec.customer}</b>
-                <span>
-                  {rec.id}
-                  {matchedCustomer ? ` · ${matchedCustomer.phone}` : ""}
-                </span>
+      {rec ? (
+        <div className="overlay" onClick={() => setSelected(null)}>
+          <div className="drawer" key={rec.id} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="drawer-head">
+              <div className="detail-head">
+                <Avatar initials={rec.initials} size={48} />
+                <div>
+                  <b>{rec.customer}</b>
+                  <span>
+                    {rec.id}
+                    {matchedCustomer ? ` · ${matchedCustomer.phone}` : ""}
+                  </span>
+                </div>
+              </div>
+              <button className="icon-pill" aria-label="Tutup" onClick={() => setSelected(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div>
+              <div className="mini-label" style={{ color: "var(--accent-ink)" }}>
+                UKURAN LENSA (OD &amp; OS)
+              </div>
+              <div className="rx-mini" style={{ marginTop: 10 }}>
+                <div className="rx-eye">
+                  <div className="ey-label">OD / MATA KANAN</div>
+                  <b>{rec.od.sph}</b>
+                  <span>
+                    CYL {rec.od.cyl || "0.00"} · AXIS {rec.od.axis || "-"}
+                  </span>
+                </div>
+                <div className="rx-eye">
+                  <div className="ey-label">OS / MATA KIRI</div>
+                  <b>{rec.os.sph}</b>
+                  <span>
+                    CYL {rec.os.cyl || "0.00"} · AXIS {rec.os.axis || "-"}
+                  </span>
+                </div>
               </div>
             </div>
 
             <div className="detail-rows">
-              <div className="detail-row">
-                <span>Tanggal Resep</span>
-                <b>{rec.date}</b>
-              </div>
               <div className="detail-row">
                 <span>PD (Pupillary Distance)</span>
                 <b>{rec.pd} mm</b>
@@ -297,41 +327,28 @@ export default function ResepMataPage() {
                 <b>{rec.add || "-"}</b>
               </div>
               <div className="detail-row">
+                <span>Tanggal Resep</span>
+                <b>{rec.date}</b>
+              </div>
+              <div className="detail-row">
                 <span>Keterangan / Catatan</span>
                 <b>{rec.note && rec.note !== "-" ? rec.note : "-"}</b>
               </div>
             </div>
 
-            <div className="mini-label">UKURAN LENSA (OD &amp; OS)</div>
-            <div className="rx-mini">
-              <div className="rx-eye">
-                <div className="ey-label">OD / MATA KANAN</div>
-                <b>{rec.od.sph}</b>
-                <span>
-                  CYL {rec.od.cyl || "0.00"} · AXIS {rec.od.axis || "-"}
-                </span>
-              </div>
-              <div className="rx-eye">
-                <div className="ey-label">OS / MATA KIRI</div>
-                <b>{rec.os.sph}</b>
-                <span>
-                  CYL {rec.os.cyl || "0.00"} · AXIS {rec.os.axis || "-"}
-                </span>
-              </div>
+            <div className="drawer-foot">
+              <button type="button" className="btn btn-ghost" onClick={startEdit}>
+                <Pencil size={15} />
+                Ubah Resep
+              </button>
+              <button type="button" className="btn btn-primary" onClick={() => setPrintOpen(true)}>
+                <Printer size={16} />
+                Cetak Resep
+              </button>
             </div>
-
-            <button type="button" className="btn btn-ghost full" onClick={startEdit}>
-              <Pencil size={15} />
-              Ubah Resep
-            </button>
-
-            <button className="btn btn-primary full" onClick={() => setPrintOpen(true)}>
-              <Printer size={16} />
-              Cetak Resep
-            </button>
-          </aside>
-        ) : null}
-      </div>
+          </div>
+        </div>
+      ) : null}
 
       {printOpen && rec ? (
         <div className="overlay" onClick={() => setPrintOpen(false)}>

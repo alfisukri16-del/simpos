@@ -179,7 +179,7 @@ export default function OwnerTransaksiPage() {
                 </td>
                 <td className="tt-right">
                   <button className="link-action" onClick={() => setDetailNo(t.no)}>
-                    Detail
+                    Lihat Detail
                     <ArrowRight size={15} />
                   </button>
                 </td>

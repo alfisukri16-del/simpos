@@ -19,7 +19,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .sidebar-brand {
@@ -61,6 +61,10 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .nav-item {
@@ -109,20 +113,33 @@
 }
 
 /* Pemilik punya 11 menu: rapatkan agar seluruh navigasi muat tanpa scroll. */
+.sidebar.owner-sidebar {
+  padding: 16px 14px 14px;
+}
+
 .sidebar.owner-sidebar .sidebar-brand {
-  padding-bottom: 24px;
+  padding-bottom: 12px;
+}
+
+.sidebar.owner-sidebar .sidebar-nav {
+  gap: 2px;
 }
 
 .sidebar.owner-sidebar .nav-item {
-  padding: 11px 14px;
+  padding: 7px 12px;
+  font-size: 13px;
 }
 
 .sidebar.owner-sidebar .nav-sep {
-  margin: 22px 12px 10px;
+  margin: 10px 12px 4px;
+}
+
+.sidebar.owner-sidebar > .sidebar-nav > div:first-child .nav-sep {
+  margin-top: 2px;
 }
 
 .sidebar.owner-sidebar .sidebar-foot {
-  padding-top: 14px;
+  padding-top: 10px;
 }
 
 .sidebar-foot b {

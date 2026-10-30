@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Truck, X } from "lucide-react";
 import { useSharedStore } from "../../store/sharedStore";
 import { requestState, requestStateLabel, type RequestState } from "../../store/requestStatus";
 import { getSession } from "../../store/session";
@@ -103,14 +103,27 @@ export default function OwnerPengajuanPage() {
       />
 
       <div className="stat-row" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
-        <StatCard label="Menunggu Tinjauan" value={String(awaiting)} caption="Belum dialokasikan" tone="amber" />
         <StatCard
-          label="Dialokasikan"
+          label="Menunggu Tinjauan"
+          value={String(awaiting)}
+          caption="Belum dialokasikan ke cabang"
+          icon={<Clock size={22} />}
+          tone="amber"
+        />
+        <StatCard
+          label="Sedang Dialokasikan"
           value={String(partly + allocated)}
           caption={`${partly} sebagian · ${allocated} menunggu diterima`}
+          icon={<Truck size={22} />}
           tone="blue"
         />
-        <StatCard label="Selesai" value={String(done)} caption="Barang sudah diterima" tone="green" />
+        <StatCard
+          label="Selesai Diterima"
+          value={String(done)}
+          caption="Barang sudah diterima cabang"
+          icon={<CheckCircle2 size={22} />}
+          tone="green"
+        />
       </div>
 
       {notice ? (
@@ -201,7 +214,7 @@ export default function OwnerPengajuanPage() {
         </table>
         <div className="table-foot">
           <span className="foot-note">
-            {rows.length} pengajuan · {awaiting} menunggu · {rejected} ditolak · sisa = diminta − dialokasikan
+            Menampilkan {rows.length} pengajuan ({awaiting} menunggu tinjauan · {rejected} ditolak)
           </span>
         </div>
       </div>
@@ -211,9 +224,9 @@ export default function OwnerPengajuanPage() {
           <div className="drawer" key={detail.id} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             <div className="drawer-head">
               <div>
-                <h2>{detail.id}</h2>
+                <h2>Detail Pengajuan — {detail.id}</h2>
                 <div className="section-desc">
-                  {detail.at} · {detail.actor}
+                  Diajukan oleh {detail.actor} · {detail.at}
                 </div>
               </div>
               <button className="icon-pill" aria-label="Tutup" onClick={() => setDetailId(null)}>
@@ -226,12 +239,13 @@ export default function OwnerPengajuanPage() {
                 <div>
                   <b>{detailProduct.name}</b>
                   <span>
-                    {detailProduct.code} · {store.branches.find((b) => b.id === detail.branchId)?.name ?? detail.branchId}
+                    {detailProduct.type} · {detailProduct.code} ·{" "}
+                    {store.branches.find((b) => b.id === detail.branchId)?.name ?? detail.branchId}
                   </span>
                 </div>
                 <StatusPill label={requestStateLabel(detailState)} />
               </div>
-              <div className="trace-summary-meta">
+              <div className="trace-summary-meta" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
                 <div className="trace-meta-item">
                   <span>Diminta</span>
                   <b>{detail.qty} unit</b>
@@ -244,59 +258,56 @@ export default function OwnerPengajuanPage() {
                   <span>Diterima</span>
                   <b>{detailReceived} unit</b>
                 </div>
+                <div className="trace-meta-item">
+                  <span>Sisa</span>
+                  <b>{detailSisa} unit</b>
+                </div>
               </div>
             </div>
 
-            <div className="trace-progress-box">
-              <div className="trace-progress-head">
-                <span>Penerimaan Barang</span>
-                <b>{detailPct}% diterima</b>
+            {detailAlloc > 0 ? (
+              <div className="trace-progress-box">
+                <div className="trace-progress-head">
+                  <span>Progres Penerimaan Cabang</span>
+                  <b>
+                    {detailReceived} dari {detail.qty} unit ({detailPct}%)
+                  </b>
+                </div>
+                <div className="top-bar">
+                  <span style={{ width: `${detailPct}%` }} />
+                </div>
               </div>
-              <div className="top-bar">
-                <span style={{ width: `${detailPct}%` }} />
-              </div>
-            </div>
+            ) : null}
 
             <div className="detail-rows">
               <div className="detail-row">
-                <span>Produk</span>
+                <span>Sisa Stok di Cabang</span>
                 <b>
-                  {detailProduct.name} ({detailProduct.code})
+                  {detailStock?.saldo ?? 0} unit{" "}
+                  <span className="tt-sub">(min. {detailStock?.minimum ?? 0} unit)</span>
                 </b>
               </div>
               <div className="detail-row">
-                <span>Diminta / dialokasikan / diterima / sisa</span>
+                <span>Stok Tersedia di Pusat</span>
                 <b>
-                  {detail.qty} / {detailAlloc} / {detailReceived} / {detailSisa}
+                  {detailAvail?.available ?? 0} unit siap kirim{" "}
+                  {detailAvail && detailAvail.reserved > 0 ? (
+                    <span className="tt-sub">({detailAvail.reserved} unit sedang direservasi)</span>
+                  ) : null}
                 </b>
               </div>
               <div className="detail-row">
-                <span>Stok cabang (minimum)</span>
-                <b>
-                  {detailStock?.saldo ?? 0} ({detailStock?.minimum ?? 0})
-                </b>
-              </div>
-              <div className="detail-row">
-                <span>Stok pusat dapat dialokasikan</span>
-                <b>
-                  {detailAvail?.available}{" "}
-                  <span className="tt-sub">
-                    (dari {detailAvail?.onHand} unit, {detailAvail?.reserved} direservasi)
-                  </span>
-                </b>
-              </div>
-              <div className="detail-row">
-                <span>Keterangan pengajuan</span>
+                <span>Catatan Cabang</span>
                 <b>{detail.note || "—"}</b>
               </div>
               {detail.status === "Ditolak" ? (
                 <>
                   <div className="detail-row">
-                    <span>Alasan penolakan</span>
+                    <span>Alasan Penolakan</span>
                     <b>{detail.rejectedReason ?? "—"}</b>
                   </div>
                   <div className="detail-row">
-                    <span>Ditolak oleh</span>
+                    <span>Ditolak Oleh</span>
                     <b>
                       {detail.rejectedBy ?? "Pemilik"} · {detail.rejectedAt ?? "—"}
                     </b>
@@ -313,7 +324,7 @@ export default function OwnerPengajuanPage() {
                   </div>
                 ) : null}
                 <label className="afield">
-                  <span>Alasan penolakan</span>
+                  <span>Alasan penolakan *</span>
                   <input
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
@@ -332,31 +343,36 @@ export default function OwnerPengajuanPage() {
                     Batal
                   </button>
                   <button className="btn btn-danger" onClick={doReject}>
-                    Tolak Pengajuan
+                    Konfirmasi Tolak
                   </button>
                 </div>
               </div>
             ) : (
               <div className="drawer-foot">
-                <button className="btn btn-ghost" onClick={() => setDetailId(null)}>
-                  Tutup
-                </button>
                 {detailState === "Diajukan" ? (
-                  <button className="btn btn-ghost" onClick={() => setRejecting(true)}>
-                    Tolak
+                  <button
+                    className="btn btn-ghost"
+                    style={{
+                      color: "var(--danger-ink)",
+                      background: "var(--danger-bg)",
+                      borderColor: "rgba(216, 69, 95, 0.2)",
+                    }}
+                    onClick={() => setRejecting(true)}
+                  >
+                    Tolak Pengajuan
                   </button>
                 ) : null}
                 {detailSisa > 0 && detailState !== "Ditolak" ? (
                   <button className="btn btn-primary" onClick={() => navigate(`/owner/alokasi?requestId=${detail.id}`)}>
-                    Tentukan Alokasi
+                    Setujui & Alokasikan
                     <ArrowRight size={16} />
                   </button>
                 ) : detailState === "Ditolak" ? (
-                  <span className="foot-note">Pengajuan ditolak.</span>
+                  <span className="foot-note">Pengajuan ini telah ditolak.</span>
                 ) : detailState === "Selesai" ? (
-                  <span className="foot-note">Pengajuan selesai.</span>
+                  <span className="foot-note">Pengajuan telah selesai dipenuhi.</span>
                 ) : (
-                  <span className="foot-note">Menunggu penerimaan Admin cabang.</span>
+                  <span className="foot-note">Menunggu konfirmasi penerimaan Admin Cabang.</span>
                 )}
               </div>
             )}

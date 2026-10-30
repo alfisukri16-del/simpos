@@ -221,7 +221,7 @@ export default function OwnerAlokasiPage() {
                 </td>
                 <td className="tt-right">
                   <button className="link-action" onClick={() => setDetailId(d.id)}>
-                    Detail
+                    Lihat Detail
                     <ArrowRight size={15} />
                   </button>
                 </td>

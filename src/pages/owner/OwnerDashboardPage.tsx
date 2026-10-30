@@ -7,11 +7,9 @@ import {
   Banknote,
   Boxes,
   CalendarDays,
-  ClipboardList,
-  FilePlus2,
-  ReceiptText,
+  Truck,
 } from "lucide-react";
-import { useSharedStore, type Branch, type ProductType } from "../../store/sharedStore";
+import { useSharedStore, type Branch } from "../../store/sharedStore";
 import { requestState, requestStateLabel } from "../../store/requestStatus";
 import { PageHeader, StatusPill, formatIDR } from "../../components/ui";
 import SalesBarChart from "../../components/SalesBarChart";
@@ -130,90 +128,13 @@ function DeltaBadge({
   );
 }
 
-type CategoryKey = ProductType | "Lainnya";
-type CategoryRow = { type: CategoryKey; revenue: number; qty: number };
-
-const CATEGORY_COLORS: Record<CategoryKey, string> = {
-  Frame: "#5b55fb",
-  Lensa: "#958df8",
-  Aksesoris: "#efb45f",
-  Lainnya: "#c9c8e8",
-};
-
-function RevenueDonut({ rows, total }: { rows: CategoryRow[]; total: number }) {
-  const size = 136;
-  const stroke = 18;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const sum = rows.reduce((a, row) => a + row.revenue, 0);
-  let offset = 0;
-
-  return (
-    <div className="dash-donut-body">
-      <div className="dash-donut">
-        <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label="Komposisi omzet berdasarkan kategori produk">
-          <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="none"
-              stroke="#eef0fb"
-              strokeWidth={stroke}
-            />
-            {rows.map((row) => {
-              const length = sum > 0 ? (row.revenue / sum) * circumference : 0;
-              const gap = rows.length > 1 ? 2.5 : 0;
-              const dash = Math.max(0, length - gap);
-              const dashOffset = -offset;
-              offset += length;
-              return (
-                <circle
-                  key={row.type}
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={radius}
-                  fill="none"
-                  stroke={CATEGORY_COLORS[row.type]}
-                  strokeWidth={stroke}
-                  strokeDasharray={`${dash} ${circumference - dash}`}
-                  strokeDashoffset={dashOffset}
-                />
-              );
-            })}
-          </g>
-        </svg>
-        <div className="dash-donut-center">
-          <span>Omzet</span>
-          <b>{formatIDR(total)}</b>
-        </div>
-      </div>
-      <div className="dash-donut-legend">
-        {rows.map((row) => (
-          <div key={row.type} className="dash-donut-row">
-            <span className="dash-donut-dot" style={{ background: CATEGORY_COLORS[row.type] }} />
-            <div className="dash-donut-copy">
-              <b>{row.type}</b>
-              <span>{formatIDR(row.revenue)}</span>
-            </div>
-            <strong>
-              {total > 0
-                ? (row.revenue / total * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })
-                : "0"}
-              %
-            </strong>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function OwnerDashboardPage() {
   const store = useSharedStore();
   const [scope, setScope] = useState<Scope>("all");
   const [period, setPeriod] = useState<PeriodKey>("90");
-  const { tx, poActive, reqs, low } = useOwnerScope(scope);
+  const { tx, poActive, reqs, rows } = useOwnerScope(scope);
+  const totalStockUnits = rows.reduce((a, s) => a + s.saldo, 0);
+  const activeSkuCount = new Set(rows.map((s) => s.productId)).size;
 
   const range = useMemo(() => buildRange(period), [period]);
   const hasComparison = period !== "all";
@@ -243,7 +164,6 @@ export default function OwnerDashboardPage() {
   const total = periodTx.reduce((a, t) => a + t.total, 0);
   const previousTotal = previousTx.reduce((a, t) => a + t.total, 0);
   const count = periodTx.length;
-  const previousCount = previousTx.length;
   const average = count > 0 ? Math.round(total / count) : 0;
 
   const rangeText =
@@ -273,7 +193,22 @@ export default function OwnerDashboardPage() {
 
   const reqsPending = requestRows.filter((row) => row.state === "Diajukan");
   const pendingBranches = new Set(reqsPending.map(({ r }) => r.branchId)).size;
-  const lowBranches = new Set(low.map((row) => row.loc)).size;
+
+  const activeDists = useMemo(
+    () =>
+      store.distributions.filter(
+        (d) => d.status !== "Diterima" && (scope === "all" || scope === "pusat" || d.branchId === scope),
+      ),
+    [store.distributions, scope],
+  );
+  const transitUnits = useMemo(
+    () =>
+      activeDists.reduce(
+        (sum, d) => sum + d.lines.reduce((a, l) => a + Math.max(0, l.qtyAlokasi - l.qtyDiterima), 0),
+        0,
+      ),
+    [activeDists],
+  );
 
   const cabangRows = useMemo(
     () =>
@@ -283,20 +218,17 @@ export default function OwnerDashboardPage() {
           const bTx = periodTx.filter((t) => (t.branchId ?? "cabang-padang") === b.id);
           const revenue = bTx.reduce((a, t) => a + t.total, 0);
           const bPo = poActive.filter((o) => o.branchId === b.id).length;
-          const bLow = store.stockForBranch(b.id).filter((s) => {
-            const p = store.productOf(s.productId);
-            return p && p.status === "Aktif" && p.type !== "Aksesoris" && s.saldo <= s.minimum;
-          }).length;
+          const units = store.stockForBranch(b.id).reduce((a, s) => a + s.saldo, 0);
           return {
             b,
+            units,
             sales: bTx.length,
             revenue,
             po: bPo,
-            low: bLow,
             share: total > 0 ? revenue / total : 0,
           };
         })
-        .sort((a, b) => b.revenue - a.revenue || a.b.name.localeCompare(b.b.name)),
+        .sort((a, b) => (a.b.type === "Cabang" ? -1 : 1) - (b.b.type === "Cabang" ? -1 : 1) || b.revenue - a.revenue),
     [store, scope, periodTx, poActive, total],
   );
 
@@ -315,52 +247,6 @@ export default function OwnerDashboardPage() {
     return [...map.values()].sort((a, b) => b.qty - a.qty || b.revenue - a.revenue).slice(0, 5);
   }, [periodTx]);
   const topMax = Math.max(1, ...topProducts.map((p) => p.qty));
-
-  const categoryRows = useMemo(() => {
-    const resolveType = (p: { id?: string; name: string; brand: string }): ProductType => {
-      const byId = p.id ? store.productOf(p.id) : undefined;
-      if (byId) return byId.type;
-      const normalized = p.name.toLowerCase();
-      const byName = store.products.find((product) => {
-        const name = product.name.toLowerCase();
-        return normalized === name || normalized.endsWith(` ${name}`) || normalized.startsWith(`${name} `);
-      });
-      if (byName) return byName.type;
-      if (normalized.includes("lensa")) return "Lensa";
-      if (
-        normalized.includes("case") ||
-        normalized.includes("lap") ||
-        normalized.includes("kit") ||
-        normalized.includes("cleaning")
-      ) {
-        return "Aksesoris";
-      }
-      return "Frame";
-    };
-
-    const map = new Map<ProductType, { revenue: number; qty: number }>();
-    for (const t of periodTx) {
-      const products = t.products ?? [];
-      const lineTotal = products.reduce((a, p) => a + p.qty * p.price, 0);
-      /* Selisih total transaksi vs harga baris (diskon/layanan) dialokasikan proporsional. */
-      const factor = lineTotal > 0 ? t.total / lineTotal : 0;
-      for (const p of products) {
-        const type = resolveType(p);
-        const cur = map.get(type) ?? { revenue: 0, qty: 0 };
-        cur.revenue += p.qty * p.price * factor;
-        cur.qty += p.qty;
-        map.set(type, cur);
-      }
-    }
-    const rows: CategoryRow[] = (["Frame", "Lensa", "Aksesoris"] as ProductType[])
-      .map((type) => ({ type, ...(map.get(type) ?? { revenue: 0, qty: 0 }) }))
-      .filter((row) => row.revenue > 0);
-    const categorized = rows.reduce((a, row) => a + row.revenue, 0);
-    if (total - categorized > 1) {
-      rows.push({ type: "Lainnya", revenue: total - categorized, qty: 0 });
-    }
-    return rows;
-  }, [periodTx, store, total]);
 
   const chart = useMemo(() => {
     const groupByDate = (rows: typeof periodTx) => {
@@ -400,47 +286,44 @@ export default function OwnerDashboardPage() {
       <PageHeader
         overline="DASHBOARD PEMILIK"
         title="Dashboard Pemilik"
-        desc="Kinerja penjualan, stok, dan keputusan yang perlu ditindaklanjuti di seluruh lokasi."
+        desc={`Ringkasan penjualan, stok, dan keputusan pengajuan (${rangeText}).`}
+        actions={
+          <div className="dash-toolbar-filters">
+            <select
+              className="select-pill"
+              aria-label="Lokasi"
+              value={scope}
+              onChange={(e) => setScope(e.target.value)}
+            >
+              <option value="all">Semua Lokasi</option>
+              {store.branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <label className="period-pill-select" title="Pilih periode">
+              <CalendarDays size={15} />
+              <select
+                aria-label="Periode"
+                value={period}
+                onChange={(e) => setPeriod(e.target.value as PeriodKey)}
+              >
+                {PERIOD_OPTIONS.map((key) => (
+                  <option key={key} value={key}>
+                    {PERIOD_META[key].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        }
       />
-
-      <div className="toolbar dash-toolbar">
-        <div className="dash-toolbar-note">
-          <CalendarDays size={15} />
-          {rangeText}
-        </div>
-        <div className="dash-toolbar-filters">
-          <select
-            className="select-pill"
-            aria-label="Lokasi"
-            value={scope}
-            onChange={(e) => setScope(e.target.value)}
-          >
-            <option value="all">Semua Lokasi</option>
-            {store.branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className="select-pill"
-            aria-label="Periode"
-            value={period}
-            onChange={(e) => setPeriod(e.target.value as PeriodKey)}
-          >
-            {PERIOD_OPTIONS.map((key) => (
-              <option key={key} value={key}>
-                {PERIOD_META[key].label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
 
       <div className="dash-kpi-grid">
         <Link to="/owner/transaksi" className="dash-kpi dash-kpi-primary">
           <div className="dash-kpi-head">
-            <span className="dash-kpi-label">Omzet</span>
+            <span className="dash-kpi-label">Omzet Penjualan</span>
             <span className="dash-kpi-icon">
               <Banknote size={18} />
             </span>
@@ -457,68 +340,37 @@ export default function OwnerDashboardPage() {
           </div>
         </Link>
 
-        <Link to="/owner/transaksi" className="dash-kpi">
-          <div className="dash-kpi-head">
-            <span className="dash-kpi-label">Transaksi Sukses</span>
-            <span className="dash-kpi-icon">
-              <ReceiptText size={18} />
-            </span>
-          </div>
-          <div className="dash-kpi-value">{count}</div>
-          <div className="dash-kpi-sub">Transaksi selesai</div>
-          <div className="dash-kpi-foot">
-            <DeltaBadge current={count} previous={previousCount} hasComparison={hasComparison} />
-            <span className="dash-kpi-compare">
-              {hasComparison ? `vs ${meta.previous}` : "Semua waktu"}
-            </span>
-          </div>
-        </Link>
-
         <Link to="/owner/stok" className="dash-kpi">
           <div className="dash-kpi-head">
-            <span className="dash-kpi-label">Stok Menipis</span>
+            <span className="dash-kpi-label">Total Stok Lokasi</span>
             <span className="dash-kpi-icon">
               <Boxes size={18} />
             </span>
           </div>
-          <div className="dash-kpi-value">{low.length}</div>
+          <div className="dash-kpi-value">{totalStockUnits} unit</div>
           <div className="dash-kpi-sub">
-            {low.length > 0 ? `${lowBranches} lokasi · saldo ≤ minimum` : "Semua di atas minimum"}
+            {activeSkuCount} produk aktif · {scope === "all" ? `${store.branches.length} lokasi` : scopeLabel(scope, store.branches)}
           </div>
           <div className="dash-kpi-foot">
-            <span className="dash-kpi-compare">Kondisi saat ini</span>
+            <span className="dash-kpi-compare">Lihat rincian stok ›</span>
           </div>
         </Link>
 
-        <Link to="/owner/pengajuan" className="dash-kpi">
+        <Link to="/owner/alokasi" className="dash-kpi">
           <div className="dash-kpi-head">
-            <span className="dash-kpi-label">Pengajuan Masuk</span>
+            <span className="dash-kpi-label">Distribusi Berjalan</span>
             <span className="dash-kpi-icon">
-              <FilePlus2 size={18} />
+              <Truck size={18} />
             </span>
           </div>
-          <div className="dash-kpi-value">{reqsPending.length}</div>
+          <div className="dash-kpi-value">{activeDists.length}</div>
           <div className="dash-kpi-sub">
-            {reqsPending.length > 0 ? `${pendingBranches} cabang mengajukan` : "Tidak ada antrean"}
+            {activeDists.length > 0
+              ? `${transitUnits} unit menunggu diterima cabang`
+              : "Seluruh kiriman telah diterima"}
           </div>
           <div className="dash-kpi-foot">
-            <span className="dash-kpi-compare">Menunggu keputusan</span>
-          </div>
-        </Link>
-
-        <Link to="/owner/pemesanan" className="dash-kpi">
-          <div className="dash-kpi-head">
-            <span className="dash-kpi-label">PO Aktif</span>
-            <span className="dash-kpi-icon">
-              <ClipboardList size={18} />
-            </span>
-          </div>
-          <div className="dash-kpi-value">{poActive.length}</div>
-          <div className="dash-kpi-sub">
-            {poActive.length > 0 ? "Dipesan + Diproses" : "Tidak ada PO berjalan"}
-          </div>
-          <div className="dash-kpi-foot">
-            <span className="dash-kpi-compare">Kondisi saat ini</span>
+            <span className="dash-kpi-compare">Pantau alokasi distribusi ›</span>
           </div>
         </Link>
       </div>
@@ -553,61 +405,16 @@ export default function OwnerDashboardPage() {
           )}
         </section>
 
-        <section className="panel dash-side-card">
-          <div className="section-head">
-            <div>
-              <h2>Kinerja Lokasi</h2>
-              <div className="section-desc">Omzet per lokasi · {meta.period}</div>
-            </div>
-            <Link className="link-action" to="/owner/cabang">
-              Semua
-              <ArrowRight size={15} />
-            </Link>
-          </div>
-          <div className="dash-branch-list">
-            {cabangRows.slice(0, 5).map((row) => (
-              <Link className="dash-branch-row" to={`/owner/cabang/${row.b.id}`} key={row.b.id}>
-                <div className="dash-branch-line">
-                  <span className="dash-branch-name">{row.b.name}</span>
-                  <span className="dash-branch-value">{formatIDR(row.revenue)}</span>
-                </div>
-                <div className="dash-branch-bar">
-                  <span style={{ width: `${Math.max(0, Math.min(100, row.share * 100))}%` }} />
-                </div>
-                <div className="dash-branch-meta">
-                  <span>{Math.round(row.share * 100)}% omzet</span>
-                  <span>{row.sales} transaksi</span>
-                  <span>{row.po} PO</span>
-                  {row.low > 0 ? <span className="is-warn">{row.low} menipis</span> : null}
-                </div>
-              </Link>
-            ))}
-            {cabangRows.length === 0 ? <div className="empty-note">Belum ada lokasi pada cakupan ini.</div> : null}
-          </div>
-        </section>
-      </div>
-
-      <div className="dash-lower">
-        <section className="panel dash-donut-panel">
-          <div className="section-head">
-            <div>
-              <h2>Komposisi Omzet</h2>
-              <div className="section-desc">Berdasarkan kategori · {meta.period}</div>
-            </div>
-          </div>
-          {categoryRows.length > 0 ? (
-            <RevenueDonut rows={categoryRows} total={total} />
-          ) : (
-            <div className="empty-note">Belum ada penjualan pada periode ini.</div>
-          )}
-        </section>
-
         <section className="panel top-card">
           <div className="section-head">
             <div>
               <h2>Produk Terlaris</h2>
               <div className="section-desc">Transaksi selesai · {meta.period}</div>
             </div>
+            <Link className="link-action" to="/owner/laporan">
+              Lihat Laporan
+              <ArrowRight size={15} />
+            </Link>
           </div>
           {topProducts.length > 0 ? (
             <div className="top-list" key={`${scope}-${period}`}>
@@ -633,15 +440,17 @@ export default function OwnerDashboardPage() {
             <div className="empty-note">Belum ada penjualan pada periode ini.</div>
           )}
         </section>
+      </div>
 
+      <div className="dash-lower">
         <section className="panel">
           <div className="section-head">
             <div>
               <h2>Pengajuan Masuk Terbaru</h2>
-              <div className="section-desc">Kebutuhan stok dari cabang</div>
+              <div className="section-desc">Kebutuhan stok dari cabang yang perlu ditinjau</div>
             </div>
             <Link className="link-action" to="/owner/pengajuan">
-              Tinjau semua
+              Tinjau Semua
               <ArrowRight size={15} />
             </Link>
           </div>
@@ -650,7 +459,7 @@ export default function OwnerDashboardPage() {
               <div key={r.id} className="todo-row">
                 <div className="todo-body">
                   <b>
-                    {product?.name} × {r.qty}
+                    {product?.name} × {r.qty} unit
                   </b>
                   <span>
                     {r.id} · {r.at}
@@ -662,12 +471,59 @@ export default function OwnerDashboardPage() {
             {requestRows.length === 0 ? <div className="empty-note">Tidak ada pengajuan pada cakupan ini.</div> : null}
           </div>
         </section>
-      </div>
 
-      <span className="foot-note">
-        Omzet dan transaksi mengikuti periode; stok, PO, dan pengajuan adalah kondisi saat ini. Sumber:{" "}
-        {scopeLabel(scope, store.branches)}.
-      </span>
+        <section className="panel dash-side-card">
+          <div className="section-head">
+            <div>
+              <h2>Ringkasan Lokasi</h2>
+              <div className="section-desc">Kinerja cabang &amp; ketersediaan stok · {meta.period}</div>
+            </div>
+            <Link className="link-action" to="/owner/cabang">
+              Semua Lokasi
+              <ArrowRight size={15} />
+            </Link>
+          </div>
+          <div className="dash-branch-list">
+            {cabangRows.slice(0, 5).map((row) => (
+              <Link className="dash-branch-row" to={`/owner/cabang/${row.b.id}`} key={row.b.id}>
+                <div className="dash-branch-line">
+                  <span className="dash-branch-name">{row.b.name}</span>
+                  <span className="dash-branch-value">
+                    {row.b.type === "Pusat" ? `${row.units} unit stok` : formatIDR(row.revenue)}
+                  </span>
+                </div>
+                <div className="dash-branch-bar">
+                  <span
+                    style={{
+                      width: `${
+                        row.b.type === "Pusat"
+                          ? 100
+                          : Math.max(0, Math.min(100, row.share * 100))
+                      }%`,
+                    }}
+                  />
+                </div>
+                <div className="dash-branch-meta">
+                  {row.b.type === "Pusat" ? (
+                    <>
+                      <span>Gudang distribusi utama</span>
+                      <span>{activeDists.length} pengiriman berjalan</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{Math.round(row.share * 100)}% omzet</span>
+                      <span>{row.sales} transaksi</span>
+                      <span>{row.units} unit stok</span>
+                      <span>{row.po} PO aktif</span>
+                    </>
+                  )}
+                </div>
+              </Link>
+            ))}
+            {cabangRows.length === 0 ? <div className="empty-note">Tidak ada lokasi pada cakupan ini.</div> : null}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

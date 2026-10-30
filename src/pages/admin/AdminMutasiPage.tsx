@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, History } from "lucide-react";
 import { DEMO_ADMIN } from "../../data/admin";
 import { useSharedStore } from "../../store/sharedStore";
-import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
+import { Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -31,28 +32,35 @@ export default function AdminMutasiPage() {
       <PageHeader
         overline="PERSEDIAAN — MUTASI"
         title="Riwayat Mutasi"
-        desc={`Jejak audit perubahan stok ${DEMO_ADMIN.branch}. Riwayat hanya dapat dilihat — tidak dapat diubah atau dihapus.`}
+        desc={`Jejak perubahan stok masuk dan keluar di ${DEMO_ADMIN.branch}.`}
       />
 
-      <div className="stat-row" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
-        <div className="stat-card tone-green">
-          <div className="stat-body">
-            <div className="stat-label">Total masuk</div>
-            <div className="stat-value">+{masuk}</div>
-            <div className="stat-caption">Penerimaan + saldo awal</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-body">
-            <div className="stat-label">Total keluar</div>
-            <div className="stat-value">{keluar}</div>
-            <div className="stat-caption">Penjualan Kasir</div>
-          </div>
-        </div>
+      <div className="stat-row">
+        <StatCard
+          label="Total Barang Masuk"
+          value={`+${masuk}`}
+          caption="Penerimaan pusat & saldo awal"
+          icon={<ArrowDownLeft size={22} />}
+          tone="green"
+        />
+        <StatCard
+          label="Total Barang Keluar"
+          value={String(keluar)}
+          caption="Penjualan kasir cabang"
+          icon={<ArrowUpRight size={22} />}
+          tone="amber"
+        />
+        <StatCard
+          label="Total Catatan Mutasi"
+          value={String(store.mutations.length)}
+          caption={`Seluruh aktivitas stok ${DEMO_ADMIN.branch}`}
+          icon={<History size={22} />}
+          tone="violet"
+        />
       </div>
 
       <div className="toolbar">
-        <SearchBox placeholder="Cari ID mutasi, referensi, kode, atau produk..." value={q} onChange={setQ} />
+        <SearchBox placeholder="Cari ID mutasi, nomor referensi, kode, atau nama produk..." value={q} onChange={setQ} />
         <div className="toolbar-chips">
           {(["Semua", "Masuk", "Keluar"] as const).map((a) => (
             <Chip key={a} active={arah === a} onClick={() => setArah(a)}>
@@ -77,11 +85,8 @@ export default function AdminMutasiPage() {
               <th>PRODUK</th>
               <th className="tt-center">JENIS</th>
               <th>SUMBER</th>
-              <th>LOKASI</th>
-              <th className="tt-center">QTY</th>
-              <th className="tt-center">SEBELUM → SESUDAH</th>
-              <th>REFERENSI</th>
-              <th>AKTOR</th>
+              <th className="tt-right">MUTASI STOK</th>
+              <th>PETUGAS</th>
             </tr>
           </thead>
           <tbody>
@@ -89,49 +94,44 @@ export default function AdminMutasiPage() {
               const p = store.productOf(m.productId);
               return (
                 <tr key={m.id}>
-                  <td>
-                    <div className="tt-num" style={{ fontSize: 12.5 }}>
-                      {m.id}
-                    </div>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <div className="tt-num">{m.id}</div>
                     <div className="tt-sub">{m.at}</div>
                   </td>
                   <td>
                     <div className="tt-num" style={{ fontSize: 13 }}>
                       {p?.name ?? m.productId}
                     </div>
-                    <div className="tt-sub">{p?.code}</div>
+                    <div className="tt-sub">{p?.code} · {p?.type}</div>
                   </td>
-                  <td className="tt-center">
+                  <td className="tt-center" style={{ whiteSpace: "nowrap" }}>
                     <StatusPill label={m.arah === "IN" ? "Masuk" : "Keluar"} />
                   </td>
-                  <td>
-                    <span className="type-chip">{m.sumber}</span>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <div className="tt-num" style={{ fontSize: 13 }}>{m.sumber}</div>
+                    <div className="tt-sub">{m.ref}</div>
                   </td>
-                  <td>
-                    <span className="tt-sub" style={{ marginTop: 0 }}>
-                      {m.sumber === "Penerimaan" ? `Pusat → ${DEMO_ADMIN.branch}` : DEMO_ADMIN.branch}
-                    </span>
+                  <td className="tt-right" style={{ whiteSpace: "nowrap" }}>
+                    <div
+                      className="tt-money"
+                      style={{ color: m.arah === "IN" ? "var(--ok-ink)" : "var(--danger-ink)" }}
+                    >
+                      {m.qty > 0 ? `+${m.qty} unit` : `${m.qty} unit`}
+                    </div>
+                    <div className="tt-sub">
+                      Saldo: {m.sebelum} → <b style={{ color: "var(--ink)" }}>{m.sesudah}</b>
+                    </div>
                   </td>
-                  <td className="tt-center tt-money" style={{ color: m.arah === "IN" ? "var(--ok-ink)" : "var(--danger-ink)" }}>
-                    {m.qty > 0 ? `+${m.qty}` : m.qty}
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <div className="tt-num" style={{ fontSize: 13 }}>{m.actor}</div>
+                    <div className="tt-sub">Cabang Padang</div>
                   </td>
-                  <td className="tt-center">
-                    <span className="tt-sub" style={{ marginTop: 0 }}>
-                      {m.sebelum} → <b style={{ color: "var(--ink)" }}>{m.sesudah}</b>
-                    </span>
-                  </td>
-                  <td>
-                    <span className="tt-sub" style={{ marginTop: 0 }}>
-                      {m.ref}
-                    </span>
-                  </td>
-                  <td>{m.actor}</td>
                 </tr>
               );
             })}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={9}>
+                <td colSpan={6}>
                   <div className="empty-note">Tidak ada mutasi yang cocok dengan filter.</div>
                 </td>
               </tr>
@@ -140,7 +140,7 @@ export default function AdminMutasiPage() {
         </table>
         <div className="table-foot">
           <span className="foot-note">
-            Menampilkan {rows.length} dari {store.mutations.length} mutasi
+            Menampilkan {rows.length} dari {store.mutations.length} mutasi stok
           </span>
         </div>
       </div>

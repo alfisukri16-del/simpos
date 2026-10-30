@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Boxes } from "lucide-react";
+import { ArrowLeft, Boxes, ClipboardList, Receipt, Truck } from "lucide-react";
 import { useSharedStore } from "../../store/sharedStore";
 import { PageHeader, StatCard, StatusPill, formatIDR } from "../../components/ui";
 import "../../styles/pages.css";
@@ -31,9 +31,8 @@ export default function OwnerCabangDetailPage() {
 
   const isPusat = branch.id === "pusat";
   const stock = store.stockForBranch(branch.id);
-  const low = stock.filter(
-    (s) => store.productOf(s.productId)?.status === "Aktif" && s.saldo <= s.minimum && s.saldo > 0,
-  );
+  const totalUnits = stock.reduce((a, s) => a + s.saldo, 0);
+  const activeDists = store.distributions.filter((d) => d.status !== "Diterima");
   const sales = store.transactions.filter(
     (t) => t.status === "Selesai" && (t.branchId ?? "cabang-padang") === branch.id,
   );
@@ -50,12 +49,12 @@ export default function OwnerCabangDetailPage() {
             <b>{branch.name}</b>
           </>
         }
-        overline="MONITORING - DETAIL CABANG"
+        overline="MONITORING - DETAIL LOKASI"
         title={branch.name}
         desc={
           isPusat
-            ? "Gudang pusat: sumber stok untuk seluruh cabang."
-            : "Profil dan ringkasan operasional cabang."
+            ? "Gudang pusat: sumber stok dan distribusi untuk seluruh cabang."
+            : "Profil dan ringkasan operasional cabang ritel."
         }
         actions={
           <>
@@ -72,24 +71,55 @@ export default function OwnerCabangDetailPage() {
       />
 
       <div className="stat-row">
-        <StatCard
-          label="Transaksi Sukses"
-          value={String(sales.length)}
-          caption={formatIDR(omzet)}
-          tone="green"
-        />
-        <StatCard
-          label="PO Aktif"
-          value={String(poActive.length)}
-          caption={`${pos.length} total PO`}
-          tone="blue"
-        />
-        <StatCard
-          label="Stok Menipis"
-          value={String(low.length)}
-          caption={`${stock.reduce((a, s) => a + s.saldo, 0)} unit di ${stock.length} produk`}
-          tone="amber"
-        />
+        {isPusat ? (
+          <>
+            <StatCard
+              label="Total Stok Gudang Pusat"
+              value={`${totalUnits} unit`}
+              caption={`${stock.length} jenis produk tercatat`}
+              icon={<Boxes size={22} />}
+              tone="violet"
+            />
+            <StatCard
+              label="Distribusi Berjalan"
+              value={String(activeDists.length)}
+              caption="Menunggu konfirmasi penerimaan cabang"
+              icon={<Truck size={22} />}
+              tone="blue"
+            />
+            <StatCard
+              label="Total Alokasi Terkirim"
+              value={String(store.distributions.length)}
+              caption="Riwayat distribusi dari gudang pusat"
+              icon={<ClipboardList size={22} />}
+              tone="green"
+            />
+          </>
+        ) : (
+          <>
+            <StatCard
+              label="Transaksi Sukses"
+              value={String(sales.length)}
+              caption={formatIDR(omzet)}
+              icon={<Receipt size={22} />}
+              tone="green"
+            />
+            <StatCard
+              label="PO Aktif"
+              value={String(poActive.length)}
+              caption={`${pos.length} total PO tercatat`}
+              icon={<ClipboardList size={22} />}
+              tone="blue"
+            />
+            <StatCard
+              label="Total Stok Cabang"
+              value={`${totalUnits} unit`}
+              caption={`Tersebar di ${stock.length} jenis produk`}
+              icon={<Boxes size={22} />}
+              tone="violet"
+            />
+          </>
+        )}
       </div>
 
       <div className="two-col" style={{ alignItems: "start" }}>

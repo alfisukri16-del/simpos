@@ -88,7 +88,7 @@ export default function AdminPemesananPage() {
                       </span>
                     ) : null}
                     <Link className="link-action" to={`/admin/pemesanan/${o.id}`}>
-                      Lihat detail
+                      Lihat Detail
                       <ChevronRight size={15} />
                     </Link>
                   </div>

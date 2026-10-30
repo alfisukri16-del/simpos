@@ -37,8 +37,8 @@ export const BRANCHES: Branch[] = [
     type: "Pusat",
     code: "PST",
     city: "Padang",
-    address: "Jl. Contoh No. 1, Padang",
-    phone: "(0751) 123456",
+    address: "Jl. Khatib Sulaiman No. 45, Padang",
+    phone: "(0751) 7051234",
     pic: "Agus Wijaya",
     status: "Aktif",
   },
@@ -48,8 +48,8 @@ export const BRANCHES: Branch[] = [
     type: "Cabang",
     code: "PDG",
     city: "Padang",
-    address: "Jl. Contoh No. 1, Padang",
-    phone: "(0751) 123456",
+    address: "Jl. Permindo No. 12, Padang",
+    phone: "(0751) 321456",
     pic: "Rina Amelia",
     status: "Aktif",
   },
@@ -406,9 +406,9 @@ function seed(): StoreShape {
     // Data demo pengajuan: Admin Cabang mengajukan produk yang stoknya menipis
     // (FR-003 2/3, LS-008 3/3, FR-005 4/4) supaya alur Keputusan Pemilik terlihat.
     requests: [
-      { id: "REQ-2026-001", at: "10 Okt 2026, 08:40", actor: DEMO_ADMIN.name, branchId: BRANCH_ID, productId: "P-003", qty: 6, note: "Egalisasi Bella Round — saldo 2 / minimum 3", status: "Diajukan" },
-      { id: "REQ-2026-002", at: "10 Okt 2026, 08:45", actor: DEMO_ADMIN.name, branchId: BRANCH_ID, productId: "P-008", qty: 4, note: "Blue Control habis setelah akhir pekan", status: "Diajukan" },
-      { id: "REQ-2026-003", at: "10 Okt 2026, 09:02", actor: DEMO_ADMIN.name, branchId: BRANCH_ID, productId: "P-005", qty: 3, note: "AirFlex menipis (saldo = minimum)", status: "Diajukan" },
+      { id: "REQ-2026-001", at: "10 Okt 2026, 08:40", actor: DEMO_ADMIN.name, branchId: BRANCH_ID, productId: "P-003", qty: 6, note: "Stok frame menipis, banyak dicari pelanggan", status: "Diajukan" },
+      { id: "REQ-2026-002", at: "10 Okt 2026, 08:45", actor: DEMO_ADMIN.name, branchId: BRANCH_ID, productId: "P-008", qty: 4, note: "Persediaan lensa habis setelah akhir pekan", status: "Diajukan" },
+      { id: "REQ-2026-003", at: "10 Okt 2026, 09:02", actor: DEMO_ADMIN.name, branchId: BRANCH_ID, productId: "P-005", qty: 3, note: "Penambahan stok rutin cabang", status: "Diajukan" },
     ],
     notices: [
       { id: "NT-001", at: "10 Okt 2026, 08:40", kind: "Pengajuan Stok" as const, refId: "REQ-2026-001", summary: "FR-003 × 6 dari Cabang Padang" },
@@ -503,12 +503,14 @@ function load(): StoreShape {
           const seedBranches = new Map(seed().branches.map((b) => [b.id, b]));
           parsed.branches = parsed.branches.map((b) => {
             const s = seedBranches.get(b.id);
+            const rawAddress = b.address && b.address !== "Jl. Contoh No. 1, Padang" ? b.address : s?.address;
+            const rawPhone = b.phone && b.phone !== "(0751) 123456" ? b.phone : s?.phone;
             return {
               ...b,
               code: b.code ?? s?.code ?? b.id.slice(-3).toUpperCase(),
               city: b.city ?? s?.city ?? "Padang",
-              address: b.address ?? s?.address ?? "-",
-              phone: b.phone ?? s?.phone ?? "-",
+              address: rawAddress ?? "-",
+              phone: rawPhone ?? "-",
               pic: b.pic ?? s?.pic ?? "-",
               status: b.status ?? "Aktif",
             };
@@ -529,6 +531,17 @@ function load(): StoreShape {
           }
         }
         if (!parsed.settings) parsed.settings = seed().settings;
+        if (Array.isArray(parsed.requests)) {
+          for (const req of parsed.requests) {
+            if (req.note === "Egalisasi Bella Round — saldo 2 / minimum 3") {
+              req.note = "Stok frame menipis, banyak dicari pelanggan";
+            } else if (req.note === "Blue Control habis setelah akhir pekan") {
+              req.note = "Persediaan lensa habis setelah akhir pekan";
+            } else if (req.note === "AirFlex menipis (saldo = minimum)") {
+              req.note = "Penambahan stok rutin cabang";
+            }
+          }
+        }
         if (Array.isArray(parsed.transactions)) {
           const seedMap = new Map(TRANSACTIONS.map((x) => [x.id, x]));
           for (const t of parsed.transactions) {

@@ -31,7 +31,7 @@ export default function AppLayout() {
   const session = getSession();
 
   return (
-    <div className="page-bg app-shell">
+    <div className="page-bg app-shell notranslate" translate="no">
       <div className={`scrim ${open ? "show" : ""}`} onClick={() => setOpen(false)} />
       <div className="app-grid">
         <aside className={`sidebar ${open ? "open" : ""}`}>

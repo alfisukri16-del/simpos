@@ -1,9 +1,9 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, PackageCheck, TriangleAlert, Truck, X } from "lucide-react";
+import { CheckCircle2, Clock, PackageCheck, TriangleAlert, Truck, X } from "lucide-react";
 import { DEMO_ADMIN } from "../../data/admin";
 import { useSharedStore } from "../../store/sharedStore";
-import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
+import { Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -32,8 +32,12 @@ export default function AdminPenerimaanPage() {
     [store, q, filter],
   );
 
-  const openConfirm = (distId: string, productId: string) => {
-    const raw = (qty[`${distId}::${productId}`] ?? "").trim();
+  const menungguCount = store.distributions.filter((d) => d.status === "Menunggu Diterima").length;
+  const sebagianCount = store.distributions.filter((d) => d.status === "Diterima Sebagian").length;
+  const selesaiCount = store.distributions.filter((d) => d.status === "Diterima").length;
+
+  const openConfirm = (distId: string, productId: string, sisa: number) => {
+    const raw = (qty[`${distId}::${productId}`] ?? String(sisa)).trim();
     const v = /^[0-9]+$/.test(raw) ? Number(raw) : NaN;
     if (!Number.isInteger(v) || v <= 0) {
       setResult({ ok: false, msg: "Isi jumlah diterima aktual (bilangan bulat > 0, tanpa titik/koma/minus) dahulu." });
@@ -50,7 +54,11 @@ export default function AdminPenerimaanPage() {
     const r = store.confirmReceipt(confirm.distId, confirm.productId, confirm.qty, "");
     setResult(r);
     if (r.ok) {
-      setQty((prev) => ({ ...prev, [`${confirm.distId}::${confirm.productId}`]: "" }));
+      setQty((prev) => {
+        const next = { ...prev };
+        delete next[`${confirm.distId}::${confirm.productId}`];
+        return next;
+      });
       setConfirm(null);
       setConfirmError("");
     } else {
@@ -66,13 +74,31 @@ export default function AdminPenerimaanPage() {
       <PageHeader
         overline="PERSEDIAAN — PENERIMAAN"
         title="Penerimaan Barang"
-        desc={`Catat barang yang benar-benar diterima ${DEMO_ADMIN.branch}. Alokasi dari pusat bersifat read-only; stok bertambah tepat satu kali per konfirmasi.`}
+        desc={`Verifikasi dan catat barang pengiriman dari pusat yang diterima di ${DEMO_ADMIN.branch}.`}
       />
 
-      <div className="notice">
-        <Truck size={16} />
-        Stok pusat berkurang kapan (saat alokasi / kirim / terima) masih keputusan terbuka PRD — prototype ini hanya
-        menambah stok cabang saat penerimaan dikonfirmasi.
+      <div className="stat-row">
+        <StatCard
+          label="Menunggu Diterima"
+          value={String(menungguCount)}
+          caption="Kiriman baru dari pusat"
+          icon={<Truck size={22} />}
+          tone="amber"
+        />
+        <StatCard
+          label="Diterima Sebagian"
+          value={String(sebagianCount)}
+          caption="Masih ada sisa item belum masuk"
+          icon={<Clock size={22} />}
+          tone="violet"
+        />
+        <StatCard
+          label="Selesai Diterima"
+          value={String(selesaiCount)}
+          caption="Seluruh alokasi telah diverifikasi"
+          icon={<PackageCheck size={22} />}
+          tone="green"
+        />
       </div>
 
       <div className="toolbar">
@@ -104,7 +130,7 @@ export default function AdminPenerimaanPage() {
                 {d.id} <span className="tt-sub" style={{ display: "inline" }}>· {d.date} · dari {d.from}</span>
               </h2>
               <div className="section-desc">
-                {d.lines.length} produk · alokasi {totalAlokasi} · diterima {totalDiterima}
+                {d.lines.length} produk · dikirim {totalAlokasi} unit · diterima {totalDiterima} unit
               </div>
             </div>
             <div className="section-action">
@@ -117,20 +143,21 @@ export default function AdminPenerimaanPage() {
             const sisa = l.qtyAlokasi - l.qtyDiterima;
             const key = `${d.id}::${l.productId}`;
             const done = sisa <= 0;
+            const inputVal = qty[key] ?? String(sisa);
             return (
               <div key={key} className="recv-line">
                 <div className="recv-body">
                   <b>{p?.name}</b>
                   <span>
-                    {p?.code} · {p?.type} · stok saat ini {s?.saldo ?? 0}
+                    {p?.code} · {p?.type} · stok cabang: {s?.saldo ?? 0} unit
                   </span>
                 </div>
                 <div className="recv-alloc">
-                  <span>Alokasi (read-only)</span>
+                  <span>Dikirim Pusat</span>
                   <b>{l.qtyAlokasi}</b>
                 </div>
                 <div className="recv-alloc">
-                  <span>Sudah diterima</span>
+                  <span>Sudah Diterima</span>
                   <b>{l.qtyDiterima}</b>
                 </div>
                 {done ? (
@@ -140,11 +167,12 @@ export default function AdminPenerimaanPage() {
                     <input
                       inputMode="numeric"
                       aria-label={`Jumlah diterima ${p?.name}`}
+                      title={`Maksimal ${sisa} unit`}
                       placeholder={`maks ${sisa}`}
-                      value={qty[key] ?? ""}
+                      value={inputVal}
                       onChange={(e) => setQty((prev) => ({ ...prev, [key]: e.target.value }))}
                     />
-                    <button className="btn btn-primary btn-sm" onClick={() => openConfirm(d.id, l.productId)}>
+                    <button className="btn btn-primary btn-sm" onClick={() => openConfirm(d.id, l.productId, sisa)}>
                       <PackageCheck size={15} />
                       Konfirmasi
                     </button>
@@ -162,7 +190,7 @@ export default function AdminPenerimaanPage() {
         <div className="section-head">
           <div>
             <h2>Riwayat Konfirmasi</h2>
-            <div className="section-desc">Bukti penerimaan yang sudah tercatat (anti-duplikat)</div>
+            <div className="section-desc">Daftar penerimaan barang dari pusat yang telah dikonfirmasi</div>
           </div>
         </div>
         <div className="table-wrap">

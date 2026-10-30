@@ -30,7 +30,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="page-bg app-shell admin">
+    <div className="page-bg app-shell admin notranslate" translate="no">
       <div className={`scrim ${open ? "show" : ""}`} onClick={() => setOpen(false)} />
       <div className="app-grid">
         <aside className={`sidebar ${open ? "open" : ""}`}>

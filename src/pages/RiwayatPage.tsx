@@ -230,10 +230,7 @@ export default function RiwayatPage() {
     .reduce((sum, t) => sum + t.total, 0);
 
   const visibleRows = rows.slice(0, pageSize);
-  const selected =
-    visibleRows.find((t) => t.id === selectedId) ??
-    rows.find((t) => t.id === selectedId) ??
-    visibleRows[0];
+  const selected = selectedId ? shared.transactions.find((t) => t.id === selectedId) : undefined;
   const active = strukId ? shared.transactions.find((t) => t.id === strukId) : undefined;
   const selectedRx = selected
     ? shared.reseps.find((r) => r.customer === selected.customer)
@@ -252,7 +249,6 @@ export default function RiwayatPage() {
 
   // Cetak struk langsung (tanpa pratinjau): render struk tersembunyi lalu buka dialog print.
   const openStrukFor = (id: string) => {
-    setSelectedId(id);
     setStrukId(id);
   };
 
@@ -435,150 +431,160 @@ export default function RiwayatPage() {
         </div>
       ) : null}
 
-      <div className="split riwayat-split">
-        <section className="section-block">
-          <div className="section-head">
-            <div>
-              <h2>Daftar Transaksi</h2>
-              <div className="section-desc">Pilih transaksi untuk melihat detail pembayaran dan struk</div>
-            </div>
-            <div className="section-action">
-              <span className="foot-note" style={{ color: "var(--muted)", fontSize: 12.5, fontWeight: 700 }}>
-                {rows.length} transaksi
-              </span>
-            </div>
+      <section className="section-block">
+        <div className="section-head">
+          <div>
+            <h2>Daftar Transaksi</h2>
+            <div className="section-desc">Pilih transaksi untuk melihat detail pembayaran dan struk</div>
           </div>
+          <div className="section-action">
+            <span className="foot-note" style={{ color: "var(--muted)", fontSize: 12.5, fontWeight: 700 }}>
+              {rows.length} transaksi
+            </span>
+          </div>
+        </div>
 
-          <div className="toolbar">
-            <SearchBox
-              placeholder="Cari nomor transaksi, nama pelanggan, telepon, atau metode..."
-              value={query}
-              onChange={(v) => {
-                setQuery(v);
+        <div className="toolbar">
+          <SearchBox
+            placeholder="Cari nomor transaksi, nama pelanggan, telepon, atau metode..."
+            value={query}
+            onChange={(v) => {
+              setQuery(v);
+              setNotice(false);
+            }}
+          />
+          <div className="toolbar-chips" style={{ alignItems: "center" }}>
+            <select
+              className="select-pill"
+              aria-label="Filter Metode Pembayaran"
+              value={methodFilter}
+              onChange={(e) => {
+                setMethodFilter(e.target.value as "Semua" | PaymentMethod);
                 setNotice(false);
               }}
-            />
-            <div className="toolbar-chips" style={{ alignItems: "center" }}>
-              <select
-                className="select-pill"
-                aria-label="Filter Metode Pembayaran"
-                value={methodFilter}
-                onChange={(e) => {
-                  setMethodFilter(e.target.value as "Semua" | PaymentMethod);
+            >
+              {METHOD_FILTERS.map((m) => (
+                <option key={m} value={m}>
+                  {m === "Semua" ? "Semua Metode" : m}
+                </option>
+              ))}
+            </select>
+            {FILTERS.map((f) => (
+              <Chip
+                key={f}
+                active={filter === f}
+                onClick={() => {
+                  setFilter(f);
                   setNotice(false);
                 }}
               >
-                {METHOD_FILTERS.map((m) => (
-                  <option key={m} value={m}>
-                    {m === "Semua" ? "Semua Metode" : m}
-                  </option>
-                ))}
-              </select>
-              {FILTERS.map((f) => (
-                <Chip
-                  key={f}
-                  active={filter === f}
-                  onClick={() => {
-                    setFilter(f);
-                    setNotice(false);
-                  }}
-                >
-                  {f}
-                </Chip>
-              ))}
-            </div>
+                {f}
+              </Chip>
+            ))}
           </div>
+        </div>
 
-          <div className="table-wrap">
-            <table className="tt">
-              <thead>
-                <tr>
-                  <th>NO. TRANSAKSI</th>
-                  <th>PELANGGAN</th>
-                  <th>METODE</th>
-                  <th className="tt-right">TOTAL</th>
-                  <th className="tt-center">STATUS</th>
-                  <th className="tt-right">AKSI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRows.map((t) => {
-                  const method = (t.method as PaymentMethod | undefined) ?? "Tunai";
-                  const MethodIcon = METHOD_ICON[method] ?? Banknote;
-                  return (
-                    <tr
-                      key={t.id}
-                      className={selected?.id === t.id ? "is-active" : ""}
-                      onClick={() => setSelectedId(t.id)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <td>
-                        <div className="tt-num">{t.no}</div>
-                        <div className="tt-sub">
-                          {t.date} · {t.time}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="tt-num" style={{ fontSize: 13 }}>
-                          {t.customer}
-                        </div>
-                        <div className="tt-sub">{t.phone}</div>
-                      </td>
-                      <td>
-                        <span className="type-chip">
-                          <MethodIcon size={14} />
-                          {methodShort(method)}
-                        </span>
-                      </td>
-                      <td className="tt-right tt-money">{formatIDR(t.total)}</td>
-                      <td className="tt-center">
-                        <StatusPill label={t.status} />
-                      </td>
-                      <td className="tt-right">
-                        <span className="link-action">
-                          Detail
-                          <ChevronRight size={15} />
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6}>
-                      <div className="empty-note">Tidak ada transaksi atau pembayaran yang cocok dengan filter.</div>
+        <div className="table-wrap">
+          <table className="tt">
+            <thead>
+              <tr>
+                <th>NO. TRANSAKSI</th>
+                <th>PELANGGAN</th>
+                <th>METODE</th>
+                <th className="tt-right">TOTAL</th>
+                <th className="tt-center">STATUS</th>
+                <th className="tt-right">AKSI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRows.map((t) => {
+                const method = (t.method as PaymentMethod | undefined) ?? "Tunai";
+                const MethodIcon = METHOD_ICON[method] ?? Banknote;
+                return (
+                  <tr
+                    key={t.id}
+                    className={selected?.id === t.id ? "is-active" : ""}
+                    onClick={() => setSelectedId(t.id)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>
+                      <div className="tt-num">{t.no}</div>
+                      <div className="tt-sub">
+                        {t.date} · {t.time}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="tt-num" style={{ fontSize: 13 }}>
+                        {t.customer}
+                      </div>
+                      <div className="tt-sub">{t.phone}</div>
+                    </td>
+                    <td>
+                      <span className="type-chip">
+                        <MethodIcon size={14} />
+                        {methodShort(method)}
+                      </span>
+                    </td>
+                    <td className="tt-right tt-money">{formatIDR(t.total)}</td>
+                    <td className="tt-center">
+                      <StatusPill label={t.status} />
+                    </td>
+                    <td className="tt-right">
+                      <button
+                        type="button"
+                        className="link-action"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedId(t.id);
+                        }}
+                      >
+                        Lihat Detail
+                        <ChevronRight size={15} />
+                      </button>
                     </td>
                   </tr>
-                ) : null}
-              </tbody>
-            </table>
+                );
+              })}
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="empty-note">Tidak ada transaksi atau pembayaran yang cocok dengan filter.</div>
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
 
-            <div className="table-foot">
-              <span className="foot-note">
-                Menampilkan {visibleRows.length} dari {rows.length} transaksi sesuai filter ({shared.transactions.length} total)
-              </span>
-              <div className="foot-actions">
-                <select
-                  className="select-pill"
-                  aria-label="Baris per halaman"
-                  value={String(pageSize)}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
-                >
-                  <option value="10">10 per halaman</option>
-                  <option value="25">25 per halaman</option>
-                  <option value="50">50 per halaman</option>
-                </select>
-              </div>
+          <div className="table-foot">
+            <span className="foot-note">
+              Menampilkan {visibleRows.length} dari {rows.length} transaksi sesuai filter ({shared.transactions.length} total)
+            </span>
+            <div className="foot-actions">
+              <select
+                className="select-pill"
+                aria-label="Baris per halaman"
+                value={String(pageSize)}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+              >
+                <option value="10">10 per halaman</option>
+                <option value="25">25 per halaman</option>
+                <option value="50">50 per halaman</option>
+              </select>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {rows.length === 0 ? (
-          <aside className="detail-panel">
-            <div className="empty-note">Tidak ada transaksi yang cocok dengan filter.</div>
-          </aside>
-        ) : selected ? (
-          <aside className="detail-panel riwayat-detail" key={selected.id}>
+      {selected ? (
+        <div className="overlay" onClick={() => setSelectedId(null)}>
+          <div
+            className="drawer riwayat-detail"
+            key={selected.id}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="drawer-head">
               <div className="detail-head">
                 <Avatar
                   initials={selected.customer.slice(0, 1) + (selected.customer.split(" ")[1]?.[0] ?? "")}
@@ -591,147 +597,155 @@ export default function RiwayatPage() {
                   </span>
                 </div>
               </div>
+              <button className="icon-pill" aria-label="Tutup" onClick={() => setSelectedId(null)}>
+                <X size={18} />
+              </button>
+            </div>
 
-              <div className="detail-badges">
-                <span className="tag-mini">{selected.type}</span>
-                <StatusPill label={selected.status} />
+            <div className="detail-badges">
+              <StatusPill label={selected.status} />
+            </div>
+
+            <div className="detail-rows">
+              <div className="detail-row">
+                <span>Tanggal</span>
+                <b>{selected.date}</b>
               </div>
-
-              <div className="detail-rows">
+              <div className="detail-row">
+                <span>Nomor HP</span>
+                <b>{selected.phone}</b>
+              </div>
+              <div className="detail-row">
+                <span>Metode</span>
+                <b style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <SelectedMethodIcon size={14} />
+                  {selectedMethod}
+                </b>
+              </div>
+              {selected.poId ? (
                 <div className="detail-row">
-                  <span>Tanggal</span>
-                  <b>{selected.date}</b>
-                </div>
-                <div className="detail-row">
-                  <span>Nomor HP</span>
-                  <b>{selected.phone}</b>
-                </div>
-                <div className="detail-row">
-                  <span>Metode</span>
-                  <b style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <SelectedMethodIcon size={14} />
-                    {selectedMethod}
-                  </b>
-                </div>
-                {selected.poId ? (
-                  <div className="detail-row">
-                    <span>Pengambilan PO</span>
-                    <b>{selected.poId}</b>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="riwayat-detail-actions">
-                <button
-                  type="button"
-                  className="btn btn-ghost full"
-                  onClick={() => openStrukFor(selected.id)}
-                >
-                  <Printer size={16} />
-                  Cetak Struk
-                </button>
-                {selected.date === today && selected.status === "Selesai" ? (
-                  <button
-                    type="button"
-                    className="btn btn-danger full"
-                    onClick={() => {
-                      setCancelNo(selected.no);
-                      setCancelReason("");
-                      setCancelResult(null);
-                    }}
-                  >
-                    Batalkan Transaksi
-                  </button>
-                ) : null}
-              </div>
-
-              <div>
-                <div className="mini-label" style={{ color: "var(--accent-ink)" }}>
-                  PRODUK ({selected.products?.length ?? 0} ITEM)
-                </div>
-                <div className="sub-list" style={{ marginTop: 8 }}>
-                  {(selected.products ?? []).map((p) => (
-                    <div className="sub-row" key={p.name}>
-                      <span>
-                        <b style={{ color: "var(--ink)" }}>{p.name}</b>
-                        <br />
-                        <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                          {p.brand} · {p.qty} × {formatIDR(p.price)}
-                        </span>
-                      </span>
-                      <b>{formatIDR(p.price * p.qty)}</b>
-                    </div>
-                  ))}
-                  {(selected.products?.length ?? 0) === 0 ? (
-                    <div className="empty-note" style={{ padding: "12px 0" }}>
-                      Tidak ada rincian produk.
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              {selected.detail === "resep" ? (
-                <div>
-                  <div className="mini-label" style={{ color: "var(--accent-ink)" }}>
-                    RESEP MATA
-                  </div>
-                  {selectedRx ? (
-                    <div className="rx-mini" style={{ marginTop: 10 }}>
-                      <div className="rx-eye">
-                        <div className="ey-label">OD / KANAN</div>
-                        <b>{selectedRx.od.sph}</b>
-                        <span>
-                          CYL {selectedRx.od.cyl || "0.00"} · AXIS {selectedRx.od.axis || "-"}
-                        </span>
-                      </div>
-                      <div className="rx-eye">
-                        <div className="ey-label">OS / KIRI</div>
-                        <b>{selectedRx.os.sph}</b>
-                        <span>
-                          CYL {selectedRx.os.cyl || "0.00"} · AXIS {selectedRx.os.axis || "-"}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="empty-note" style={{ padding: "12px 0" }}>
-                      Arsip resep pelanggan ini tidak ditemukan.
-                    </div>
-                  )}
+                  <span>Pengambilan PO</span>
+                  <b>{selected.poId}</b>
                 </div>
               ) : null}
+            </div>
 
-              <div>
-                <div className="mini-label">RINGKASAN PEMBAYARAN</div>
-                <div className="sub-list" style={{ marginTop: 8 }}>
-                  <div className="sub-row">
-                    <span>Subtotal</span>
-                    <b>{formatIDR(selectedSubtotal)}</b>
-                  </div>
-                  <div className="sub-row">
-                    <span>Diskon</span>
-                    <b>{formatIDR(selectedDiscount)}</b>
-                  </div>
-                  <div className="sub-row total">
-                    <span>Total Tagihan</span>
-                    <b>{formatIDR(selected.total)}</b>
-                  </div>
-                  {selectedMethod === "Tunai" ? (
-                    <>
-                      <div className="sub-row">
-                        <span>Jumlah Dibayar</span>
-                        <b>{formatIDR(selectedPaid)}</b>
-                      </div>
-                      <div className="sub-row">
-                        <span>Kembalian</span>
-                        <b style={{ color: "var(--ok-ink)" }}>{formatIDR(selectedChange)}</b>
-                      </div>
-                    </>
-                  ) : null}
-                </div>
+            <div>
+              <div className="mini-label" style={{ color: "var(--accent-ink)" }}>
+                PRODUK ({selected.products?.length ?? 0} ITEM)
               </div>
-            </aside>
-        ) : null}
-      </div>
+              <div className="sub-list" style={{ marginTop: 8 }}>
+                {(selected.products ?? []).map((p) => (
+                  <div className="sub-row" key={p.name}>
+                    <span>
+                      <b style={{ color: "var(--ink)" }}>{p.name}</b>
+                      <br />
+                      <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                        {p.brand} · {p.qty} × {formatIDR(p.price)}
+                      </span>
+                    </span>
+                    <b>{formatIDR(p.price * p.qty)}</b>
+                  </div>
+                ))}
+                {(selected.products?.length ?? 0) === 0 ? (
+                  <div className="empty-note" style={{ padding: "12px 0" }}>
+                    Tidak ada rincian produk.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            {selected.detail === "resep" ? (
+              <div>
+                <div className="mini-label" style={{ color: "var(--accent-ink)" }}>
+                  RESEP MATA
+                </div>
+                {selectedRx ? (
+                  <div className="rx-mini" style={{ marginTop: 10 }}>
+                    <div className="rx-eye">
+                      <div className="ey-label">OD / KANAN</div>
+                      <b>{selectedRx.od.sph}</b>
+                      <span>
+                        CYL {selectedRx.od.cyl || "0.00"} · AXIS {selectedRx.od.axis || "-"}
+                      </span>
+                    </div>
+                    <div className="rx-eye">
+                      <div className="ey-label">OS / KIRI</div>
+                      <b>{selectedRx.os.sph}</b>
+                      <span>
+                        CYL {selectedRx.os.cyl || "0.00"} · AXIS {selectedRx.os.axis || "-"}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="empty-note" style={{ padding: "12px 0" }}>
+                    Arsip resep pelanggan ini tidak ditemukan.
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            <div>
+              <div className="mini-label">RINGKASAN PEMBAYARAN</div>
+              <div className="sub-list" style={{ marginTop: 8 }}>
+                <div className="sub-row">
+                  <span>Subtotal</span>
+                  <b>{formatIDR(selectedSubtotal)}</b>
+                </div>
+                <div className="sub-row">
+                  <span>Diskon</span>
+                  <b>{formatIDR(selectedDiscount)}</b>
+                </div>
+                <div className="sub-row total">
+                  <span>Total Tagihan</span>
+                  <b>{formatIDR(selected.total)}</b>
+                </div>
+                {selectedMethod === "Tunai" ? (
+                  <>
+                    <div className="sub-row">
+                      <span>Jumlah Dibayar</span>
+                      <b>{formatIDR(selectedPaid)}</b>
+                    </div>
+                    <div className="sub-row">
+                      <span>Kembalian</span>
+                      <b style={{ color: "var(--ok-ink)" }}>{formatIDR(selectedChange)}</b>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="drawer-foot">
+              {selected.date === today && selected.status === "Selesai" ? (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  style={{ marginRight: "auto" }}
+                  onClick={() => {
+                    setCancelNo(selected.no);
+                    setCancelReason("");
+                    setCancelResult(null);
+                  }}
+                >
+                  Batalkan Transaksi
+                </button>
+              ) : (
+                <button type="button" className="btn btn-ghost" onClick={() => setSelectedId(null)}>
+                  Tutup
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => openStrukFor(selected.id)}
+              >
+                <Printer size={16} />
+                Cetak Struk
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {strukId && active ? (
         <div className="struk-print struk-print-hidden" id="struk-print" aria-hidden="true">

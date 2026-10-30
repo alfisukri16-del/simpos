@@ -1,16 +1,15 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Check, Clock, Info, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Check, ChevronRight, Clock, History, Info, X } from "lucide-react";
 import { useSharedStore } from "../../store/sharedStore";
 import { requestState, requestStateLabel } from "../../store/requestStatus";
-import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
+import { Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
 const BULAN: Record<string, number> = {
-  Jan: 0, Feb: 1, Mar: 2, Apr: 3, Mei: 4, Jun: 5, Jul: 6, Agu: 7, Sep: 8, Okt: 9, Nov: 10, Des: 11,
+  Jan: 0, Feb: 1, Mar: 2, Apr: 2, Mei: 4, Jun: 5, Jul: 6, Agu: 7, Sep: 8, Okt: 9, Nov: 10, Des: 11,
 };
 
-/** Parse "10 Okt 2026, 09:12" → epoch; gagal → 0 (tetap tampil, di akhir). */
 function parseAt(at: string): number {
   const m = at.match(/(\d+)\s+(\w+)\s+(\d{4}),?\s+(\d+)[:.](\d+)/);
   if (!m) return 0;
@@ -19,132 +18,83 @@ function parseAt(at: string): number {
 
 const PAGE = 10;
 
-type LedgerRow = {
-  key: string;
-  at: string;
-  ts: number;
-  fisik: boolean;
-  event: string;
-  ref: string;
-  productId: string;
-  branchId: string;
-  qty: number | null;
-  qtyText: string;
-  actor: string;
-  trace: { mutationId?: string; requestId?: string; allocationId?: string; receiptId?: string; productId: string };
-};
-
 export default function OwnerMutasiPage() {
   const store = useSharedStore();
   const [q, setQ] = useState("");
   const [loc, setLoc] = useState("all");
   const [arah, setArah] = useState<"Semua" | "Masuk" | "Keluar">("Semua");
+  const [sumber, setSumber] = useState("all");
   const [page, setPage] = useState(1);
-  const [traceKey, setTraceKey] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const rows = useMemo<LedgerRow[]>(() => {
-    const out: LedgerRow[] = [];
-    for (const m of store.mutations) {
-      out.push({
-        key: `M-${m.id}`,
-        at: m.at,
-        ts: parseAt(m.at),
-        fisik: true,
-        event: m.sumber,
-        ref: m.ref,
-        productId: m.productId,
-        branchId: m.branchId,
-        qty: m.qty,
-        qtyText: m.qty > 0 ? `+${m.qty}` : `${m.qty}`,
-        actor: m.actor,
-        trace: {
-          mutationId: m.id,
-          receiptId: m.sumber === "Penerimaan" ? m.ref : undefined,
-          productId: m.productId,
-        },
-      });
-    }
-    for (const r of store.requests) {
-      out.push({
-        key: `R-${r.id}`,
-        at: r.at,
-        ts: parseAt(r.at),
-        fisik: false,
-        event: "Pengajuan Dibuat",
-        ref: r.id,
-        productId: r.productId,
-        branchId: r.branchId,
-        qty: null,
-        qtyText: `minta ${r.qty}`,
-        actor: r.actor,
-        trace: { requestId: r.id, productId: r.productId },
-      });
-    }
-    for (const d of store.distributions) {
-      for (const l of d.lines) {
-        out.push({
-          key: `A-${d.id}-${l.productId}`,
-          at: d.date,
-          ts: parseAt(d.date),
-          fisik: false,
-          event: "Alokasi Direservasi",
-          ref: d.id,
-          productId: l.productId,
-          branchId: d.branchId,
-          qty: null,
-          qtyText: `alokasi ${l.qtyAlokasi}`,
-          actor: d.actor ?? "Sistem",
-          trace: { requestId: d.requestId, allocationId: d.id, productId: l.productId },
-        });
-      }
-    }
-    out.sort((a, b) => b.ts - a.ts);
-    return out
-      .filter((r) => (loc === "all" ? true : r.branchId === loc))
-      .filter((r) =>
-        arah === "Semua" ? true : arah === "Masuk" ? r.qty !== null && r.qty > 0 : r.qty !== null && r.qty < 0,
-      )
-      .filter((r) => {
-        const p = store.productOf(r.productId);
-        return `${r.ref} ${r.event} ${p?.name ?? ""} ${p?.code ?? ""}`.toLowerCase().includes(q.toLowerCase());
-      });
-  }, [store, q, loc, arah]);
+  const scopedMutations = useMemo(
+    () =>
+      [...store.mutations]
+        .sort((a, b) => parseAt(b.at) - parseAt(a.at))
+        .filter((m) => (loc === "all" ? true : m.branchId === loc)),
+    [store.mutations, loc],
+  );
+
+  const totalMasuk = useMemo(
+    () => scopedMutations.filter((m) => m.arah === "IN").reduce((acc, m) => acc + m.qty, 0),
+    [scopedMutations],
+  );
+  const totalKeluar = useMemo(
+    () => scopedMutations.filter((m) => m.arah === "OUT").reduce((acc, m) => acc + Math.abs(m.qty), 0),
+    [scopedMutations],
+  );
+
+  const rows = useMemo(
+    () =>
+      scopedMutations
+        .filter((m) => (arah === "Semua" ? true : m.arah === (arah === "Masuk" ? "IN" : "OUT")))
+        .filter((m) => (sumber === "all" ? true : m.sumber === sumber))
+        .filter((m) => {
+          const p = store.productOf(m.productId);
+          return `${m.id} ${m.ref} ${m.sumber} ${p?.name ?? ""} ${p?.code ?? ""} ${m.actor}`
+            .toLowerCase()
+            .includes(q.toLowerCase());
+        }),
+    [scopedMutations, arah, sumber, q, store],
+  );
 
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
-  const view = rows.slice((page - 1) * PAGE, page * PAGE);
+  const safePage = Math.min(page, pages);
+  const view = rows.slice((safePage - 1) * PAGE, safePage * PAGE);
 
-  const selectedRow = traceKey ? rows.find((r) => r.key === traceKey) : undefined;
-  const trace = selectedRow?.trace;
-  const directMove = trace?.mutationId ? store.mutations.find((m) => m.id === trace.mutationId) : undefined;
+  const directMove = selectedId ? store.mutations.find((m) => m.id === selectedId) : undefined;
 
   // Telusur dua arah: Pengajuan <-> Alokasi <-> Penerimaan <-> Mutasi
-  const initialReceipt = trace?.receiptId ? store.receipts.find((r) => r.id === trace.receiptId) : undefined;
-  const resolvedAllocId = trace?.allocationId ?? initialReceipt?.distributionId;
+  const initialReceipt =
+    directMove?.sumber === "Penerimaan"
+      ? store.receipts.find((r) => r.id === directMove.ref)
+      : undefined;
+  const resolvedAllocId = initialReceipt?.distributionId;
   const initialAlloc = resolvedAllocId ? store.distributions.find((d) => d.id === resolvedAllocId) : undefined;
-  const resolvedRequestId = trace?.requestId ?? initialAlloc?.requestId;
+  const resolvedRequestId = initialAlloc?.requestId;
 
   const traceReq = resolvedRequestId ? store.requests.find((r) => r.id === resolvedRequestId) : undefined;
   const traceReqAlloc = traceReq ? store.allocatedForRequest(traceReq.id, traceReq.productId) : 0;
   const traceReqReceived = traceReq ? store.receivedForRequest(traceReq.id, traceReq.productId) : 0;
-  const traceAllocs = trace
+  const traceAllocs = directMove
     ? store.distributions.filter(
         (d) =>
           (resolvedAllocId && d.id === resolvedAllocId) ||
           (resolvedRequestId && d.requestId === resolvedRequestId),
       )
     : [];
-  const traceReceipts = trace
+  const traceReceipts = directMove
     ? store.receipts.filter(
         (r) =>
-          (trace.receiptId && r.id === trace.receiptId) ||
-          traceAllocs.some((d) => d.id === r.distributionId && r.productId === trace.productId),
+          (initialReceipt && r.id === initialReceipt.id) ||
+          traceAllocs.some((d) => d.id === r.distributionId && r.productId === directMove.productId),
       )
     : [];
-  const traceMoves = trace
+  const traceMoves = directMove
     ? store.mutations.filter(
         (m) =>
-          (directMove && m.id === directMove.id) ||
-          traceReceipts.some((r) => r.id === m.ref && m.productId === trace.productId),
+          m.id === directMove.id ||
+          traceReceipts.some((r) => r.id === m.ref && m.productId === directMove.productId),
       )
     : [];
 
@@ -155,22 +105,46 @@ export default function OwnerMutasiPage() {
     traceAllocs.length === 0 &&
     traceReceipts.length === 0;
 
-  const traceProduct = selectedRow ? store.productOf(selectedRow.productId) : undefined;
-  const traceBranchName = selectedRow
-    ? store.branches.find((b) => b.id === selectedRow.branchId)?.name ?? selectedRow.branchId
+  const traceProduct = directMove ? store.productOf(directMove.productId) : undefined;
+  const traceBranchName = directMove
+    ? store.branches.find((b) => b.id === directMove.branchId)?.name ?? directMove.branchId
     : "";
 
   return (
     <div className="page">
       <PageHeader
         overline="PENGAWASAN — MUTASI"
-        title="Riwayat Mutasi"
-        desc="Catatan gabungan mutasi stok dan keputusan distribusi dari seluruh lokasi."
+        title="Mutasi Barang"
+        desc="Pantau seluruh pergerakan stok masuk dan keluar beserta jejak alokasi di semua cabang."
       />
+
+      <div className="stat-row">
+        <StatCard
+          label="Total Barang Masuk"
+          value={`+${totalMasuk} unit`}
+          caption="Penerimaan distribusi & saldo awal"
+          icon={<ArrowDownLeft size={22} />}
+          tone="green"
+        />
+        <StatCard
+          label="Total Barang Keluar"
+          value={`${totalKeluar} unit`}
+          caption="Penjualan kasir di cabang"
+          icon={<ArrowUpRight size={22} />}
+          tone="amber"
+        />
+        <StatCard
+          label="Total Catatan Mutasi"
+          value={String(scopedMutations.length)}
+          caption="Riwayat perubahan stok fisik"
+          icon={<History size={22} />}
+          tone="violet"
+        />
+      </div>
 
       <div className="toolbar">
         <SearchBox
-          placeholder="Cari referensi, keterangan, atau produk..."
+          placeholder="Cari ID mutasi, nomor referensi, kode, atau nama produk..."
           value={q}
           onChange={(v) => {
             setQ(v);
@@ -193,6 +167,21 @@ export default function OwnerMutasiPage() {
         </div>
         <select
           className="select-pill"
+          aria-label="Sumber"
+          value={sumber}
+          onChange={(e) => {
+            setSumber(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="all">Semua Sumber</option>
+          <option value="Penerimaan">Penerimaan</option>
+          <option value="Penjualan">Penjualan</option>
+          <option value="Pembatalan">Pembatalan</option>
+          <option value="Saldo Awal">Saldo Awal</option>
+        </select>
+        <select
+          className="select-pill"
           aria-label="Lokasi"
           value={loc}
           onChange={(e) => {
@@ -213,56 +202,68 @@ export default function OwnerMutasiPage() {
         <table className="tt">
           <thead>
             <tr>
-              <th>TANGGAL</th>
+              <th>WAKTU / ID</th>
               <th>PRODUK</th>
-              <th>CABANG</th>
+              <th>CABANG &amp; AKTOR</th>
               <th className="tt-center">JENIS</th>
-              <th className="tt-center">JUMLAH</th>
-              <th>KETERANGAN</th>
-              <th>AKTOR</th>
+              <th>SUMBER</th>
+              <th className="tt-right">MUTASI STOK</th>
               <th className="tt-right">AKSI</th>
             </tr>
           </thead>
           <tbody>
-            {view.map((r) => {
-              const p = store.productOf(r.productId);
-              const jenis = r.fisik
-                ? r.event === "Penjualan"
-                  ? "Keluar"
-                  : "Masuk"
-                : r.event === "Pengajuan Dibuat"
-                  ? "Pengajuan"
-                  : "Alokasi";
+            {view.map((m) => {
+              const p = store.productOf(m.productId);
+              const branchName = store.branches.find((b) => b.id === m.branchId)?.name ?? m.branchId;
               return (
-                <tr key={r.key}>
-                  <td>
-                    <div className="tt-num" style={{ fontSize: 12.5 }}>
-                      {r.at}
-                    </div>
-                    <div className="tt-sub">{r.key.startsWith("M-") ? r.key.slice(2) : r.ref}</div>
+                <tr
+                  key={m.id}
+                  onClick={() => setSelectedId(m.id)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <div className="tt-num">{m.id}</div>
+                    <div className="tt-sub">{m.at}</div>
                   </td>
                   <td>
                     <div className="tt-num" style={{ fontSize: 13 }}>
-                      {p?.name ?? r.productId}
+                      {p?.name ?? m.productId}
                     </div>
-                    <div className="tt-sub">{p?.code}</div>
+                    <div className="tt-sub">{p?.code} · {p?.type}</div>
                   </td>
-                  <td>{store.branches.find((b) => b.id === r.branchId)?.name ?? r.branchId}</td>
-                  <td className="tt-center">
-                    <StatusPill label={jenis} dot={false} />
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <div className="tt-num" style={{ fontSize: 13 }}>{branchName}</div>
+                    <div className="tt-sub">{m.actor}</div>
                   </td>
-                  <td className="tt-center tt-money">{r.qtyText}</td>
-                  <td>
-                    <div className="tt-num" style={{ fontSize: 12.5 }}>
-                      {r.event}
+                  <td className="tt-center" style={{ whiteSpace: "nowrap" }}>
+                    <StatusPill label={m.arah === "IN" ? "Masuk" : "Keluar"} />
+                  </td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    <div className="tt-num" style={{ fontSize: 13 }}>{m.sumber}</div>
+                    <div className="tt-sub">{m.ref}</div>
+                  </td>
+                  <td className="tt-right" style={{ whiteSpace: "nowrap" }}>
+                    <div
+                      className="tt-money"
+                      style={{ color: m.arah === "IN" ? "var(--ok-ink)" : "var(--danger-ink)" }}
+                    >
+                      {m.qty > 0 ? `+${m.qty} unit` : `${m.qty} unit`}
                     </div>
-                    <div className="tt-sub">{r.ref}</div>
+                    <div className="tt-sub">
+                      Saldo: {m.sebelum} → <b style={{ color: "var(--ink)" }}>{m.sesudah}</b>
+                    </div>
                   </td>
-                  <td>{r.actor}</td>
                   <td className="tt-right">
-                    <button className="link-action" onClick={() => setTraceKey(r.key)}>
-                      Telusur
-                      <ArrowRight size={15} />
+                    <button
+                      type="button"
+                      className="link-action"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedId(m.id);
+                      }}
+                    >
+                      Detail
+                      <ChevronRight size={15} />
                     </button>
                   </td>
                 </tr>
@@ -270,8 +271,8 @@ export default function OwnerMutasiPage() {
             })}
             {view.length === 0 ? (
               <tr>
-                <td colSpan={8}>
-                  <div className="empty-note">Tidak ada kejadian yang cocok dengan filter.</div>
+                <td colSpan={7}>
+                  <div className="empty-note">Tidak ada mutasi barang yang cocok dengan filter.</div>
                 </td>
               </tr>
             ) : null}
@@ -279,21 +280,20 @@ export default function OwnerMutasiPage() {
         </table>
         <div className="table-foot">
           <span className="foot-note">
-            Halaman {page} dari {pages} · {rows.length} kejadian · Masuk/Keluar hanya baris fisik;
-            pengajuan dan alokasi tercatat sebagai keputusan.
+            Menampilkan {view.length} dari {rows.length} mutasi stok · Halaman {safePage} dari {pages}
           </span>
           <div className="foot-actions">
             <button
               className="btn btn-ghost btn-sm"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
+              disabled={safePage <= 1}
+              onClick={() => setPage(safePage - 1)}
             >
               Sebelumnya
             </button>
             <button
               className="btn btn-ghost btn-sm"
-              disabled={page >= pages}
-              onClick={() => setPage(page + 1)}
+              disabled={safePage >= pages}
+              onClick={() => setPage(safePage + 1)}
             >
               Berikutnya
             </button>
@@ -301,53 +301,41 @@ export default function OwnerMutasiPage() {
         </div>
       </div>
 
-      {selectedRow && trace ? (
-        <div className="overlay" onClick={() => setTraceKey(null)}>
-          <div className="drawer" key={selectedRow.key} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      {directMove ? (
+        <div className="overlay" onClick={() => setSelectedId(null)}>
+          <div className="drawer" key={directMove.id} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             <div className="drawer-head">
               <div>
-                <h2>Telusur Rantai</h2>
-                <div className="section-desc">pengajuan → alokasi → penerimaan → mutasi</div>
+                <h2>Detail &amp; Jejak Mutasi</h2>
+                <div className="section-desc">{directMove.id} · {directMove.at}</div>
               </div>
-              <button className="icon-pill" aria-label="Tutup" onClick={() => setTraceKey(null)}>
+              <button className="icon-pill" aria-label="Tutup" onClick={() => setSelectedId(null)}>
                 <X size={18} />
               </button>
             </div>
 
-            {/* Kartu ringkasan baris yang sedang ditelusuri */}
             <div className="trace-summary-card">
               <div className="trace-summary-top">
                 <div>
-                  <b>{traceProduct?.name ?? selectedRow.productId}</b>
+                  <b>{traceProduct?.name ?? directMove.productId}</b>
                   <span>
-                    {traceProduct?.code ?? selectedRow.productId} · {traceBranchName}
+                    {traceProduct?.code ?? directMove.productId} · {traceBranchName}
                   </span>
                 </div>
-                <StatusPill
-                  label={
-                    selectedRow.fisik
-                      ? selectedRow.event === "Penjualan"
-                        ? "Keluar"
-                        : "Masuk"
-                      : selectedRow.event === "Pengajuan Dibuat"
-                        ? "Pengajuan"
-                        : "Alokasi"
-                  }
-                  dot={false}
-                />
+                <StatusPill label={directMove.arah === "IN" ? "Masuk" : "Keluar"} />
               </div>
               <div className="trace-summary-meta">
                 <div className="trace-meta-item">
-                  <span>Referensi</span>
-                  <b>{selectedRow.ref}</b>
+                  <span>Sumber &amp; Referensi</span>
+                  <b>{directMove.sumber} · {directMove.ref}</b>
                 </div>
                 <div className="trace-meta-item">
-                  <span>Kejadian</span>
-                  <b>{selectedRow.event}</b>
+                  <span>Perubahan</span>
+                  <b>{directMove.qty > 0 ? `+${directMove.qty} unit` : `${directMove.qty} unit`}</b>
                 </div>
                 <div className="trace-meta-item">
-                  <span>Kuantitas</span>
-                  <b>{selectedRow.qtyText}</b>
+                  <span>Saldo Stok</span>
+                  <b>{directMove.sebelum} → {directMove.sesudah} unit</b>
                 </div>
               </div>
             </div>
@@ -447,7 +435,7 @@ export default function OwnerMutasiPage() {
                       <div className="trace-card-stage">TAHAP 2 · ALOKASI DISTRIBUSI</div>
                       {traceAllocs.length > 0 ? (
                         traceAllocs.map((d) => {
-                          const line = d.lines.find((l) => l.productId === trace.productId);
+                          const line = d.lines.find((l) => l.productId === directMove.productId);
                           return (
                             <div key={d.id} style={{ marginTop: 2 }}>
                               <b>Alokasi {d.id}</b>
@@ -467,7 +455,7 @@ export default function OwnerMutasiPage() {
                     {traceAllocs.length > 0 ? (
                       <span className="trace-qty-badge">
                         {traceAllocs.reduce(
-                          (acc, d) => acc + (d.lines.find((l) => l.productId === trace.productId)?.qtyAlokasi ?? 0),
+                          (acc, d) => acc + (d.lines.find((l) => l.productId === directMove.productId)?.qtyAlokasi ?? 0),
                           0,
                         )}{" "}
                         unit
@@ -543,7 +531,7 @@ export default function OwnerMutasiPage() {
             )}
 
             <div className="drawer-foot">
-              <button className="btn btn-ghost" onClick={() => setTraceKey(null)}>
+              <button className="btn btn-ghost" onClick={() => setSelectedId(null)}>
                 Tutup
               </button>
             </div>
