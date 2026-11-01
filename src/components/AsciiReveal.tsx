@@ -148,8 +148,8 @@ function BrandMark() {
     <svg className="ascii-reveal-mark" viewBox="0 0 64 64" width={44} height={44} aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="asciiBrand" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#6f6afd" />
-          <stop offset="1" stopColor="#5b55fb" />
+          <stop offset="0" stopColor="#4a95ec" />
+          <stop offset="1" stopColor="#2f7de1" />
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="20" fill="url(#asciiBrand)" />

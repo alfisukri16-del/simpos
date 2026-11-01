@@ -142,7 +142,7 @@
 .chip.active {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 12px 24px -12px rgba(91, 85, 251, 0.9);
+  box-shadow: 0 12px 24px -12px rgba(47, 125, 225, 0.9);
 }
 
 .toolbar-search {
@@ -230,7 +230,7 @@
 }
 
 .panel-lav {
-  background: #eaecfe;
+  background: #e3f1fc;
 }
 
 .section-block {
@@ -518,8 +518,8 @@ table.tt td:last-child .row-actions {
   color: #fff;
   font-weight: 800;
   line-height: 1;
-  background: linear-gradient(150deg, #7d78ff, var(--accent-strong));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 6px rgba(59, 47, 209, 0.18);
+  background: linear-gradient(150deg, #5aa2f0, var(--accent-strong));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 6px rgba(47, 125, 225, 0.18);
   flex: none;
   letter-spacing: 0.3px;
   user-select: none;
@@ -574,7 +574,7 @@ table.tt td:last-child .row-actions {
 .product-thumb {
   height: 118px;
   border-radius: var(--r-md);
-  background: linear-gradient(150deg, #e9ebfd, #dcdefb);
+  background: linear-gradient(150deg, #e1effb, #d5e8f8);
   display: grid;
   place-items: center;
   color: var(--violet-head);
@@ -684,7 +684,7 @@ table.tt td:last-child .row-actions {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: linear-gradient(150deg, #e9ebfd, #dcdefb);
+  background: linear-gradient(150deg, #e1effb, #d5e8f8);
   display: grid;
   place-items: center;
   color: var(--violet-head);
@@ -888,7 +888,7 @@ table.tt td:last-child .row-actions {
   font-weight: 800;
   padding: 12px 14px;
   text-align: left;
-  background: #f6f5fc;
+  background: #f2f9fe;
 }
 
 .rx-table td {
@@ -917,7 +917,7 @@ table.tt td:last-child .row-actions {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: linear-gradient(150deg, #e9ebfd, #dcdefb);
+  background: linear-gradient(150deg, #e1effb, #d5e8f8);
   display: grid;
   place-items: center;
   color: var(--violet-head);
@@ -965,7 +965,7 @@ table.tt td:last-child .row-actions {
 }
 
 .summary {
-  background: #eaecfe;
+  background: #e3f1fc;
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-md);
   padding: 22px 22px 20px;
@@ -1015,7 +1015,7 @@ table.tt td:last-child .row-actions {
   align-items: center;
   justify-content: space-between;
   padding-top: 14px;
-  border-top: 1px dashed rgba(91, 85, 251, 0.32);
+  border-top: 1px dashed rgba(47, 125, 225, 0.32);
 }
 
 .sum-total span {
@@ -1110,7 +1110,7 @@ table.tt td:last-child .row-actions {
   background: #fff;
   border-radius: var(--r-md);
   padding: 14px 15px;
-  border: 1.5px solid rgba(91, 85, 251, 0.18);
+  border: 1.5px solid rgba(47, 125, 225, 0.18);
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
@@ -1148,7 +1148,7 @@ table.tt td:last-child .row-actions {
 }
 
 .cash-exact-btn:hover {
-  background: #dcdafb;
+  background: #d5e8f8;
 }
 
 .cash-input-wrap {
@@ -1158,7 +1158,7 @@ table.tt td:last-child .row-actions {
   height: 42px;
   border-radius: 11px;
   border: 1.5px solid var(--line-2);
-  background: #f8f8fe;
+  background: #f5fbfe;
   padding: 0 12px;
   transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
@@ -1231,7 +1231,7 @@ table.tt td:last-child .row-actions {
   justify-content: space-between;
   gap: 10px;
   padding-top: 10px;
-  border-top: 1px dashed rgba(91, 85, 251, 0.28);
+  border-top: 1px dashed rgba(47, 125, 225, 0.28);
 }
 
 .cash-change-row span {
@@ -1350,7 +1350,7 @@ table.tt td:last-child .row-actions {
   width: 44px;
   height: 44px;
   border-radius: 13px;
-  background: linear-gradient(150deg, #e9ebfd, #dcdefb);
+  background: linear-gradient(150deg, #e1effb, #d5e8f8);
   display: grid;
   place-items: center;
   color: var(--violet-head);
@@ -1920,11 +1920,11 @@ table.tt td:last-child .row-actions {
   width: 12px;
   height: 12px;
   border-radius: 3px;
-  background: linear-gradient(180deg, #8b87ff, #5b55fb);
+  background: linear-gradient(180deg, #6cb0f5, #2f7de1);
 }
 
 .lg-bar.is-prev {
-  background: #d8d7f2;
+  background: #cfe4f6;
 }
 
 .sales-svg-wrap {
@@ -1977,7 +1977,7 @@ table.tt td:last-child .row-actions {
 .sales-tooltip-date {
   font-size: 11px;
   font-weight: 700;
-  color: #c9c7ee;
+  color: #bcd6ea;
   margin-bottom: 3px;
 }
 
@@ -1996,7 +1996,7 @@ table.tt td:last-child .row-actions {
 .sales-tooltip-val span {
   font-size: 11px;
   font-weight: 600;
-  color: #d6d5f5;
+  color: #cfe4f6;
 }
 
 .sales-tooltip-prev {
@@ -2005,7 +2005,7 @@ table.tt td:last-child .row-actions {
   border-top: 1px dashed rgba(255, 255, 255, 0.18);
   font-size: 10.5px;
   font-weight: 600;
-  color: #b7b5e4;
+  color: #a9c6de;
 }
 
 @media (max-width: 900px) {
@@ -2203,8 +2203,8 @@ table.tt td:last-child .row-actions {
 
 .product-card.is-selected {
   border-color: var(--accent);
-  background: linear-gradient(180deg, #f7f8ff 0%, #eef0ff 100%);
-  box-shadow: 0 14px 28px -14px rgba(91, 85, 251, 0.28);
+  background: linear-gradient(180deg, #f4fafe 0%, #e8f4fe 100%);
+  box-shadow: 0 14px 28px -14px rgba(47, 125, 225, 0.28);
 }
 
 .pc-in-cart-badge {
@@ -2220,7 +2220,7 @@ table.tt td:last-child .row-actions {
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   padding: 4px 10px;
   border-radius: 999px;
-  box-shadow: 0 4px 12px rgba(91, 85, 251, 0.35);
+  box-shadow: 0 4px 12px rgba(47, 125, 225, 0.35);
   animation: cartPop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -2235,13 +2235,13 @@ table.tt td:last-child .row-actions {
   color: #fff;
   font-size: 12.5px;
   font-weight: 800;
-  box-shadow: 0 8px 18px -8px rgba(91, 85, 251, 0.65);
+  box-shadow: 0 8px 18px -8px rgba(47, 125, 225, 0.65);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .pc-add-pill:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px -6px rgba(91, 85, 251, 0.85);
+  box-shadow: 0 10px 22px -6px rgba(47, 125, 225, 0.85);
 }
 
 .pc-stepper {
@@ -2253,7 +2253,7 @@ table.tt td:last-child .row-actions {
   border-radius: 10px;
   background: #fff;
   border: 1.5px solid var(--accent);
-  box-shadow: 0 4px 10px rgba(91, 85, 251, 0.12);
+  box-shadow: 0 4px 10px rgba(47, 125, 225, 0.12);
 }
 
 .pc-stepper button {
@@ -2304,7 +2304,7 @@ table.tt td:last-child .row-actions {
   color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: 0 10px 20px -8px rgba(91, 85, 251, 0.65);
+  box-shadow: 0 10px 20px -8px rgba(47, 125, 225, 0.65);
   flex: none;
 }
 
@@ -2361,7 +2361,7 @@ table.tt td:last-child .row-actions {
   background: #fff;
   border-radius: 14px;
   padding: 10px 12px;
-  border: 1px solid rgba(91, 85, 251, 0.12);
+  border: 1px solid rgba(47, 125, 225, 0.12);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2426,7 +2426,7 @@ table.tt td:last-child .row-actions {
   border-radius: 16px;
   padding: 20px 16px;
   text-align: center;
-  border: 1px dashed rgba(91, 85, 251, 0.22);
+  border: 1px dashed rgba(47, 125, 225, 0.22);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2437,7 +2437,7 @@ table.tt td:last-child .row-actions {
   width: 56px;
   height: 56px;
   border-radius: 18px;
-  background: linear-gradient(145deg, #eef0ff, #dfe3fe);
+  background: linear-gradient(145deg, #e8f4fe, #d9eafb);
   color: var(--accent-ink);
   display: grid;
   place-items: center;
@@ -2464,7 +2464,7 @@ table.tt td:last-child .row-actions {
   flex-direction: column;
   gap: 6px;
   text-align: left;
-  background: #f7f8fe;
+  background: #f4fafe;
   padding: 10px 12px;
   border-radius: 12px;
 }
@@ -2505,7 +2505,7 @@ table.tt td:last-child .row-actions {
   border-radius: 15px;
   padding: 12px 13px;
   box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(91, 85, 251, 0.1);
+  border: 1px solid rgba(47, 125, 225, 0.1);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2624,7 +2624,7 @@ table.tt td:last-child .row-actions {
   background: #fff;
   border-radius: 14px;
   padding: 12px 14px;
-  border: 1px solid rgba(91, 85, 251, 0.12);
+  border: 1px solid rgba(47, 125, 225, 0.12);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2714,8 +2714,8 @@ table.tt td:last-child .row-actions {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  background: linear-gradient(145deg, #eef0ff 0%, #e1e4fd 100%);
-  border: 1px solid rgba(91, 85, 251, 0.18);
+  background: linear-gradient(145deg, #e8f4fe 0%, #ddecfb 100%);
+  border: 1px solid rgba(47, 125, 225, 0.18);
   border-radius: 18px;
   padding: 16px 18px;
 }
@@ -2735,7 +2735,7 @@ table.tt td:last-child .row-actions {
   color: #fff;
   display: grid;
   place-items: center;
-  box-shadow: 0 10px 22px -8px rgba(91, 85, 251, 0.7);
+  box-shadow: 0 10px 22px -8px rgba(47, 125, 225, 0.7);
   flex: none;
 }
 
@@ -2787,7 +2787,7 @@ table.tt td:last-child .row-actions {
   background: #fff;
   border-radius: 16px;
   padding: 14px 16px;
-  border: 1px solid rgba(91, 85, 251, 0.12);
+  border: 1px solid rgba(47, 125, 225, 0.12);
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
@@ -2833,15 +2833,15 @@ table.tt td:last-child .row-actions {
 .po-type-tab.is-active {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 3px 8px rgba(91, 85, 251, 0.35);
+  box-shadow: 0 3px 8px rgba(47, 125, 225, 0.35);
 }
 
 .po-customer-preview {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #f7f8fe;
-  border: 1px solid rgba(91, 85, 251, 0.12);
+  background: #f4fafe;
+  border: 1px solid rgba(47, 125, 225, 0.12);
   border-radius: 13px;
   padding: 10px 12px;
 }
@@ -2885,8 +2885,8 @@ table.tt td:last-child .row-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #f7f8fe;
-  border: 1px solid rgba(91, 85, 251, 0.12);
+  background: #f4fafe;
+  border: 1px solid rgba(47, 125, 225, 0.12);
   border-radius: 13px;
   padding: 11px 13px;
 }
@@ -2895,7 +2895,7 @@ table.tt td:last-child .row-actions {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(150deg, #e9ebfd, #dcdefb);
+  background: linear-gradient(150deg, #e1effb, #d5e8f8);
   color: var(--violet-head);
   display: grid;
   place-items: center;
@@ -3008,8 +3008,8 @@ table.tt td:last-child .row-actions {
 }
 
 .po-rx-eye-box {
-  background: #f7f8fe;
-  border: 1px solid rgba(91, 85, 251, 0.14);
+  background: #f4fafe;
+  border: 1px solid rgba(47, 125, 225, 0.14);
   border-radius: 12px;
   padding: 9px 11px;
   display: flex;
@@ -3040,8 +3040,8 @@ table.tt td:last-child .row-actions {
   display: flex;
   align-items: flex-start;
   gap: 11px;
-  background: #f4f6ff;
-  border: 1px dashed rgba(91, 85, 251, 0.28);
+  background: #f0f8fe;
+  border: 1px dashed rgba(47, 125, 225, 0.28);
   border-radius: 15px;
   padding: 13px 15px;
   color: var(--accent-ink);
@@ -3074,8 +3074,8 @@ table.tt td:last-child .row-actions {
 }
 
 .po-summary-card {
-  background: linear-gradient(145deg, #f8f9ff 0%, #eef0ff 100%);
-  border: 1px solid rgba(91, 85, 251, 0.18);
+  background: linear-gradient(145deg, #f5fbfe 0%, #e8f4fe 100%);
+  border: 1px solid rgba(47, 125, 225, 0.18);
   border-radius: 16px;
   padding: 14px 16px;
   display: flex;
@@ -3104,7 +3104,7 @@ table.tt td:last-child .row-actions {
   justify-content: space-between;
   padding-top: 9px;
   margin-top: 3px;
-  border-top: 1px dashed rgba(91, 85, 251, 0.22);
+  border-top: 1px dashed rgba(47, 125, 225, 0.22);
   font-size: 13px;
   font-weight: 800;
   color: var(--ink);
@@ -3152,7 +3152,7 @@ table.tt td:last-child .row-actions {
   box-shadow: var(--shadow-sm);
   color: var(--ink-2);
   cursor: pointer;
-  border: 1px solid rgba(91, 85, 251, 0.14);
+  border: 1px solid rgba(47, 125, 225, 0.14);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -3184,8 +3184,8 @@ table.tt td:last-child .row-actions {
   justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
-  background: linear-gradient(145deg, #f6f7ff 0%, #eceefe 100%);
-  border: 1px solid rgba(91, 85, 251, 0.2);
+  background: linear-gradient(145deg, #f2f9fe 0%, #e6f2fc 100%);
+  border: 1px solid rgba(47, 125, 225, 0.2);
   border-radius: 16px;
   padding: 12px 18px;
   box-shadow: var(--shadow-sm);
@@ -3250,7 +3250,7 @@ table.tt td:last-child .row-actions {
 
 .tier-choice-card {
   text-align: left;
-  background: #f7f8fe;
+  background: #f4fafe;
   border: 1.5px solid var(--line);
   border-radius: 13px;
   padding: 11px 13px;
@@ -3265,9 +3265,9 @@ table.tt td:last-child .row-actions {
 }
 
 .tier-choice-card.is-active {
-  background: linear-gradient(145deg, #f3f4ff 0%, #e7e9fe 100%);
+  background: linear-gradient(145deg, #eef7fe 0%, #dcecfb 100%);
   border-color: var(--accent);
-  box-shadow: 0 8px 18px -10px rgba(91, 85, 251, 0.45);
+  box-shadow: 0 8px 18px -10px rgba(47, 125, 225, 0.45);
 }
 
 .tcc-head {
@@ -3311,8 +3311,8 @@ table.tt td:last-child .row-actions {
 }
 
 .cust-live-card {
-  background: linear-gradient(145deg, #f8f9ff 0%, #eff1ff 100%);
-  border: 1px solid rgba(91, 85, 251, 0.16);
+  background: linear-gradient(145deg, #f5fbfe 0%, #e8f4fe 100%);
+  border: 1px solid rgba(47, 125, 225, 0.16);
   border-radius: 15px;
   padding: 14px 15px;
   display: flex;
@@ -3374,7 +3374,7 @@ table.tt td:last-child .row-actions {
   flex-direction: column;
   gap: 7px;
   padding-top: 10px;
-  border-top: 1px dashed rgba(91, 85, 251, 0.2);
+  border-top: 1px dashed rgba(47, 125, 225, 0.2);
 }
 
 .clc-row {
@@ -3504,8 +3504,8 @@ table.tt td:last-child .row-actions {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  background: #f5f6fe;
-  border: 1px solid rgba(91, 85, 251, 0.1);
+  background: #f2f9fe;
+  border: 1px solid rgba(47, 125, 225, 0.1);
   border-radius: 10px;
   padding: 8px 12px;
   font-size: 12px;
@@ -3528,8 +3528,8 @@ table.tt td:last-child .row-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(145deg, #f7f8ff 0%, #eef0ff 100%);
-  border: 1px solid rgba(91, 85, 251, 0.16);
+  background: linear-gradient(145deg, #f4fafe 0%, #e8f4fe 100%);
+  border: 1px solid rgba(47, 125, 225, 0.16);
   border-radius: 12px;
   padding: 12px 15px;
   font-size: 13px;
@@ -3544,7 +3544,7 @@ table.tt td:last-child .row-actions {
 }
 
 .simple-rx-box {
-  background: #f7f8fe;
+  background: #f4fafe;
   border: 1px solid var(--line);
   border-radius: 13px;
   padding: 10px 12px 12px;
@@ -3822,8 +3822,8 @@ table.tt.stock-table {
 
 .po-cust-trigger:hover,
 .po-cust-trigger.is-open {
-  border-color: #b9b5f7;
-  box-shadow: 0 0 0 3px rgba(91, 85, 251, 0.09);
+  border-color: #a9cdf2;
+  box-shadow: 0 0 0 3px rgba(47, 125, 225, 0.09);
 }
 
 .po-cust-ico {
@@ -3997,7 +3997,7 @@ table.tt.stock-table {
   padding: 14px;
   border: 1px solid var(--line-2);
   border-radius: 14px;
-  background: #fbfbfe;
+  background: #fafdff;
 }
 
 .po-newcust-head {
@@ -4085,9 +4085,9 @@ table.tt.stock-table {
   gap: 6px;
   height: 34px;
   padding: 0 12px;
-  border: 1px solid #d6d4fb;
+  border: 1px solid #cfe4f6;
   border-radius: 10px;
-  background: #f6f5ff;
+  background: #f2f9fe;
   color: var(--accent-ink);
   font-size: 11.5px;
   font-weight: 800;
@@ -4097,7 +4097,7 @@ table.tt.stock-table {
 
 .po-add-btn:hover {
   background: var(--accent-soft);
-  border-color: #b9b5f7;
+  border-color: #a9cdf2;
 }
 
 .po-lines {
@@ -4139,7 +4139,7 @@ table.tt.stock-table {
 }
 
 .po-line:hover {
-  background: #fcfcff;
+  background: #fbfeff;
 }
 
 .po-line-no {
@@ -4163,12 +4163,12 @@ table.tt.stock-table {
   flex: none;
   border-radius: 11px;
   background: var(--panel-2);
-  color: #6b68a8;
+  color: #5b7d9c;
 }
 
 .po-thumb.is-frame {
-  background: #eeecff;
-  color: #5b55c9;
+  background: #e6f2fc;
+  color: #1f6fd0;
 }
 
 .po-thumb.is-lensa {
@@ -4352,7 +4352,7 @@ table.tt.stock-table {
 }
 
 .po-cat-row.is-added {
-  background: #f4f3ff;
+  background: #eef7fe;
 }
 
 .po-cat-row .po-thumb {
@@ -4434,8 +4434,8 @@ table.tt.stock-table {
   gap: 8px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: #eef0fe;
-  color: #4a44ae;
+  background: #e8f4fe;
+  color: #1f6fd0;
   font-size: 11.5px;
   font-weight: 600;
   line-height: 1.45;
@@ -4586,7 +4586,7 @@ table.tt.stock-table {
   flex: none;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(91, 85, 251, 0.14);
+  box-shadow: 0 0 0 3px rgba(47, 125, 225, 0.14);
 }
 
 .po-status-box svg {

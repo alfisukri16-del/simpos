@@ -83,8 +83,8 @@ export default function SalesBarChart({ points, previous }: Props) {
       >
         <defs>
           <linearGradient id="salesBarFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#8b87ff" />
-            <stop offset="100%" stopColor="#5b55fb" />
+            <stop offset="0%" stopColor="#6cb0f5" />
+            <stop offset="100%" stopColor="#2f7de1" />
           </linearGradient>
         </defs>
 
@@ -93,7 +93,7 @@ export default function SalesBarChart({ points, previous }: Props) {
           const y = yOf(t);
           return (
             <g key={t}>
-              <line x1={M.left} y1={y} x2={W - M.right} y2={y} stroke="#eef0fb" strokeWidth={1} />
+              <line x1={M.left} y1={y} x2={W - M.right} y2={y} stroke="#eaf5fe" strokeWidth={1} />
               <text x={M.left - 10} y={y} textAnchor="end" dominantBaseline="middle" className="sales-tick">
                 {tickLabel(t)}
               </text>
@@ -118,7 +118,7 @@ export default function SalesBarChart({ points, previous }: Props) {
                     width={barW}
                     height={prevH}
                     rx={4}
-                    fill="#d8d7f2"
+                    fill="#cfe4f6"
                   />
                 )}
                 <rect

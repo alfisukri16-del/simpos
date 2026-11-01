@@ -6,9 +6,9 @@
 .page-bg.auth {
   padding: 40px 32px;
   background:
-    radial-gradient(1200px 780px at 6% -8%, #fcfcfe 0%, rgba(252, 252, 254, 0) 58%),
-    radial-gradient(1000px 700px at 100% 0%, #f1f2f8 0%, rgba(241, 242, 248, 0) 55%),
-    linear-gradient(155deg, #f0f1f7 0%, #e9eaf3 42%, #e3e4ee 72%, #dde0ea 100%);
+    radial-gradient(1200px 780px at 6% -8%, #fcfdff 0%, rgba(252, 253, 255, 0) 58%),
+    radial-gradient(1000px 700px at 100% 0%, #e3f2fd 0%, rgba(227, 242, 253, 0) 55%),
+    linear-gradient(155deg, #b7dcf8 0%, #cfe9fc 42%, #e2f3fe 72%, #eff9ff 100%);
 }
 
 .auth {
@@ -38,7 +38,7 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: 48px 52px 52px;
-  background: #e7e6fb;
+  background: #e0effb;
 }
 
 .auth-visual > img {
@@ -84,7 +84,7 @@
 
 .auth-copy h1 em {
   font-style: normal;
-  color: #c9c6ff;
+  color: #b8d9f8;
 }
 
 .auth-copy p {
@@ -146,8 +146,8 @@
   place-items: center;
   border-radius: 14px;
   color: #fff;
-  background: linear-gradient(150deg, #6f6afd, var(--accent));
-  box-shadow: 0 14px 26px -14px rgba(91, 85, 251, 0.8);
+  background: linear-gradient(150deg, #4a95ec, var(--accent));
+  box-shadow: 0 14px 26px -14px rgba(47, 125, 225, 0.8);
 }
 
 .form-brand b {

@@ -14,7 +14,7 @@
   min-height: 346px;
   border-radius: var(--r-lg);
   overflow: hidden;
-  background: linear-gradient(115deg, #ebeafe 0%, #dfe0fb 46%, #d6d6f8 100%);
+  background: linear-gradient(115deg, #e3f1fc 0%, #d5e8f8 46%, #cfe4f6 100%);
   box-shadow: var(--shadow-md);
 }
 
@@ -63,7 +63,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #e3e3fc 0%, rgba(227, 227, 252, 0.35) 30%, rgba(227, 227, 252, 0) 60%);
+  background: linear-gradient(90deg, #d9ecfc 0%, rgba(217, 236, 252, 0.35) 30%, rgba(217, 236, 252, 0) 60%);
 }
 
 .hero-media img {
@@ -93,12 +93,12 @@
 
 .btn-primary {
   color: #fff;
-  background: linear-gradient(150deg, #6a65fd, var(--accent));
-  box-shadow: 0 18px 34px -16px rgba(91, 85, 251, 0.85);
+  background: linear-gradient(150deg, #4a95ec, var(--accent));
+  box-shadow: 0 18px 34px -16px rgba(47, 125, 225, 0.85);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(150deg, #5f5afc, var(--accent-strong));
+  background: linear-gradient(150deg, #2f7de1, var(--accent-strong));
 }
 
 .btn-ghost {
@@ -147,7 +147,7 @@
 }
 
 .menu-card.featured {
-  border-color: rgba(91, 85, 251, 0.45);
+  border-color: rgba(47, 125, 225, 0.45);
 }
 
 .menu-card .m-icon {

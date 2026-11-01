@@ -242,8 +242,8 @@ export default function OwnerPengaturanPage() {
                           Ya
                         </span>
                       ) : (
-                        <span className="status-pill" style={{ background: "#eef0f8", color: "#8d8eb4" }}>
-                          <i style={{ background: "#8d8eb4" }} />
+                        <span className="status-pill" style={{ background: "#eaf5fe", color: "#7b94ad" }}>
+                          <i style={{ background: "#7b94ad" }} />
                           Tidak
                         </span>
                       )}

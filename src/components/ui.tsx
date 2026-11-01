@@ -77,38 +77,38 @@ export function SearchBox({
 const STATUS_STYLE: Record<string, [string, string]> = {
   "Sudah Datang": ["#e5f9ef", "#15803d"],
   Diproses: ["#fff4dd", "#a16207"],
-  Dipesan: ["#eaf0ff", "#3a4fd0"],
-  Selesai: ["#eef0f8", "#5b5f7a"],
+  Dipesan: ["#e8f4fe", "#1f6fd0"],
+  Selesai: ["#eaf5fe", "#4a6a86"],
   Lunas: ["#e2f7ec", "#1f9d63"],
   Pending: ["#fdf0d6", "#b57a12"],
   Dibatalkan: ["#fde7ea", "#d8455f"],
-  Aktif: ["#e6e8fd", "#4a44ee"],
-  Expired: ["#f1f0f8", "#8d8eb4"],
+  Aktif: ["#e0efff", "#1f6fd0"],
+  Expired: ["#eef5fa", "#7b94ad"],
   Kedaluwarsa: ["#fde7ea", "#d8455f"],
   Ada: ["#e2f7ec", "#1f9d63"],
-  "Belum ada": ["#eef0f8", "#8d8eb4"],
+  "Belum ada": ["#eaf5fe", "#7b94ad"],
   "Stok Menipis": ["#fdf0d6", "#b57a12"],
   "Stok Habis": ["#fde7ea", "#d8455f"],
   Aman: ["#e2f7ec", "#1f9d63"],
-  "Menunggu Diterima": ["#eaf0ff", "#3a4fd0"],
+  "Menunggu Diterima": ["#e8f4fe", "#1f6fd0"],
   "Diterima Sebagian": ["#fdf0d6", "#b57a12"],
   Diterima: ["#e2f7ec", "#1f9d63"],
-  Diajukan: ["#e6e8fd", "#4a44ee"],
-  "Menunggu Tinjauan": ["#e6e8fd", "#4a44ee"],
+  Diajukan: ["#e0efff", "#1f6fd0"],
+  "Menunggu Tinjauan": ["#e0efff", "#1f6fd0"],
   Sebagian: ["#fdf0d6", "#b57a12"],
   "Sebagian Dialokasikan": ["#fdf0d6", "#b57a12"],
-  Dialokasikan: ["#eaf0ff", "#3a4fd0"],
+  Dialokasikan: ["#e8f4fe", "#1f6fd0"],
   Ditolak: ["#fde7ea", "#d8455f"],
-  "Nonaktif": ["#f1f0f8", "#8d8eb4"],
+  "Nonaktif": ["#eef5fa", "#7b94ad"],
   Terpenuhi: ["#e2f7ec", "#1f9d63"],
-  Pengajuan: ["#e6e8fd", "#4a44ee"],
-  Alokasi: ["#eaf0ff", "#3a4fd0"],
+  Pengajuan: ["#e0efff", "#1f6fd0"],
+  Alokasi: ["#e8f4fe", "#1f6fd0"],
   Masuk: ["#e2f7ec", "#1f9d63"],
   Keluar: ["#fde7ea", "#d8455f"],
 };
 
 export function StatusPill({ label, dot = true }: { label: string; dot?: boolean }) {
-  const [bg, fg] = STATUS_STYLE[label] ?? ["#eef0f8", "#5b5f7a"];
+  const [bg, fg] = STATUS_STYLE[label] ?? ["#eaf5fe", "#4a6a86"];
   return (
     <span className="status-pill" style={{ background: bg, color: fg }}>
       {dot ? <i style={{ background: fg }} /> : null}

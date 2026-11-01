@@ -1,32 +1,32 @@
 :root {
   /* Surfaces */
-  --bg-0: #e4e7f9;
-  --bg-1: #eef0fd;
-  --shell: #f3f4fd;
+  --bg-0: #dceaf6;
+  --bg-1: #e8f4fe;
+  --shell: #eef7fe;
   --panel: #ffffff;
-  --panel-soft: #f7f8fe;
-  --panel-2: #eef0fd;
+  --panel-soft: rgba(255, 255, 255, 0.68);
+  --panel-2: #e8f4fe;
 
   /* Text */
-  --ink: #171733;
-  --ink-2: #474872;
-  --muted: #8d8eb4;
-  --muted-2: #a7a8cb;
+  --ink: #122a45;
+  --ink-2: #3c5a78;
+  --muted: #7b94ad;
+  --muted-2: #9db3c8;
 
   /* Lines */
-  --line: #e7e8f7;
-  --line-2: #dcddf1;
+  --line: #dcebf7;
+  --line-2: #d7e7f4;
 
-  /* Accent (violet / indigo) */
-  --accent: #5b55fb;
-  --accent-strong: #4a44ee;
-  --accent-soft: #eae9fe;
-  --accent-ink: #3a34c9;
-  --violet-head: #5f5cdd;
+  /* Accent (blue) */
+  --accent: #2f7de1;
+  --accent-strong: #1f6fd0;
+  --accent-soft: #dbeafe;
+  --accent-ink: #1659a8;
+  --violet-head: #2f7de1;
 
   /* Lavender fills */
-  --lav-1: #dfe0fa;
-  --lav-2: #eceefa;
+  --lav-1: #d5e8f8;
+  --lav-2: #e6f2fc;
 
   /* Status */
   --ok-bg: #e2f7ec;
@@ -35,8 +35,8 @@
   --warn-ink: #b57a12;
   --danger-bg: #fde7ea;
   --danger-ink: #d8455f;
-  --info-bg: #e6e8fd;
-  --info-ink: #4a44ee;
+  --info-bg: #e0efff;
+  --info-ink: #1f6fd0;
 
   /* Radii */
   --r-xl: 30px;
@@ -46,10 +46,10 @@
   --r-pill: 999px;
 
   /* Shadows */
-  --shadow-lg: 0 40px 90px -46px rgba(58, 50, 150, 0.5);
-  --shadow-md: 0 22px 55px -34px rgba(58, 50, 150, 0.42);
-  --shadow-sm: 0 12px 32px -22px rgba(58, 50, 150, 0.5);
-  --ring: 0 0 0 3px rgba(91, 85, 251, 0.28);
+  --shadow-lg: 0 40px 90px -46px rgba(30, 90, 150, 0.5);
+  --shadow-md: 0 22px 55px -34px rgba(30, 90, 150, 0.42);
+  --shadow-sm: 0 12px 32px -22px rgba(30, 90, 150, 0.5);
+  --ring: 0 0 0 3px rgba(47, 125, 225, 0.28);
 
   /* Type */
   --font: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;

@@ -12,7 +12,8 @@
 
 /* ---------------- Sidebar ---------------- */
 .sidebar {
-  background: var(--panel-soft);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.84), rgba(226, 243, 255, 0.7));
+  border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-md);
   padding: 26px 16px 22px;
@@ -36,8 +37,8 @@
   display: grid;
   place-items: center;
   color: #fff;
-  background: linear-gradient(150deg, #6f6afd, var(--accent));
-  box-shadow: 0 14px 26px -12px rgba(91, 85, 251, 0.75);
+  background: linear-gradient(150deg, #4a95ec, var(--accent));
+  box-shadow: 0 14px 26px -12px rgba(47, 125, 225, 0.75);
   flex: none;
 }
 
@@ -89,9 +90,9 @@
 }
 
 .nav-item.active {
-  background: #e4e4fe;
+  background: #ddecfb;
   color: var(--accent-strong);
-  box-shadow: inset 0 0 0 1px rgba(91, 85, 251, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(47, 125, 225, 0.22);
 }
 
 .nav-item.active svg {
@@ -158,7 +159,8 @@
 
 /* ---------------- Main panel ---------------- */
 .mainpanel {
-  background: var(--panel-2);
+  background: linear-gradient(160deg, #cfe8fb 0%, #e1f1fd 45%, #eff8ff 100%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-md);
   display: flex;
@@ -346,7 +348,7 @@
 }
 
 .notif-item:hover {
-  background: #f6f6fe;
+  background: #f2f9fe;
 }
 
 .notif-item.is-read {
@@ -468,7 +470,7 @@
   font-size: 14px;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(150deg, #7d78ff, var(--accent-strong));
+  background: linear-gradient(150deg, #5aa2f0, var(--accent-strong));
   flex: none;
 }
 
@@ -539,7 +541,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(24, 20, 60, 0.4);
+    background: rgba(15, 40, 70, 0.4);
     z-index: 55;
   }
   .topbar {
