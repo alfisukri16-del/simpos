@@ -259,36 +259,12 @@ export default function TransaksiBaruPage() {
                 <Trash2 size={13} />
                 Kosongkan
               </button>
-            ) : (
-              <span className="cart-count">0 item</span>
-            )}
+            ) : null}
           </div>
 
 
 
-          {cart.items.length === 0 ? (
-            <div className="cart-empty-rich">
-              <div className="cart-empty-art">
-                <Glasses size={28} strokeWidth={1.7} />
-              </div>
-              <b>Mulai Transaksi Baru</b>
-              <p>Pilih produk dari katalog di sebelah kiri untuk dimasukkan ke dalam keranjang.</p>
-              <div className="cart-empty-steps">
-                <div className="ces-row">
-                  <span className="ces-num">1</span>
-                  <span>Klik tombol <b>+ Tambah</b> pada kartu produk</span>
-                </div>
-                <div className="ces-row">
-                  <span className="ces-num">2</span>
-                  <span>Sesuaikan <b>jumlah unit</b> &amp; cek stok cabang</span>
-                </div>
-                <div className="ces-row">
-                  <span className="ces-num">3</span>
-                  <span>Lanjut ke <b>Checkout</b> untuk pilih pelanggan &amp; bayar</span>
-                </div>
-              </div>
-            </div>
-          ) : (
+          {cart.items.length > 0 ? (
             <div className="cart-items-list">
               {cart.items.map((i) => {
                 const saldo = shared.stockOf(i.id)?.saldo;
@@ -368,7 +344,7 @@ export default function TransaksiBaruPage() {
                 );
               })}
             </div>
-          )}
+          ) : null}
 
           <div className="cart-summary-box">
             <div className="csb-row">
