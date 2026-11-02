@@ -20,10 +20,10 @@
 
 .auth-card {
   width: 100%;
-  max-width: 1480px;
-  min-height: 840px;
+  max-width: 1280px;
+  min-height: min(790px, calc(100vh - 80px));
   display: grid;
-  grid-template-columns: 1fr 580px;
+  grid-template-columns: 1fr 1fr;
   gap: 0;
   border-radius: var(--r-xl);
   overflow: hidden;
@@ -127,7 +127,7 @@
 /* ---------------- Panel kanan ---------------- */
 .auth-form {
   background: var(--panel-soft);
-  padding: 60px 56px 44px;
+  padding: 54px 56px 44px;
   display: flex;
   flex-direction: column;
 }
@@ -136,7 +136,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .form-brand .mark {
@@ -178,7 +178,7 @@
 }
 
 .auth-form form {
-  margin-top: 46px;
+  margin-top: 40px;
 }
 
 .field {
@@ -317,7 +317,7 @@
 }
 
 .auth-help {
-  margin-top: 40px;
+  margin-top: 34px;
   text-align: center;
 }
 
@@ -342,17 +342,11 @@
 
 .brand-foot {
   margin-top: auto;
-  padding-top: 30px;
+  padding-top: 26px;
   text-align: center;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--muted-2);
-}
-
-@media (max-width: 1540px) {
-  .auth-card {
-    grid-template-columns: 1fr 560px;
-  }
 }
 
 @media (max-width: 1180px) {

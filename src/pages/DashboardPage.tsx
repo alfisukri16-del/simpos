@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const readyPo = shared.pos.filter((o) => o.status === "Sudah Datang" && !o.linkedTrx);
 
   return (
-    <div className="dash">
+    <div className="dash dashboard-anim">
       <section className="hero">
         <div className="hero-copy">
           <span className="overline">SELAMAT DATANG</span>

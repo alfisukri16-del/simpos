@@ -391,3 +391,72 @@ table.tt tbody tr:nth-child(n+6) { animation-delay: 0.17s; }
     radial-gradient(1000px 700px at 100% 0%, #d6ecfd 0%, rgba(214, 236, 253, 0) 55%),
     linear-gradient(155deg, #a9d6f7 0%, #c3e4fb 38%, #d9effe 68%, #eaf7ff 100%);
 }
+
+/* ---- Dashboard card entrance (Kasir, Admin Cabang, Pemilik) ---- */
+@keyframes simpos-dashboard-card-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.975); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Blok besar tidak ikut naik sendiri; kartu di dalamnya yang tampil berurutan. */
+.page.dashboard-anim > *:not(.overlay),
+.dash.dashboard-anim > *:not(.overlay) {
+  animation: none;
+}
+
+.page.dashboard-anim > .pagehead,
+.dashboard-anim .dash-metric,
+.dashboard-anim .menu-card,
+.dashboard-anim .stat-row > *,
+.dashboard-anim .dash-kpi,
+.dashboard-anim .dash-charts > .panel,
+.dashboard-anim .dash-lower > .panel,
+.page.dashboard-anim > .action-row,
+.page.dashboard-anim > .panel,
+.dash.dashboard-anim > .hero,
+.dash.dashboard-anim > .history-strip {
+  animation: simpos-dashboard-card-in 0.58s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* StatCard dibungkus link; cukup wrapper-nya yang beranimasi. */
+.dashboard-anim .stat-card {
+  animation: none;
+}
+
+.page.dashboard-anim > .pagehead { animation-delay: 0.02s; }
+.dash.dashboard-anim > .hero { animation-delay: 0.06s; }
+
+.dashboard-anim .dash-metrics .dash-metric:nth-child(1),
+.dashboard-anim .stat-row > *:nth-child(1),
+.dashboard-anim .dash-kpi:nth-child(1) { animation-delay: 0.12s; }
+
+.dashboard-anim .dash-metrics .dash-metric:nth-child(2),
+.dashboard-anim .stat-row > *:nth-child(2),
+.dashboard-anim .dash-kpi:nth-child(2) { animation-delay: 0.19s; }
+
+.dashboard-anim .dash-metrics .dash-metric:nth-child(3),
+.dashboard-anim .stat-row > *:nth-child(3),
+.dashboard-anim .dash-kpi:nth-child(3) { animation-delay: 0.26s; }
+
+.dashboard-anim .dash-metrics .dash-metric:nth-child(n+4),
+.dashboard-anim .stat-row > *:nth-child(n+4),
+.dashboard-anim .dash-kpi:nth-child(n+4) { animation-delay: 0.33s; }
+
+.dashboard-anim .menu-cards .menu-card:nth-child(1) { animation-delay: 0.24s; }
+.dashboard-anim .menu-cards .menu-card:nth-child(2) { animation-delay: 0.31s; }
+.dashboard-anim .menu-cards .menu-card:nth-child(3) { animation-delay: 0.38s; }
+.dashboard-anim .menu-cards .menu-card:nth-child(4) { animation-delay: 0.45s; }
+.dashboard-anim .menu-cards .menu-card:nth-child(n+5) { animation-delay: 0.52s; }
+
+.page.dashboard-anim > .action-row { animation-delay: 0.22s; }
+.page.dashboard-anim > .panel { animation-delay: 0.3s; }
+
+.dashboard-anim .dash-charts > .panel:nth-child(1) { animation-delay: 0.24s; }
+.dashboard-anim .dash-charts > .panel:nth-child(2) { animation-delay: 0.32s; }
+.dashboard-anim .dash-charts > .panel:nth-child(n+3) { animation-delay: 0.4s; }
+
+.dashboard-anim .dash-lower > .panel:nth-child(1) { animation-delay: 0.34s; }
+.dashboard-anim .dash-lower > .panel:nth-child(2) { animation-delay: 0.42s; }
+.dashboard-anim .dash-lower > .panel:nth-child(n+3) { animation-delay: 0.5s; }
+
+.dash.dashboard-anim > .history-strip { animation-delay: 0.34s; }

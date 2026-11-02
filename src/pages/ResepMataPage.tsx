@@ -113,11 +113,6 @@ export default function ResepMataPage() {
   return (
     <div className="page">
       <PageHeader
-        crumbs={
-          <>
-            <b>Kasir</b> › Resep Mata
-          </>
-        }
         overline="ARSIP RESEP"
         title="Resep Mata"
         desc="Catat dan kelola riwayat resep ukuran lensa mata kanan (OD) dan kiri (OS) pelanggan."

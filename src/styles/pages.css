@@ -1137,18 +1137,60 @@ table.tt td:last-child .row-actions {
   color: var(--ink-2);
 }
 
-.cash-exact-btn {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  padding: 3px 9px;
-  border-radius: 999px;
-  transition: background 0.16s ease, transform 0.15s ease;
+.cash-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
 }
 
-.cash-exact-btn:hover {
-  background: #d5e8f8;
+.cash-mode-btn {
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  background: transparent;
+  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.cash-mode-btn:hover {
+  color: var(--ink);
+}
+
+.cash-mode-btn.on {
+  color: var(--accent-ink);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.cash-exact-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 11px;
+  border: 1.5px solid var(--line-2);
+  background: #f5fbfe;
+}
+
+.cash-exact-display span {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.cash-exact-display b {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .cash-input-wrap {
@@ -2163,35 +2205,94 @@ table.tt td:last-child .row-actions {
 }
 
 @media print {
-  body:has(.struk-print) * {
-    visibility: hidden !important;
-  }
-
-  body:has(.struk-print) .struk-print,
-  body:has(.struk-print) .struk-print * {
-    visibility: visible !important;
-  }
-
-  body:has(.struk-print) .struk-print {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 80mm;
-    max-width: 80mm;
+  @page {
+    size: 80mm auto;
     margin: 0;
-    padding: 6mm;
-    box-shadow: none;
-    border-radius: 0;
-    font-size: 11px;
+  }
+
+  /* Hanya struk yang masuk pagination cetak. Konten aplikasi dihapus dari layout
+     (bukan sekadar visibility:hidden) agar tidak menciptakan halaman kosong. */
+  body:has(.struk-print) {
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  body:has(.struk-print) #root,
+  body:has(.struk-print) .app-shell,
+  body:has(.struk-print) .app-grid,
+  body:has(.struk-print) .mainpanel,
+  body:has(.struk-print) .main-content,
+  body:has(.struk-print) .page {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  body:has(.struk-print) .app-grid {
+    grid-template-columns: none !important;
+    gap: 0 !important;
+  }
+
+  body:has(.struk-print) .sidebar,
+  body:has(.struk-print) .topbar,
+  body:has(.struk-print) .scrim,
+  body:has(.struk-print) .page > *:not(.overlay):not(.struk-print),
+  body:has(.struk-print) .page > .overlay:not(:has(.struk-print)),
+  body:has(.struk-print) .overlay > *:not(.drawer),
+  body:has(.struk-print) .drawer > *:not(.struk-print) {
+    display: none !important;
   }
 
   body:has(.struk-print) .overlay,
-  body:has(.struk-print) .struk-drawer {
+  body:has(.struk-print) .drawer {
+    display: block !important;
     position: static !important;
-    background: none !important;
-    box-shadow: none !important;
+    inset: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  body:has(.struk-print) .struk-print {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 5mm !important;
+    background: #fff !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+    line-height: 1.42 !important;
+    color: #111 !important;
+  }
+
+  body:has(.struk-print) .struk-brand,
+  body:has(.struk-print) .struk-line,
+  body:has(.struk-print) .struk-totals,
+  body:has(.struk-print) .struk-foot {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 

@@ -282,7 +282,7 @@ export default function OwnerDashboardPage() {
   }, [periodTx, previousTx]);
 
   return (
-    <div className="page">
+    <div className="page dashboard-anim">
       <PageHeader
         overline="DASHBOARD PEMILIK"
         title="Dashboard Pemilik"

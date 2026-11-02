@@ -37,6 +37,7 @@ import OwnerPOPage from "./pages/owner/OwnerPOPage";
 import OwnerLaporanPage from "./pages/owner/OwnerLaporanPage";
 import OwnerPengaturanPage from "./pages/owner/OwnerPengaturanPage";
 import TitleSync from "./components/TitleSync";
+import ScrollToTop from "./components/ScrollToTop";
 import AsciiReveal from "./components/AsciiReveal";
 import { CartProvider } from "./context/CartContext";
 import { SharedProvider } from "./store/sharedStore";
@@ -47,6 +48,7 @@ export default function App() {
       <CartProvider>
         <AsciiReveal />
         <TitleSync />
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />

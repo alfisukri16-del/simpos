@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import MRLogo from "./MRLogo";
 import "../styles/ascii-reveal.css";
 
 /**
@@ -142,26 +143,6 @@ function buildCells(W: number, H: number, cols: number, rows: number): Cell[] {
   return cells;
 }
 
-/** Mark SIMPOS digambar inline (SVG) supaya intro tetap tampil meski aset/jaringan gagal. */
-function BrandMark() {
-  return (
-    <svg className="ascii-reveal-mark" viewBox="0 0 64 64" width={44} height={44} aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="asciiBrand" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#4a95ec" />
-          <stop offset="1" stopColor="#2f7de1" />
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="20" fill="url(#asciiBrand)" />
-      <g transform="translate(15 15) scale(1.4167)" fill="none" stroke="#fff" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="15" r="4" />
-        <circle cx="18" cy="15" r="4" />
-        <path d="M14 15a2 2 0 0 0-2-2h-1m5 2a2 2 0 0 1 2-2h1" />
-      </g>
-    </svg>
-  );
-}
-
 export default function AsciiReveal() {
   const [phase, setPhase] = useState<"idle" | "run" | "exit" | "done">(() => (introAllowed() ? "idle" : "done"));
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -257,10 +238,11 @@ export default function AsciiReveal() {
         // denyut cahaya menyeberang grid setelah tersusun
         const pulse = wave > 0 ? 0.72 + 0.28 * Math.sin(c.x * 0.06 + c.y * 0.09 - wave * 7) : 1;
         const light = Math.min(1, c.tone * pulse);
-        const g = Math.round(120 + 120 * light);
-        const b = Math.round(200 + 55 * light);
-        const r = Math.round(90 + 60 * light);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * (0.55 + 0.45 * light)})`;
+        // Palet mengikuti logo baru: navy #1D2184 dengan tepi biru muda.
+        const g = Math.round(33 + 62 * (1 - light));
+        const b = Math.round(132 + 70 * (1 - light));
+        const r = Math.round(29 + 46 * (1 - light));
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * (0.72 + 0.28 * light)})`;
         ctx.fillText(c.ch, px, py);
       }
     };
@@ -304,7 +286,7 @@ export default function AsciiReveal() {
       <div className="ascii-reveal-stage">
         <canvas ref={canvasRef} className="ascii-reveal-canvas" />
         <div className="ascii-reveal-brand">
-          <BrandMark />
+          <MRLogo size={44} className="ascii-reveal-mark" />
           <div>
             <b>SIMPOS</b>
             <span>Optik Mekar Jaya</span>

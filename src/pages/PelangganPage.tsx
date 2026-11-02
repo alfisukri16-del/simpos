@@ -67,11 +67,6 @@ export default function PelangganPage() {
   return (
     <div className="page">
       <PageHeader
-        crumbs={
-          <>
-            <b>Kasir</b> › Pelanggan
-          </>
-        }
         overline="PENGELOLAAN PELANGGAN"
         title="Data Pelanggan"
         desc="Cari pelanggan berdasarkan nama atau nomor HP, kelola data pelanggan, dan catat riwayat resep."

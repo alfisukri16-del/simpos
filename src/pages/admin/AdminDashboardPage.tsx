@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
   ].slice(0, 5);
 
   return (
-    <div className="page">
+    <div className="page dashboard-anim">
       <PageHeader
         overline="DASHBOARD ADMIN CABANG"
         title={`Dashboard Admin Cabang`}

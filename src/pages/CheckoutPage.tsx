@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Banknote,
@@ -35,6 +35,16 @@ export default function CheckoutPage() {
   const [query, setQuery] = useState("");
   const [picking, setPicking] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
+  const [cashMode, setCashMode] = useState<"exact" | "manual">(() =>
+    cart.cashInput.trim() !== "" && cart.cashPaid !== cart.total ? "manual" : "exact",
+  );
+
+  // Uang pas selalu mengikuti total terbaru (misalnya setelah diskon diubah).
+  useEffect(() => {
+    if (cart.method === "Tunai" && cashMode === "exact") {
+      cart.setCashInput(String(cart.total));
+    }
+  }, [cart.method, cart.total, cashMode]);
 
   const po = cart.poId ? shared.pos.find((o) => o.id === cart.poId) : undefined;
 
@@ -59,6 +69,18 @@ export default function CheckoutPage() {
     setWarning(null);
   };
 
+  const chooseExactCash = () => {
+    setCashMode("exact");
+    cart.setCashInput(String(cart.total));
+    setWarning(null);
+  };
+
+  const chooseManualCash = () => {
+    setCashMode("manual");
+    cart.setCashInput("");
+    setWarning(null);
+  };
+
   const finish = () => {
     if (cart.items.length === 0) {
       setWarning("Keranjang masih kosong. Tambahkan produk terlebih dahulu.");
@@ -70,7 +92,7 @@ export default function CheckoutPage() {
     }
     if (cart.method === "Tunai") {
       if (cart.cashInput.trim() === "") {
-        setWarning("Masukkan jumlah uang tunai yang dibayar sebelum menyelesaikan transaksi.");
+        setWarning("Pilih Uang Pas atau masukkan jumlah uang tunai yang dibayar.");
         return;
       }
       if (cart.cashPaid < cart.total) {
@@ -367,35 +389,51 @@ export default function CheckoutPage() {
 
           {cart.method === "Tunai" ? (
             <div className="cash-box">
-              <div className="cash-field">
-                <div className="cash-label-row">
-                  <label htmlFor="cash-paid-input">Jumlah Dibayar</label>
-                  <button
-                    type="button"
-                    className="cash-exact-btn"
-                    onClick={() => {
-                      cart.setCashInput(String(cart.total));
-                      setWarning(null);
-                    }}
-                  >
-                    Uang Pas
-                  </button>
-                </div>
-                <div className="cash-input-wrap">
-                  <span className="cash-prefix">Rp</span>
-                  <input
-                    id="cash-paid-input"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder={cart.total.toLocaleString("id-ID")}
-                    value={cart.cashInput}
-                    onChange={(e) => {
-                      cart.setCashInput(e.target.value);
-                      setWarning(null);
-                    }}
-                  />
-                </div>
+              <div className="cash-mode-toggle" role="group" aria-label="Cara pembayaran tunai">
+                <button
+                  type="button"
+                  className={`cash-mode-btn ${cashMode === "exact" ? "on" : ""}`}
+                  aria-pressed={cashMode === "exact"}
+                  onClick={chooseExactCash}
+                >
+                  Uang Pas
+                </button>
+                <button
+                  type="button"
+                  className={`cash-mode-btn ${cashMode === "manual" ? "on" : ""}`}
+                  aria-pressed={cashMode === "manual"}
+                  onClick={chooseManualCash}
+                >
+                  Input Manual
+                </button>
               </div>
+
+              {cashMode === "exact" ? (
+                <div className="cash-exact-display">
+                  <span>Jumlah Dibayar</span>
+                  <b>{formatIDR(cart.total)}</b>
+                </div>
+              ) : (
+                <div className="cash-field">
+                  <div className="cash-label-row">
+                    <label htmlFor="cash-paid-input">Jumlah Dibayar</label>
+                  </div>
+                  <div className="cash-input-wrap">
+                    <span className="cash-prefix">Rp</span>
+                    <input
+                      id="cash-paid-input"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder={cart.total.toLocaleString("id-ID")}
+                      value={cart.cashInput}
+                      onChange={(e) => {
+                        cart.setCashInput(e.target.value);
+                        setWarning(null);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className={`cash-change-row ${cart.cashShortfall > 0 ? "is-short" : ""}`}>
                 <span>{cart.cashShortfall > 0 ? "Kurang Bayar" : "Kembalian"}</span>

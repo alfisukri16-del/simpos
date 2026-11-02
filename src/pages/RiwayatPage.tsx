@@ -315,11 +315,6 @@ export default function RiwayatPage() {
   return (
     <div className="page">
       <PageHeader
-        crumbs={
-          <>
-            <b>Kasir</b> › Riwayat Transaksi
-          </>
-        }
         overline="TRANSAKSI & PEMBAYARAN CABANG"
         title="Riwayat Transaksi"
         desc="Lihat riwayat transaksi yang telah lunas, metode pembayaran, cetak struk, dan ekspor laporan cabang"
