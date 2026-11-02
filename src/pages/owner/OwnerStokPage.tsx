@@ -104,33 +104,32 @@ export default function OwnerStokPage() {
       <div className="toolbar">
         <SearchBox placeholder="Cari kode, nama, atau merek produk..." value={q} onChange={setQ} />
         <div className="toolbar-chips">
-          <Chip active={filter === "Semua"} onClick={() => setFilter("Semua")}>
-            Semua
-          </Chip>
-          <Chip active={filter === "Aman"} onClick={() => setFilter("Aman")}>
-            Aman
-          </Chip>
-          <Chip active={filter === "Menipis"} onClick={() => setFilter("Menipis")}>
-            Menipis
-          </Chip>
-          <Chip active={filter === "Habis"} onClick={() => setFilter("Habis")}>
-            Habis
-          </Chip>
+          <select
+            className="chip-select"
+            aria-label="Filter Status Stok"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as "Semua" | StockState)}
+          >
+            <option value="Semua">Semua Status</option>
+            <option value="Aman">Aman</option>
+            <option value="Menipis">Menipis</option>
+            <option value="Habis">Habis</option>
+          </select>
+          <select className="chip-select" aria-label="Lokasi" value={loc} onChange={(e) => setLoc(e.target.value)}>
+            <option value="all">Semua Lokasi</option>
+            {store.branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+          <select className="chip-select" aria-label="Jenis" value={jenis} onChange={(e) => setJenis(e.target.value as typeof jenis)}>
+            <option value="Semua">Semua Jenis</option>
+            <option value="Frame">Frame</option>
+            <option value="Lensa">Lensa</option>
+            <option value="Aksesoris">Aksesoris</option>
+          </select>
         </div>
-        <select className="select-pill" aria-label="Lokasi" value={loc} onChange={(e) => setLoc(e.target.value)}>
-          <option value="all">Semua Lokasi</option>
-          {store.branches.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-        </select>
-        <select className="select-pill" aria-label="Jenis" value={jenis} onChange={(e) => setJenis(e.target.value as typeof jenis)}>
-          <option value="Semua">Semua jenis</option>
-          <option value="Frame">Frame</option>
-          <option value="Lensa">Lensa</option>
-          <option value="Aksesoris">Aksesoris</option>
-        </select>
       </div>
 
       <div className="table-wrap">

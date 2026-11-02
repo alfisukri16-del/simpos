@@ -47,11 +47,16 @@ export default function AdminStokPage() {
       <div className="toolbar">
         <SearchBox placeholder="Cari kode, nama, atau merek produk..." value={q} onChange={setQ} />
         <div className="toolbar-chips">
-          {(["Semua", "Aman", "Menipis"] as const).map((f) => (
-            <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
-              {f === "Menipis" ? `Menipis (${store.lowStock.length})` : f}
-            </Chip>
-          ))}
+          <select
+            className="chip-select"
+            aria-label="Filter Status Stok"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as "Semua" | "Aman" | "Menipis")}
+          >
+            <option value="Semua">Semua Status</option>
+            <option value="Aman">Aman</option>
+            <option value="Menipis">Menipis ({store.lowStock.length})</option>
+          </select>
         </div>
       </div>
 

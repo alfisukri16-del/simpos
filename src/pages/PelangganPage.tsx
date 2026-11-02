@@ -100,15 +100,16 @@ export default function PelangganPage() {
         <div className="toolbar">
           <SearchBox placeholder="Cari nama, kode, atau nomor HP pelanggan..." value={query} onChange={setQuery} />
           <div className="toolbar-chips">
-            <Chip active={filter === "Semua"} onClick={() => setFilter("Semua")}>
-              Semua
-            </Chip>
-            <Chip active={filter === "Resep"} onClick={() => setFilter("Resep")}>
-              Punya resep
-            </Chip>
-            <Chip active={filter === "PO"} onClick={() => setFilter("PO")}>
-              PO aktif
-            </Chip>
+            <select
+              className="chip-select"
+              aria-label="Filter Pelanggan"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as "Semua" | "Resep" | "PO")}
+            >
+              <option value="Semua">Semua Pelanggan</option>
+              <option value="Resep">Punya Resep</option>
+              <option value="PO">PO Aktif</option>
+            </select>
           </div>
         </div>
 

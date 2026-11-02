@@ -13,8 +13,8 @@ export default function AppLayout() {
   const [search, setSearch] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
-  // Search topbar hanya di Dashboard & Transaksi Baru; halaman Kasir lain disembunyikan.
-  const showSearch = location.pathname === "/dashboard" || location.pathname === "/transaksi-baru";
+  // Search topbar hanya di Dashboard; disembunyikan di Transaksi Baru agar tidak duplikat dengan toolbar katalog.
+  const showSearch = location.pathname === "/dashboard";
 
   const submitSearch = (e: FormEvent) => {
     e.preventDefault();

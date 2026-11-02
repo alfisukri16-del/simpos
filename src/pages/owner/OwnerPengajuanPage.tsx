@@ -138,20 +138,27 @@ export default function OwnerPengajuanPage() {
       <div className="toolbar">
         <SearchBox placeholder="Cari ID pengajuan, produk, atau kode..." value={q} onChange={setQ} />
         <div className="toolbar-chips">
-          {STATUS_FILTERS.map((f) => (
-            <Chip key={f.id} active={status === f.id} onClick={() => setStatus(f.id)}>
-              {f.label}
-            </Chip>
-          ))}
+          <select
+            className="chip-select"
+            aria-label="Filter Status Pengajuan"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as StatusFilter)}
+          >
+            {STATUS_FILTERS.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.id === "Semua" ? "Semua Status" : f.label}
+              </option>
+            ))}
+          </select>
+          <select className="chip-select" aria-label="Cabang" value={branch} onChange={(e) => setBranch(e.target.value)}>
+            <option value="all">Semua Cabang</option>
+            {store.branches.filter((b) => b.type === "Cabang").map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
         </div>
-        <select className="select-pill" aria-label="Cabang" value={branch} onChange={(e) => setBranch(e.target.value)}>
-          <option value="all">Semua Cabang</option>
-          {store.branches.filter((b) => b.type === "Cabang").map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div className="table-wrap">

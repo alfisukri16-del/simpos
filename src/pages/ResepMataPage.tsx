@@ -170,12 +170,15 @@ export default function ResepMataPage() {
             onChange={setQuery}
           />
           <div className="toolbar-chips">
-            <Chip active={filter === "Semua"} onClick={() => setFilter("Semua")}>
-              Semua
-            </Chip>
-            <Chip active={filter === "Terbaru"} onClick={() => setFilter("Terbaru")}>
-              Terbaru
-            </Chip>
+            <select
+              className="chip-select"
+              aria-label="Filter Resep"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as "Semua" | "Terbaru")}
+            >
+              <option value="Semua">Semua Resep</option>
+              <option value="Terbaru">Resep Terbaru</option>
+            </select>
           </div>
         </div>
 

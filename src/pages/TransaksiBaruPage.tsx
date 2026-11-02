@@ -71,7 +71,6 @@ export default function TransaksiBaruPage() {
         overline="TRANSAKSI BARU & CEK STOK CABANG"
         title="Pilih frame dan lensa untuk pelanggan"
         desc="Periksa ketersediaan stok cabang, tambahkan produk ke keranjang, atau ajukan PO bila stok habis."
-        actions={<Steps current={1} />}
       />
 
       <div className="catalog-grid">
@@ -83,12 +82,18 @@ export default function TransaksiBaruPage() {
               onChange={setQuery}
             />
             <div className="toolbar-chips">
-              {CATEGORIES.map((c) => (
-                <Chip key={c} active={tab === c} onClick={() => setTab(c)}>
-                  {c}
-                </Chip>
-              ))}
-              <div className="toolbar-divider" />
+              <select
+                className="chip-select"
+                aria-label="Kategori"
+                value={tab}
+                onChange={(e) => setTab(e.target.value as "Semua" | Category)}
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c === "Semua" ? "Semua Kategori" : c}
+                  </option>
+                ))}
+              </select>
               <select
                 className="chip-select"
                 aria-label="Merek"
@@ -247,7 +252,10 @@ export default function TransaksiBaruPage() {
                 <ShoppingBag size={19} />
                 {cart.count > 0 ? <span className="cart-head-dot">{cart.count}</span> : null}
               </div>
-
+              <div>
+                <h2>Keranjang</h2>
+                <p>{cart.count > 0 ? `${cart.count} item dipilih` : "Belum ada produk"}</p>
+              </div>
             </div>
             {cart.items.length > 0 ? (
               <button

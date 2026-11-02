@@ -85,11 +85,18 @@ export default function PemesananPage() {
         <div className="toolbar">
           <SearchBox placeholder="Cari nomor PO, nama pelanggan, atau nomor HP..." value={query} onChange={setQuery} />
           <div className="toolbar-chips">
-            {FILTERS.map((f) => (
-              <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
-                {f}
-              </Chip>
-            ))}
+            <select
+              className="chip-select"
+              aria-label="Filter Status"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as "Semua" | PoStatus)}
+            >
+              {FILTERS.map((f) => (
+                <option key={f} value={f}>
+                  {f === "Semua" ? "Semua Status" : f}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

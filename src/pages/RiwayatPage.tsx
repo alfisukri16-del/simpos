@@ -450,7 +450,7 @@ export default function RiwayatPage() {
           />
           <div className="toolbar-chips" style={{ alignItems: "center" }}>
             <select
-              className="select-pill"
+              className="chip-select"
               aria-label="Filter Metode Pembayaran"
               value={methodFilter}
               onChange={(e) => {
@@ -464,18 +464,21 @@ export default function RiwayatPage() {
                 </option>
               ))}
             </select>
-            {FILTERS.map((f) => (
-              <Chip
-                key={f}
-                active={filter === f}
-                onClick={() => {
-                  setFilter(f);
-                  setNotice(false);
-                }}
-              >
-                {f}
-              </Chip>
-            ))}
+            <select
+              className="chip-select"
+              aria-label="Filter Status Transaksi"
+              value={filter}
+              onChange={(e) => {
+                setFilter(e.target.value as "Semua" | TrxStatus);
+                setNotice(false);
+              }}
+            >
+              {FILTERS.map((f) => (
+                <option key={f} value={f}>
+                  {f === "Semua" ? "Semua Status" : f}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

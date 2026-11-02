@@ -166,11 +166,18 @@ export default function AdminPengajuanPage() {
       <div className="toolbar">
         <SearchBox placeholder="Cari ID pengajuan, kode, atau nama produk..." value={q} onChange={setQ} />
         <div className="toolbar-chips">
-          {FILTERS.map((f) => (
-            <Chip key={f.id} active={filter === f.id} onClick={() => setFilter(f.id)}>
-              {f.label}
-            </Chip>
-          ))}
+          <select
+            className="chip-select"
+            aria-label="Filter Status Pengajuan"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as FilterKey)}
+          >
+            {FILTERS.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.id === "Semua" ? "Semua Status" : f.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
