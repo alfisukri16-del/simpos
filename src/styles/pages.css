@@ -4817,3 +4817,42 @@ table.tt.stock-table {
     justify-content: center;
   }
 }
+
+/* chip-select: select dropdown yang tampil konsisten sejajar chip kategori */
+.chip-select {
+  height: 38px;
+  padding: 0 32px 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238d8eb4' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+
+.chip-select:hover {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.chip-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* pemisah tipis antara chip kategori dan chip-select */
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--line);
+  border-radius: 999px;
+  align-self: center;
+  margin: 0 4px;
+}

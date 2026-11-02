@@ -56,7 +56,7 @@ export default function AppLayout() {
               </NavLink>
             ))}
 
-            <div className="nav-sep">LAINNYA</div>
+            <div className="nav-sep" />
 
             {SECONDARY_NAV.map((item) => (
               <NavLink

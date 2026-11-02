@@ -10,7 +10,6 @@ import {
   Minus,
   Plus,
   ShoppingBag,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 import { CATEGORIES, type Category } from "../data/catalog";
@@ -19,7 +18,7 @@ import { useCart } from "../context/CartContext";
 import { Chip, PageHeader, SearchBox, Steps, formatIDR } from "../components/ui";
 import "../styles/pages.css";
 
-const GUIDE_CATEGORIES: Category[] = ["Frame", "Lensa", "Aksesoris"];
+
 
 export default function TransaksiBaruPage() {
   const cart = useCart();
@@ -66,9 +65,6 @@ export default function TransaksiBaruPage() {
       return 0;
     });
 
-  const qtyByCategory = (cat: Category) =>
-    cart.items.filter((i) => i.category === cat).reduce((sum, i) => sum + i.qty, 0);
-
   return (
     <div className="page">
       <PageHeader
@@ -92,10 +88,9 @@ export default function TransaksiBaruPage() {
                   {c}
                 </Chip>
               ))}
-            </div>
-            <div style={{ marginLeft: "auto", display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <div className="toolbar-divider" />
               <select
-                className="select-pill"
+                className="chip-select"
                 aria-label="Merek"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
@@ -108,7 +103,7 @@ export default function TransaksiBaruPage() {
                 ))}
               </select>
               <select
-                className="select-pill"
+                className="chip-select"
                 aria-label="Urutkan"
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
@@ -252,14 +247,7 @@ export default function TransaksiBaruPage() {
                 <ShoppingBag size={19} />
                 {cart.count > 0 ? <span className="cart-head-dot">{cart.count}</span> : null}
               </div>
-              <div>
-                <h2>Keranjang Belanja</h2>
-                <p>
-                  {cart.items.length === 0
-                    ? "Belum ada produk dipilih"
-                    : `${cart.items.length} jenis · ${cart.count} unit produk`}
-                </p>
-              </div>
+
             </div>
             {cart.items.length > 0 ? (
               <button
@@ -276,32 +264,7 @@ export default function TransaksiBaruPage() {
             )}
           </div>
 
-          {/* Indikator interaktif kelengkapan paket optik (klik untuk filter katalog) */}
-          <div className="cart-guide-bar">
-            <div className="cart-guide-label">
-              <Sparkles size={12} />
-              <span>Filter Cepat Kategori Produk:</span>
-            </div>
-            <div className="cart-guide-pills">
-              {GUIDE_CATEGORIES.map((cat) => {
-                const countInCat = qtyByCategory(cat);
-                const activeTab = tab === cat;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    className={`cart-guide-pill ${countInCat > 0 ? "has-item" : ""} ${activeTab ? "is-tab" : ""}`}
-                    onClick={() => setTab(activeTab ? "Semua" : cat)}
-                    title={`Klik untuk menampilkan kategori ${cat}`}
-                  >
-                    {countInCat > 0 ? <Check size={12} strokeWidth={2.8} /> : <Plus size={12} />}
-                    <span>{cat}</span>
-                    {countInCat > 0 ? <b>{countInCat}</b> : null}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+
 
           {cart.items.length === 0 ? (
             <div className="cart-empty-rich">
