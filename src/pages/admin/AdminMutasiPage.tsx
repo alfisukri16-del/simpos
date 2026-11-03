@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, History } from "lucide-react";
 import { DEMO_ADMIN } from "../../data/admin";
 import { useSharedStore } from "../../store/sharedStore";
-import { Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
+import { PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -61,13 +61,16 @@ export default function AdminMutasiPage() {
 
       <div className="toolbar">
         <SearchBox placeholder="Cari ID mutasi, nomor referensi, kode, atau nama produk..." value={q} onChange={setQ} />
-        <div className="toolbar-chips">
-          {(["Semua", "Masuk", "Keluar"] as const).map((a) => (
-            <Chip key={a} active={arah === a} onClick={() => setArah(a)}>
-              {a}
-            </Chip>
-          ))}
-        </div>
+        <select
+          className="select-pill"
+          aria-label="Filter Jenis Mutasi"
+          value={arah}
+          onChange={(e) => setArah(e.target.value as "Semua" | "Masuk" | "Keluar")}
+        >
+          <option value="Semua">Semua Jenis</option>
+          <option value="Masuk">Masuk</option>
+          <option value="Keluar">Keluar</option>
+        </select>
         <select className="select-pill" aria-label="Sumber" value={sumber} onChange={(e) => setSumber(e.target.value)}>
           <option value="all">Semua Sumber</option>
           <option value="Penerimaan">Penerimaan</option>

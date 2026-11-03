@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Check, ChevronRight, Clock, History, Info, X } from "lucide-react";
 import { useSharedStore } from "../../store/sharedStore";
 import { requestState, requestStateLabel } from "../../store/requestStatus";
-import { Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
+import { PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -151,20 +151,19 @@ export default function OwnerMutasiPage() {
             setPage(1);
           }}
         />
-        <div className="toolbar-chips">
-          {(["Semua", "Masuk", "Keluar"] as const).map((t) => (
-            <Chip
-              key={t}
-              active={arah === t}
-              onClick={() => {
-                setArah(t);
-                setPage(1);
-              }}
-            >
-              {t}
-            </Chip>
-          ))}
-        </div>
+        <select
+          className="select-pill"
+          aria-label="Filter Jenis Mutasi"
+          value={arah}
+          onChange={(e) => {
+            setArah(e.target.value as "Semua" | "Masuk" | "Keluar");
+            setPage(1);
+          }}
+        >
+          <option value="Semua">Semua Jenis</option>
+          <option value="Masuk">Masuk</option>
+          <option value="Keluar">Keluar</option>
+        </select>
         <select
           className="select-pill"
           aria-label="Sumber"

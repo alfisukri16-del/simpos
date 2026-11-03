@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Pencil, Plus, Power, X } from "lucide-react";
 import { FRAME_CATS, LENSA_CATS, useAdminStore, type ProductType } from "../../store/sharedStore";
-import { Chip, PageHeader, SearchBox, StatusPill, formatIDR } from "../../components/ui";
+import { PageHeader, SearchBox, StatusPill, formatIDR } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -97,13 +97,16 @@ export default function AdminProdukPage({ type }: Props) {
 
       <div className="toolbar">
         <SearchBox placeholder={`Cari kode, nama, atau merek ${type.toLowerCase()}...`} value={q} onChange={setQ} />
-        <div className="toolbar-chips">
-          {(["Semua", "Aktif", "Nonaktif"] as const).map((s) => (
-            <Chip key={s} active={status === s} onClick={() => setStatus(s)}>
-              {s}
-            </Chip>
-          ))}
-        </div>
+        <select
+          className="chip-select"
+          aria-label="Filter Status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value as "Semua" | "Aktif" | "Nonaktif")}
+        >
+          <option value="Semua">Semua Status</option>
+          <option value="Aktif">Aktif</option>
+          <option value="Nonaktif">Nonaktif</option>
+        </select>
         <select className="select-pill" aria-label="Kategori" defaultValue="all">
           <option value="all">Semua Kategori</option>
           {cats.map((c) => (

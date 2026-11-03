@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { CheckCircle2, Clock, PackageCheck, TriangleAlert, Truck, X } from "lucide-react";
 import { DEMO_ADMIN } from "../../data/admin";
 import { useSharedStore } from "../../store/sharedStore";
-import { Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
+import { PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -103,13 +103,17 @@ export default function AdminPenerimaanPage() {
 
       <div className="toolbar">
         <SearchBox placeholder="Cari ID distribusi, kode, atau nama produk..." value={q} onChange={setQ} />
-        <div className="toolbar-chips">
-          {(["Semua", "Menunggu Diterima", "Diterima Sebagian", "Diterima"] as const).map((f) => (
-            <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
-              {f}
-            </Chip>
-          ))}
-        </div>
+        <select
+          className="select-pill"
+          aria-label="Filter Status Penerimaan"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as "Semua" | "Menunggu Diterima" | "Diterima Sebagian" | "Diterima")}
+        >
+          <option value="Semua">Semua Status</option>
+          <option value="Menunggu Diterima">Menunggu Diterima</option>
+          <option value="Diterima Sebagian">Diterima Sebagian</option>
+          <option value="Diterima">Diterima</option>
+        </select>
       </div>
 
       {result ? (
