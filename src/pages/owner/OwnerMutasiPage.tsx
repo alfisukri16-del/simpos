@@ -113,8 +113,8 @@ export default function OwnerMutasiPage() {
   return (
     <div className="page">
       <PageHeader
-        overline="PENGAWASAN — MUTASI"
-        title="Mutasi Barang"
+        overline="PENGAWASAN — RIWAYAT MUTASI"
+        title="Riwayat Mutasi"
         desc="Pantau seluruh pergerakan stok masuk dan keluar beserta jejak alokasi di semua cabang."
       />
 

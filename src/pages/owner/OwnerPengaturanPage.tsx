@@ -5,22 +5,9 @@ import { Avatar, Chip, PageHeader, SearchBox, StatusPill } from "../../component
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
-type Tab = "pengguna" | "akses" | "toko" | "preferensi";
+type Tab = "pengguna" | "toko" | "preferensi";
 
 const ROLE_LABEL: Record<AppUser["role"], string> = { kasir: "Kasir", admin: "Admin Cabang", pemilik: "Pemilik" };
-
-const MATRIX: Array<{ fitur: string; kasir: boolean; admin: boolean; pemilik: boolean }> = [
-  { fitur: "Transaksi & pembayaran Kasir", kasir: true, admin: false, pemilik: false },
-  { fitur: "Kelola pelanggan & resep", kasir: true, admin: false, pemilik: false },
-  { fitur: "Buat PO", kasir: true, admin: false, pemilik: false },
-  { fitur: "Kelola produk frame/lensa", kasir: false, admin: true, pemilik: false },
-  { fitur: "Atur minimum & terima barang", kasir: false, admin: true, pemilik: false },
-  { fitur: "Proses PO (Dipesan→Datang)", kasir: false, admin: true, pemilik: false },
-  { fitur: "Buat pengajuan stok", kasir: false, admin: true, pemilik: false },
-  { fitur: "Tentukan alokasi distribusi", kasir: false, admin: false, pemilik: true },
-  { fitur: "Monitoring semua lokasi + laporan", kasir: false, admin: false, pemilik: true },
-  { fitur: "Kelola pengguna & pengaturan", kasir: false, admin: false, pemilik: true },
-];
 
 export default function OwnerPengaturanPage() {
   const store = useSharedStore();
@@ -107,9 +94,6 @@ export default function OwnerPengaturanPage() {
         <div className="toolbar-chips">
           <Chip active={tab === "pengguna"} onClick={() => setTab("pengguna")}>
             Pengguna
-          </Chip>
-          <Chip active={tab === "akses"} onClick={() => setTab("akses")}>
-            Hak Akses
           </Chip>
           <Chip active={tab === "toko"} onClick={() => setTab("toko")}>
             Toko
@@ -213,48 +197,6 @@ export default function OwnerPengaturanPage() {
             <span className="foot-note">
               {rows.length} pengguna · akun baru langsung dapat digunakan sesuai perannya.
             </span>
-          </div>
-        </div>
-      ) : null}
-
-      {tab === "akses" ? (
-        <div className="table-wrap">
-          <table className="tt">
-            <thead>
-              <tr>
-                <th>FITUR</th>
-                <th>KASIR</th>
-                <th>ADMIN CABANG</th>
-                <th>PEMILIK</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MATRIX.map((m) => (
-                <tr key={m.fitur}>
-                  <td>
-                    <div className="tt-num" style={{ fontSize: 13 }}>{m.fitur}</div>
-                  </td>
-                  {[m.kasir, m.admin, m.pemilik].map((v, i) => (
-                    <td key={i}>
-                      {v ? (
-                        <span className="status-pill" style={{ background: "#e2f7ec", color: "#1f9d63" }}>
-                          <i style={{ background: "#1f9d63" }} />
-                          Ya
-                        </span>
-                      ) : (
-                        <span className="status-pill" style={{ background: "#eaf5fe", color: "#7b94ad" }}>
-                          <i style={{ background: "#7b94ad" }} />
-                          Tidak
-                        </span>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="table-foot">
-            <span className="foot-note">Hak akses mengikuti peran pengguna.</span>
           </div>
         </div>
       ) : null}

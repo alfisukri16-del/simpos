@@ -45,7 +45,7 @@ export const OWNER_NAV: OwnerNavGroup[] = [
   {
     title: "PENGAWASAN",
     items: [
-      { label: "Mutasi Barang", to: "/owner/mutasi", icon: History, ready: true },
+      { label: "Riwayat Mutasi", to: "/owner/mutasi", icon: History, ready: true },
       { label: "Transaksi", to: "/owner/transaksi", icon: Receipt, ready: true },
       { label: "Pemesanan (PO)", to: "/owner/pemesanan", icon: ClipboardList, ready: true },
       { label: "Laporan", to: "/owner/laporan", icon: BarChart3, ready: true },
