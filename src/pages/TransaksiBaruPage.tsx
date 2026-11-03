@@ -254,7 +254,6 @@ export default function TransaksiBaruPage() {
               </div>
               <div>
                 <h2>Keranjang</h2>
-                <p>{cart.count > 0 ? `${cart.count} item dipilih` : "Belum ada produk"}</p>
               </div>
             </div>
             {cart.items.length > 0 ? (
