@@ -2,86 +2,28 @@ import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowBigUp, Eye, EyeOff, Lock, User } from "lucide-react";
 import MRLogo from "./MRLogo";
-import { ADMIN_SESSION_KEY, DEMO_ADMIN } from "../data/admin";
+import { ApiError } from "../lib/api";
+import { useAuth } from "../store/auth";
 import {
-  DEMO_KASIR,
-  DEMO_OWNER,
-  adminSession,
-  ownerSession,
-  setSession,
+  LOGIN_PATH,
+  ROLE_HOME,
+  ROLE_LABEL,
+  RoleMismatchError,
   type Role,
-  type Session,
 } from "../store/session";
-import { BRANCH_ID, useSharedStore } from "../store/sharedStore";
 import "../styles/login.css";
 
 /**
  * Satu halaman login untuk Kasir, Admin Cabang, dan Pemilik.
- * Struktur, ukuran, dan isi visual sama; yang berbeda hanya role,
- * kredensial demo, dan tujuan setelah masuk.
+ * Struktur dan tampilan sama; autentikasi memakai username/password dari
+ * Backend, lalu pengguna diarahkan sesuai role yang dikembalikan API.
  */
-
-const ROLE_LABEL: Record<Role, string> = {
-  kasir: "Kasir",
-  admin: "Admin Cabang",
-  pemilik: "Pemilik",
-};
-
-const LOGIN_PATH: Record<Role, string> = {
-  kasir: "/login",
-  admin: "/admin/login",
-  pemilik: "/owner/login",
-};
-
-type LoginConfig = {
-  demoEmail: string;
-  demoPassword: string;
-  home: string;
-  buildSession: () => Session;
-  afterDemoLogin?: () => void;
-};
-
-const LOGIN_CONFIG: Record<Role, LoginConfig> = {
-  kasir: {
-    demoEmail: DEMO_KASIR.email,
-    demoPassword: DEMO_KASIR.password,
-    home: "/dashboard",
-    buildSession: () => ({
-      role: "kasir",
-      name: DEMO_KASIR.name,
-      initials: DEMO_KASIR.initials,
-      branch: DEMO_KASIR.branch,
-      branchId: BRANCH_ID,
-      email: DEMO_KASIR.email,
-    }),
-  },
-  admin: {
-    demoEmail: DEMO_ADMIN.email,
-    demoPassword: DEMO_ADMIN.password,
-    home: "/admin/dashboard",
-    buildSession: adminSession,
-    afterDemoLogin: () => {
-      try {
-        localStorage.removeItem(ADMIN_SESSION_KEY);
-      } catch {
-        /* abaikan */
-      }
-    },
-  },
-  pemilik: {
-    demoEmail: DEMO_OWNER.email,
-    demoPassword: DEMO_OWNER.password,
-    home: "/owner/dashboard",
-    buildSession: ownerSession,
-  },
-};
 
 export default function RoleLoginPage({ role }: { role: Role }) {
   const navigate = useNavigate();
-  const shared = useSharedStore();
-  const config = LOGIN_CONFIG[role];
-  const [email, setEmail] = useState(config.demoEmail);
-  const [password, setPassword] = useState(config.demoPassword);
+  const { signIn } = useAuth();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [showPass, setShowPass] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
@@ -92,42 +34,36 @@ export default function RoleLoginPage({ role }: { role: Role }) {
     setCapsOn(e.getModifierState("CapsLock"));
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    if (!email.trim() || !password.trim()) {
-      setError("Email dan password wajib diisi.");
+
+    if (!username.trim() || !password.trim()) {
+      setError("Username dan password wajib diisi.");
       return;
     }
+
     setLoading(true);
-    window.setTimeout(() => {
-      const demoMatch =
-        email.trim().toLowerCase() === config.demoEmail.toLowerCase() &&
-        password === config.demoPassword;
 
-      if (demoMatch) {
-        setSession(config.buildSession());
-        config.afterDemoLogin?.();
-        navigate(config.home);
-        return;
-      }
-
-      const found = shared.authenticate(email, password);
-      if (found && found.role === role) {
-        setSession(found);
-        navigate(config.home);
-        return;
-      }
-
-      setLoading(false);
-      if (found) {
+    try {
+      const user = await signIn(username.trim(), password, role);
+      navigate(ROLE_HOME[user.role], { replace: true });
+    } catch (err) {
+      if (err instanceof RoleMismatchError) {
         setError(
-          `Akun ini terdaftar sebagai ${ROLE_LABEL[found.role]}. Masuk melalui halaman login ${ROLE_LABEL[found.role]} (${LOGIN_PATH[found.role]}).`,
+          `Akun ini terdaftar sebagai ${ROLE_LABEL[err.user.role]}. Masuk melalui halaman login ${ROLE_LABEL[err.user.role]} (${LOGIN_PATH[err.user.role]}).`,
         );
-      } else {
-        setError("Email atau password salah. Periksa kembali email dan password Anda.");
+        return;
       }
-    }, 700);
+
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Tidak dapat terhubung ke server. Periksa koneksi dan coba lagi.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -170,16 +106,16 @@ export default function RoleLoginPage({ role }: { role: Role }) {
             )}
 
             <div className="field">
-              <label htmlFor="login-email">Email</label>
+              <label htmlFor="login-username">Username</label>
               <div className="input-wrap">
                 <User size={18} />
                 <input
-                  id="login-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="Masukkan email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="login-username"
+                  type="text"
+                  autoComplete="username"
+                  placeholder="Masukkan username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
             </div>
@@ -230,9 +166,7 @@ export default function RoleLoginPage({ role }: { role: Role }) {
           <div className="auth-help">
             <b>Butuh bantuan masuk?</b>
             <span>Hubungi admin di cabang atau tim IT.</span>
-            <span className="demo-foot">
-              Akses {ROLE_LABEL[role]}: {config.demoEmail} / {config.demoPassword}
-            </span>
+            <span className="demo-foot">Gunakan username dan password yang terdaftar di sistem.</span>
           </div>
 
           <div className="brand-foot">v1.0 — © 2026 Optik Mekar Jaya</div>

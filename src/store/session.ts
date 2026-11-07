@@ -1,81 +1,85 @@
-import { BRANCH_ID } from "./sharedStore";
-import { DEMO_ADMIN } from "../data/admin";
+import type { AuthUser, Role } from "../lib/api";
 
-/* Sesi bersama Kasir + Admin + Pemilik (demo frontend — bukan auth/RBAC production). */
+/* ==========================================================================
+   SESSION VIEW — bentuk data sesi untuk komponen tampilan.
+   Sumber kebenaran autentikasi ada di Backend (AuthContext + /api/me).
+   File ini tidak lagi membaca/menulis localStorage.
+   ========================================================================== */
 
-export type Role = "kasir" | "admin" | "pemilik";
+export type { Role };
 
-export type Session = {
-  role: Role;
-  name: string;
-  initials: string;
-  branch: string;
-  branchId: string; // 'cabang-padang' untuk Kasir/Admin; 'all' untuk Pemilik
-  email: string;
-};
+export class RoleMismatchError extends Error {
+  readonly user: AuthUser;
 
-export const SESSION_KEY = "simpos.session";
-export const DEMO_KASIR = {
-  email: "kasir@mekarjaya.demo",
-  password: "demo123",
-  name: "Korena Saif",
-  initials: "KS",
-  role: "Kasir",
-  branch: "Cabang Padang",
-};
-
-export const DEMO_OWNER = {
-  email: "owner@mekarjaya.demo",
-  password: "demo123",
-  name: "Agus Wijaya",
-  initials: "AW",
-  role: "Pemilik",
-  branch: "Seluruh Cabang",
-};
-
-export function getSession(): Session | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const s = JSON.parse(raw) as Session;
-    if (s.role !== "kasir" && s.role !== "admin" && s.role !== "pemilik") return null;
-    if (s.role === "pemilik") {
-      if (s.branchId !== "all") return null;
-      return s;
-    }
-    if (s.branchId !== BRANCH_ID) return null;
-    return s;
-  } catch {
-    return null;
+  constructor(user: AuthUser) {
+    super(`Akun terdaftar sebagai ${user.role}.`);
+    this.name = "RoleMismatchError";
+    this.user = user;
   }
 }
 
-export function setSession(s: Session) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+export type Session = {
+  id: number;
+  role: Role;
+  name: string;
+  username: string;
+  initials: string;
+  /** Label cabang untuk tampilan. */
+  branch: string;
+  /** ID cabang dari Backend — sumber kebenaran autentikasi. */
+  backendBranchId: number | null;
+};
+
+export const ROLE_LABEL: Record<Role, string> = {
+  kasir: "Kasir",
+  admin: "Admin Cabang",
+  pemilik: "Pemilik",
+};
+
+export const ROLE_HOME: Record<Role, string> = {
+  kasir: "/dashboard",
+  admin: "/admin/dashboard",
+  pemilik: "/owner/dashboard",
+};
+
+export const LOGIN_PATH: Record<Role, string> = {
+  kasir: "/login",
+  admin: "/admin/login",
+  pemilik: "/owner/login",
+};
+
+/** Kunci sesi demo lama — dibersihkan agar tidak ada role lokal yang tersisa. */
+export const LEGACY_SESSION_KEYS = ["simpos.session", "simpos.admin.session"] as const;
+
+export function isRole(value: unknown): value is Role {
+  return value === "kasir" || value === "admin" || value === "pemilik";
 }
 
-export function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
+export function initialsFromName(name: string): string {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?"
+  );
 }
 
-export function adminSession(): Session {
+export function sessionFromUser(user: AuthUser): Session {
+  const isOwner = user.role === "pemilik";
+
   return {
-    role: "admin",
-    name: DEMO_ADMIN.name,
-    initials: DEMO_ADMIN.initials,
-    branch: DEMO_ADMIN.branch,
-    branchId: BRANCH_ID,
-    email: DEMO_ADMIN.email,
-  };
-}
-
-export function ownerSession(): Session {
-  return {
-    role: "pemilik",
-    name: DEMO_OWNER.name,
-    initials: DEMO_OWNER.initials,
-    branch: DEMO_OWNER.branch,
-    branchId: "all",
-    email: DEMO_OWNER.email,
+    id: user.id,
+    role: user.role,
+    name: user.name,
+    username: user.username,
+    initials: initialsFromName(user.name),
+    // Nama cabang belum tersedia di respons autentikasi Backend.
+    // Tampilkan ID cabang agar tidak mengarang nama.
+    branch: isOwner ? "Seluruh Cabang" : `Cabang #${user.branchId ?? "-"}`,
+    backendBranchId: user.branchId,
   };
 }

@@ -11,8 +11,8 @@ import {
   X,
 } from "lucide-react";
 import { type PaymentMethod, type Transaction, type TrxStatus } from "../data/mock";
-import { useSharedStore } from "../store/sharedStore";
-import { getSession } from "../store/session";
+import { useSharedStore, BRANCH_ID } from "../store/sharedStore";
+import { useAuth } from "../store/auth";
 import { exportXlsx, inPeriod, periodRange, stamp } from "../store/reports";
 import { Avatar, Chip, PageHeader, SearchBox, StatCard, StatusPill, formatIDR } from "../components/ui";
 import MRLogo from "../components/MRLogo";
@@ -184,7 +184,7 @@ function StrukBody({ trx, storeName, storePhone, storeAddress, branch, cashier }
 
 export default function RiwayatPage() {
   const shared = useSharedStore();
-  const session = getSession();
+  const { session } = useAuth();
   const [period, setPeriod] = useState<RiwayatPeriod>("semua");
   const [customFrom, setCustomFrom] = useState("2026-08-01");
   const [customTo, setCustomTo] = useState("2026-10-31");
@@ -201,10 +201,11 @@ export default function RiwayatPage() {
 
   const range = resolveRiwayatRange(period, customFrom, customTo);
 
-  // Riwayat & pembayaran dari shared store — discoped ke cabang sesi, lalu filter periode & metode.
+  // Riwayat & pembayaran dari shared store — discoped ke cabang data lokal,
+  // lalu filter periode & metode. ID cabang auth tidak dipakai untuk data demo.
   const byPeriod = shared.transactions.filter(
     (t) =>
-      (!session?.branchId || (t.branchId ?? session.branchId) === session.branchId) &&
+      (t.branchId ?? BRANCH_ID) === BRANCH_ID &&
       inPeriod(`${t.date}${t.time ? `, ${t.time}` : ""}`, range.from, range.to),
   );
 

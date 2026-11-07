@@ -1,9 +1,13 @@
 import { Navigate } from "react-router-dom";
-import { getSession } from "../store/session";
+import { useAuth } from "../store/auth";
+import { ROLE_HOME } from "../store/session";
 
-/** Rute /owner: wajib sesi role pemilik. */
+/** Rute /owner: wajib sesi Backend role pemilik. */
 export default function OwnerGuard({ children }: { children: JSX.Element }) {
-  const s = getSession();
-  if (!s || s.role !== "pemilik") return <Navigate to="/owner/login" replace />;
+  const { session } = useAuth();
+
+  if (!session) return <Navigate to="/owner/login" replace />;
+  if (session.role !== "pemilik") return <Navigate to={ROLE_HOME[session.role]} replace />;
+
   return children;
 }

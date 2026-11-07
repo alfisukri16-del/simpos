@@ -1,18 +1,13 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, Menu as MenuIcon, Search } from "lucide-react";
-import { ADMIN_NAV, DEMO_ADMIN } from "../data/admin";
-import { clearSession, getSession } from "../store/session";
+import { ADMIN_NAV } from "../data/admin";
+import { useAuth } from "../store/auth";
+import { ROLE_LABEL } from "../store/session";
 import MRLogo from "./MRLogo";
 import NotificationBell from "./NotificationBell";
 import "../styles/layout.css";
 import "../styles/admin.css";
-
-function readSession(): { name: string; initials: string } | null {
-  const s = getSession();
-  if (!s || s.role !== "admin") return null;
-  return { name: s.name, initials: s.initials };
-}
 
 /** Shell Admin — memakai kelas/geometri layout.css yang sama dengan Kasir. */
 export default function AdminLayout() {
@@ -21,12 +16,11 @@ export default function AdminLayout() {
   const location = useLocation();
   // Search topbar hanya di Dashboard; halaman Admin lain disembunyikan.
   const showSearch = location.pathname === "/admin/dashboard";
-  const session = readSession();
+  const { session, signOut } = useAuth();
 
-
-  const logout = () => {
-    clearSession();
-    navigate("/admin/login");
+  const logout = async () => {
+    await signOut();
+    navigate("/admin/login", { replace: true });
   };
 
   return (
@@ -70,9 +64,9 @@ export default function AdminLayout() {
           </nav>
 
           <div className="sidebar-foot">
-            <b>{DEMO_ADMIN.branch}</b>
-            <span>{DEMO_ADMIN.role}</span>
-            <button className="link-action admin-logout" onClick={logout}>
+            <b>{session?.branch ?? "Cabang"}</b>
+            <span>{session ? ROLE_LABEL[session.role] : "Admin Cabang"}</span>
+            <button className="link-action admin-logout" onClick={() => void logout()}>
               <LogOut size={14} />
               Keluar
             </button>
@@ -96,10 +90,10 @@ export default function AdminLayout() {
             <div className="topbar-right">
               <NotificationBell role="admin" />
               <div className="profile">
-                <span className="avatar">{session?.initials ?? DEMO_ADMIN.initials}</span>
+                <span className="avatar">{session?.initials ?? "A"}</span>
                 <span className="profile-text">
-                  <b>{session?.name ?? DEMO_ADMIN.name}</b>
-                  <span>{DEMO_ADMIN.role}</span>
+                  <b>{session?.name ?? "Admin"}</b>
+                  <span>{session ? ROLE_LABEL[session.role] : "Admin Cabang"}</span>
                 </span>
               </div>
             </div>

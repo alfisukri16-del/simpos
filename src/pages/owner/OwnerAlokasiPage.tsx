@@ -2,14 +2,15 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Plus, Truck, X } from "lucide-react";
 import { useSharedStore } from "../../store/sharedStore";
-import { getSession } from "../../store/session";
+import { useAuth } from "../../store/auth";
 import { Chip, PageHeader, SearchBox, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
 export default function OwnerAlokasiPage() {
   const store = useSharedStore();
-  const ownerName = getSession()?.name ?? "Pemilik";
+  const { session } = useAuth();
+  const ownerName = session?.name ?? "Pemilik";
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"Semua" | "Menunggu Diterima" | "Diterima Sebagian" | "Diterima">("Semua");

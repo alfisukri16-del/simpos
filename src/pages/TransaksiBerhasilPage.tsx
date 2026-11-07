@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Check, Eye, Glasses, History, Package, Printer, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useSharedStore } from "../store/sharedStore";
-import { getSession } from "../store/session";
+import { useAuth } from "../store/auth";
 import { formatIDR } from "../components/ui";
 import MRLogo from "../components/MRLogo";
 import "../styles/pages.css";
@@ -19,7 +19,7 @@ export default function TransaksiBerhasilPage() {
   const cart = useCart();
   const shared = useSharedStore();
   const navigate = useNavigate();
-  const session = getSession();
+  const { session } = useAuth();
   const [strukOpen, setStrukOpen] = useState(false);
   const r = cart.receipt;
 

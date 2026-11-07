@@ -2,7 +2,8 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { LogOut, Menu as MenuIcon } from "lucide-react";
 import { OWNER_NAV } from "../data/owner";
-import { DEMO_OWNER, clearSession, getSession } from "../store/session";
+import { useAuth } from "../store/auth";
+import { ROLE_LABEL } from "../store/session";
 import MRLogo from "./MRLogo";
 import NotificationBell from "./NotificationBell";
 import "../styles/layout.css";
@@ -12,12 +13,11 @@ import "../styles/admin.css";
 export default function OwnerLayout() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const s = getSession();
-  const session = s && s.role === "pemilik" ? s : null;
+  const { session, signOut } = useAuth();
 
-  const logout = () => {
-    clearSession();
-    navigate("/owner/login");
+  const logout = async () => {
+    await signOut();
+    navigate("/owner/login", { replace: true });
   };
 
   return (
@@ -61,9 +61,9 @@ export default function OwnerLayout() {
           </nav>
 
           <div className="sidebar-foot">
-            <b>{DEMO_OWNER.branch}</b>
-            <span>{DEMO_OWNER.role}</span>
-            <button className="link-action admin-logout" onClick={logout}>
+            <b>{session?.branch ?? "Seluruh Cabang"}</b>
+            <span>{session ? ROLE_LABEL[session.role] : "Pemilik"}</span>
+            <button className="link-action admin-logout" onClick={() => void logout()}>
               <LogOut size={14} />
               Keluar
             </button>
@@ -79,10 +79,10 @@ export default function OwnerLayout() {
             <div className="topbar-right">
               <NotificationBell role="pemilik" />
               <div className="profile">
-                <span className="avatar">{session?.initials ?? DEMO_OWNER.initials}</span>
+                <span className="avatar">{session?.initials ?? "P"}</span>
                 <span className="profile-text">
-                  <b>{session?.name ?? DEMO_OWNER.name}</b>
-                  <span>{DEMO_OWNER.role}</span>
+                  <b>{session?.name ?? "Pemilik"}</b>
+                  <span>{session ? ROLE_LABEL[session.role] : "Pemilik"}</span>
                 </span>
               </div>
             </div>

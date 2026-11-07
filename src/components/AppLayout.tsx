@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, Search, Menu as MenuIcon } from "lucide-react";
-import { DEMO_SESSION, PRIMARY_NAV, SECONDARY_NAV } from "../data/nav";
+import { PRIMARY_NAV, SECONDARY_NAV } from "../data/nav";
 import MRLogo from "../components/MRLogo";
-import { clearSession, getSession } from "../store/session";
+import { useAuth } from "../store/auth";
+import { ROLE_LABEL } from "../store/session";
 import NotificationBell from "./NotificationBell";
 import "../styles/layout.css";
 import "../styles/admin.css";
@@ -24,11 +25,12 @@ export default function AppLayout() {
     setOpen(false);
   };
 
-  const logout = () => {
-    clearSession();
-    navigate("/login");
+  const { session, signOut } = useAuth();
+
+  const logout = async () => {
+    await signOut();
+    navigate("/login", { replace: true });
   };
-  const session = getSession();
 
   return (
     <div className="page-bg app-shell notranslate" translate="no">
@@ -72,9 +74,9 @@ export default function AppLayout() {
           </nav>
 
           <div className="sidebar-foot">
-            <b>{DEMO_SESSION.branch}</b>
-            <span>{DEMO_SESSION.role}</span>
-            <button className="link-action admin-logout" onClick={logout}>
+            <b>{session?.branch ?? "Cabang"}</b>
+            <span>{session ? ROLE_LABEL[session.role] : "Kasir"}</span>
+            <button className="link-action admin-logout" onClick={() => void logout()}>
               <LogOut size={14} />
               Keluar
             </button>
@@ -104,10 +106,10 @@ export default function AppLayout() {
             <div className="topbar-right">
               <NotificationBell role="kasir" />
               <div className="profile">
-                <span className="avatar">{session?.initials ?? DEMO_SESSION.initials}</span>
+                <span className="avatar">{session?.initials ?? "K"}</span>
                 <span className="profile-text">
-                  <b>{session?.name ?? DEMO_SESSION.cashierName}</b>
-                  <span>{DEMO_SESSION.role}</span>
+                  <b>{session?.name ?? "Kasir"}</b>
+                  <span>{session ? ROLE_LABEL[session.role] : "Kasir"}</span>
                 </span>
               </div>
             </div>

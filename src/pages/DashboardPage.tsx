@@ -10,9 +10,8 @@ import {
   PackageCheck,
   Wallet,
 } from "lucide-react";
-import { DEMO_SESSION } from "../data/nav";
 import { useSharedStore } from "../store/sharedStore";
-import { getSession } from "../store/session";
+import { useAuth } from "../store/auth";
 import { formatIDR } from "../components/ui";
 import "../styles/dashboard.css";
 
@@ -46,8 +45,8 @@ const MENU = [
 
 export default function DashboardPage() {
   const shared = useSharedStore();
-  const session = getSession();
-  const name = session?.name ?? DEMO_SESSION.cashierName;
+  const { session } = useAuth();
+  const name = session?.name ?? "Kasir";
   const today = new Date().toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "short",

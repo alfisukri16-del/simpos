@@ -1,24 +1,40 @@
 # SIMPOS — Optik Mekar Jaya
 
 Prototype sistem informasi penjualan optik dengan tiga peran: **Kasir**, **Admin Cabang**, dan **Pemilik**.
-Frontend demo (React + TypeScript + Vite), data disimpan di `localStorage` — bukan backend produksi.
+Frontend React + TypeScript + Vite. Autentikasi dan session memakai REST API Backend
+CodeIgniter 4; data bisnis yang belum diintegrasikan masih memakai `localStorage`.
 
 ## Menjalankan
 
+Backend harus berjalan di `http://localhost:8080`:
+
+```sh
+cd ../Backend
+php spark serve --port 8080
+```
+
+Frontend:
+
 ```sh
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # buka http://127.0.0.1:5173
 npm run build
 npm run typecheck
 ```
 
-## Akun demo
+Gunakan `http://127.0.0.1:5173` (bukan `localhost:5173`) agar cocok dengan
+origin CORS Backend. Base URL API dapat dioverride lewat `VITE_API_BASE_URL`
+(lihat `.env.example`).
 
-| Peran | Halaman masuk | Email | Password |
+## Akun login
+
+Autentikasi memakai username/password dari database Backend, bukan akun demo frontend.
+
+| Peran | Halaman masuk | Username | Password |
 | --- | --- | --- | --- |
-| Kasir | `/login` | `kasir@mekarjaya.demo` | `demo123` |
-| Admin Cabang | `/admin/login` | `admin@mekarjaya.demo` | `demo123` |
-| Pemilik | `/owner/login` | `owner@mekarjaya.demo` | `demo123` |
+| Kasir | `/login` | `kasir1` | `123` |
+| Admin Cabang | `/admin/login` | `admin1` | `123` |
+| Pemilik | `/owner/login` | `pemilik` | `123` |
 
 ## Peta halaman
 
@@ -34,7 +50,7 @@ npm run typecheck
 src/
 ├─ components/   layout per peran, guard rute, komponen UI
 ├─ pages/        halaman Kasir, admin/, owner/
-├─ store/        sharedStore (state lintas peran) + session
+├─ store/        auth (session Backend) + sharedStore (data bisnis lokal)
 ├─ context/      keranjang & perhitungan checkout
 ├─ data/         data demo (produk, pelanggan, PO, navigasi)
 └─ styles/       tokens, layout, halaman
@@ -45,6 +61,8 @@ figma-kit-export/ paket desain untuk Figma (screenshot + plugin importer)
 
 ## Catatan
 
-- Autentikasi dan otorisasi hanya simulasi frontend. Jangan pakai kredensial nyata.
-- Data contoh (produk, stok, transaksi) ikut ter-reset bila `localStorage` dibersihkan.
-- Pengaturan Pemilik (`/owner/pengaturan`) mengubah pengguna, tarif PPN, dan batas minimum default secara nyata di demo.
+- Login, cek session (`GET /api/me`), dan logout (`POST /api/logout`) memakai Backend.
+- Role untuk proteksi route berasal dari session Backend, bukan localStorage.
+- Data contoh (produk, stok, transaksi) masih lokal dan ikut ter-reset bila `localStorage` dibersihkan.
+- Pengaturan Pemilik (`/owner/pengaturan`) mengubah pengguna, tarif PPN, dan batas minimum default
+  pada data demo lokal; belum tersimpan ke database Backend.

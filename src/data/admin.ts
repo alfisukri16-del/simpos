@@ -51,15 +51,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   },
 ];
 
-/** Sesi demo Admin — terpisah dari akun Kasir, bukan auth produksi. */
+/** Identitas demo Admin untuk seed/data bisnis lokal — bukan kredensial login. */
 export const DEMO_ADMIN = {
-  email: "admin@mekarjaya.demo",
-  password: "demo123",
   name: "Rina Amelia",
-  initials: "RA",
-  role: "Admin Cabang",
   branch: "Cabang Padang",
 };
 
-export const ADMIN_SESSION_KEY = "simpos.admin.session";
 export const ADMIN_STORE_KEY = "simpos.admin.store.v2";

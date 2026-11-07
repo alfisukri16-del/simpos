@@ -25,11 +25,3 @@ export const SECONDARY_NAV: NavItem[] = [
   { label: "Pelanggan", to: "/pelanggan", icon: Users },
   { label: "Resep Mata", to: "/resep-mata", icon: Glasses },
 ];
-
-/** Demo session data — clearly labelled demo, not verified business data. */
-export const DEMO_SESSION = {
-  cashierName: "Korena Saif",
-  initials: "KS",
-  role: "Kasir",
-  branch: "Cabang Padang",
-};

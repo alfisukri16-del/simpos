@@ -1,9 +1,13 @@
 import { Navigate } from "react-router-dom";
-import { getSession } from "../store/session";
+import { useAuth } from "../store/auth";
+import { ROLE_HOME } from "../store/session";
 
-/** Penjaga rute /admin — demo frontend: sesi lokal, bukan RBAC server. */
+/** Penjaga rute /admin — role dari session Backend, bukan localStorage. */
 export default function AdminGuard({ children }: { children: JSX.Element }) {
-  const s = getSession();
-  if (!s || s.role !== "admin") return <Navigate to="/admin/login" replace />;
+  const { session } = useAuth();
+
+  if (!session) return <Navigate to="/admin/login" replace />;
+  if (session.role !== "admin") return <Navigate to={ROLE_HOME[session.role]} replace />;
+
   return children;
 }

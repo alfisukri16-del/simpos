@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Clock, Truck, X } from "lucide-react";
 import { useSharedStore } from "../../store/sharedStore";
 import { requestState, requestStateLabel, type RequestState } from "../../store/requestStatus";
-import { getSession } from "../../store/session";
+import { useAuth } from "../../store/auth";
 import { Chip, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
@@ -21,6 +21,7 @@ const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
 
 export default function OwnerPengajuanPage() {
   const store = useSharedStore();
+  const { session } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [branch, setBranch] = useState("all");
@@ -85,7 +86,7 @@ export default function OwnerPengajuanPage() {
 
   function doReject() {
     if (!detail) return;
-    const res = store.rejectRequest(detail.id, rejectReason, getSession()?.name ?? "Pemilik");
+    const res = store.rejectRequest(detail.id, rejectReason, session?.name ?? "Pemilik");
     if (!res.ok) {
       setRejectError(res.msg);
       return;

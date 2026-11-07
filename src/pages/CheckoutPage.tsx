@@ -16,7 +16,7 @@ import { RESEP_MAP, type Customer } from "../data/customers";
 import type { PaymentMethod } from "../data/mock";
 import { useCart } from "../context/CartContext";
 import { useSharedStore } from "../store/sharedStore";
-import { getSession } from "../store/session";
+import { useAuth } from "../store/auth";
 import { Avatar, PageHeader, Steps, formatIDR } from "../components/ui";
 import "../styles/pages.css";
 
@@ -31,7 +31,7 @@ export default function CheckoutPage() {
   const cart = useCart();
   const shared = useSharedStore();
   const navigate = useNavigate();
-  const session = getSession();
+  const { session } = useAuth();
   const [query, setQuery] = useState("");
   const [picking, setPicking] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
