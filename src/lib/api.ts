@@ -21,8 +21,11 @@ export type AuthUser = {
   id: number;
   name: string;
   username: string;
+  email?: string;
+  phone?: string;
   role: Role;
   branchId: number | null;
+  branchName?: string | null;
 };
 
 type ApiPayload = {
@@ -324,6 +327,7 @@ export type OwnerBranchRow = {
   kota: string;
   alamat: string;
   telepon: string;
+  email: string;
   penanggung_jawab: string;
   status: "aktif" | "nonaktif";
   type: "Pusat" | "Cabang";
@@ -387,6 +391,8 @@ export type OwnerManagedUser = {
   id: number;
   nama: string;
   username: string;
+  email: string;
+  phone: string;
   role: Role;
   cabang_id: number | null;
   status: "aktif" | "nonaktif";
@@ -397,6 +403,8 @@ export type OwnerSettings = {
   storeName: string;
   storePhone: string;
   storeAddress: string;
+  storeEmail: string;
+  storePic: string;
 };
 
 type ApiDataResponse<T> = ApiPayload & { data?: T };
@@ -646,6 +654,8 @@ export const adminInventoryApi = {
       requestData<AdminCatalogProduct>(`/api/admin/produk/${id}`, { method: "POST", body: product }),
     deactivateProduct: (id: number) =>
       requestData<AdminCatalogProduct>(`/api/admin/produk/${id}/nonaktifkan`, { method: "POST", body: {} }),
+    activateProduct: (id: number) =>
+      requestData<AdminCatalogProduct>(`/api/admin/produk/${id}/aktifkan`, { method: "POST", body: {} }),
     stocks: (query = "") =>
       requestData<AdminStockRow[]>(`/api/admin/stok${query ? `?q=${encodeURIComponent(query)}` : ""}`),
     updateMinimum: (id: number, minimum: number) =>
@@ -735,6 +745,7 @@ export const ownerManagementApi = {
     city: string;
     address: string;
     phone: string;
+    email?: string;
     pic: string;
     status: "Aktif" | "Nonaktif";
     id?: number;
@@ -755,6 +766,8 @@ export const ownerManagementApi = {
     password: string;
     role: Role;
     branchId: number | null;
+    email?: string;
+    phone?: string;
   }) => requestData<{ id: number }>(user.id ? `/api/owner/pengguna/${user.id}` : "/api/owner/pengguna", {
     method: "POST",
     body: user,
@@ -764,4 +777,9 @@ export const ownerManagementApi = {
   settings: () => requestData<OwnerSettings>("/api/owner/pengaturan"),
   saveSettings: (settings: OwnerSettings) =>
     requestData<OwnerSettings>("/api/owner/pengaturan", { method: "POST", body: settings }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    requestData<{ updated: boolean }>("/api/owner/pengaturan/password", {
+      method: "POST",
+      body: { currentPassword, newPassword },
+    }),
 };
