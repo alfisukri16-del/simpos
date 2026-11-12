@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Clock, FilePlus2, FileText, X } from "lucide-react";
 import { adminInventoryApi, adminStockFlowApi, ApiError, type AdminStockRow, type StockRequestRow } from "../../lib/api";
+import { formatDateTime } from "../../lib/po";
+import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { requestStateLabel, type RequestState } from "../../store/requestStatus";
 import { PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
+import AdminPagination from "../../components/AdminPagination";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
@@ -31,8 +34,12 @@ export default function AdminPengajuanPage() {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const debouncedQuery = useDebouncedValue(query);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -48,13 +55,13 @@ export default function AdminPengajuanPage() {
     setLoading(true);
     setError("");
     try {
-      setRequests(await adminStockFlowApi.requests(filter === "Semua" ? "" : filter, query.trim()));
+      setRequests(await adminStockFlowApi.requests(filter === "Semua" ? "" : filter, debouncedQuery.trim()));
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "Daftar pengajuan gagal dimuat.");
     } finally {
       setLoading(false);
     }
-  }, [filter, query]);
+  }, [filter, debouncedQuery]);
 
   useEffect(() => {
     void loadProducts();
@@ -69,7 +76,14 @@ export default function AdminPengajuanPage() {
     const isNew = params.get("new") === "1";
     if (!deepLinkProduct && !isNew) return;
     if (products.length === 0) return;
-    const selected = products.find((item) => String(item.id) === deepLinkProduct) ?? products[0];
+    const selected = deepLinkProduct
+      ? products.find((item) => String(item.id) === deepLinkProduct)
+      : products[0];
+    if (!selected) {
+      setError("Produk tersebut bukan Frame/Lensa sehingga tidak bisa diajukan.");
+      setParams({}, { replace: true });
+      return;
+    }
     setProductId(String(selected.id));
     setQuantity("");
     setNote("");
@@ -79,8 +93,17 @@ export default function AdminPengajuanPage() {
   }, [params, products, setParams]);
 
   const waiting = requests.filter((request) => request.state === "Diajukan").length;
-  const lowStockCount = products.filter((product) => product.stok <= product.stok_minimum).length;
+  const lowStockCount = products.filter((product) => Number(product.stok) <= Number(product.stok_minimum)).length;
   const selectedProduct = products.find((product) => String(product.id) === productId);
+  const pageCount = Math.max(1, Math.ceil(requests.length / pageSize));
+  const visibleRequests = requests.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, debouncedQuery]);
+  useEffect(() => {
+    setPage((current) => Math.min(current, pageCount));
+  }, [pageCount]);
 
   const start = () => {
     setProductId(products[0] ? String(products[0].id) : "");
@@ -122,14 +145,13 @@ export default function AdminPengajuanPage() {
       <PageHeader
         overline="PERSEDIAAN — PENGAJUAN"
         title="Pengajuan Stok"
-        desc="Ajukan kebutuhan stok ke Pemilik dan pantau jumlah yang dialokasikan hingga diterima."
         actions={<button className="btn btn-primary" onClick={start}><FilePlus2 size={16} />Ajukan Stok</button>}
       />
 
       <div className="stat-row">
-        <StatCard label="Total Pengajuan" value={String(requests.length)} caption="Sesuai filter aktif" icon={<FileText size={22} />} tone="violet" />
-        <StatCard label="Menunggu Tinjauan" value={String(waiting)} caption="Belum mendapat alokasi" icon={<Clock size={22} />} tone="amber" />
-        <StatCard label="Produk Stok Menipis" value={String(lowStockCount)} caption="Saldo ≤ batas minimum" icon={<AlertTriangle size={22} />} tone="blue" />
+        <StatCard label="Total Pengajuan" value={loading || error ? "—" : String(requests.length)} caption="Sesuai filter aktif" icon={<FileText size={22} />} tone="violet" />
+        <StatCard label="Menunggu Tinjauan" value={loading || error ? "—" : String(waiting)} caption="Belum mendapat alokasi" icon={<Clock size={22} />} tone="amber" />
+        <StatCard label="Produk Stok Menipis" value={error ? "—" : String(lowStockCount)} caption="Saldo ≤ batas minimum" icon={<AlertTriangle size={22} />} tone="blue" />
       </div>
 
       {notice ? <div className="notice notice-ok" role="status"><CheckCircle2 size={16} />{notice}</div> : null}
@@ -151,9 +173,9 @@ export default function AdminPengajuanPage() {
           </tr></thead>
           <tbody>
             {loading ? <tr><td colSpan={8}><div className="empty-note">Memuat pengajuan...</div></td></tr> : null}
-            {!loading ? requests.map((request) => (
+            {!loading ? visibleRequests.map((request) => (
               <tr key={request.id_pengajuan}>
-                <td><div className="tt-num">{request.kode_pengajuan}</div><div className="tt-sub">{request.created_at}</div></td>
+                <td><div className="tt-num">{request.kode_pengajuan}</div><div className="tt-sub">{formatDateTime(request.created_at)}</div></td>
                 <td><div className="tt-num">{request.nama_barang}</div><div className="tt-sub">{request.kode_barang} · {request.jenis}</div></td>
                 <td className="tt-center tt-money">{request.stok ?? 0} / min. {request.stok_minimum}</td>
                 <td className="tt-center tt-money">+{request.jumlah_diminta}</td>
@@ -166,7 +188,13 @@ export default function AdminPengajuanPage() {
             {!loading && requests.length === 0 ? <tr><td colSpan={8}><div className="empty-note">Tidak ada pengajuan yang cocok.</div></td></tr> : null}
           </tbody>
         </table>
-        <div className="table-foot"><span className="foot-note">Menampilkan {requests.length} pengajuan</span></div>
+        <AdminPagination
+          page={page}
+          pageSize={pageSize}
+          total={requests.length}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {open ? (

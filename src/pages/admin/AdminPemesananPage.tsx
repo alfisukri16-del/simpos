@@ -1,21 +1,41 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { ChevronRight, ClipboardList, PackageCheck, PackagePlus } from "lucide-react";
 import type { PoStatus } from "../../data/mock";
 import { adminPoApi, ApiError } from "../../lib/api";
 import { mapApiPo } from "../../lib/po";
-import { useAuth } from "../../store/auth";
+import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { Avatar, PageHeader, SearchBox, StatCard, StatusPill } from "../../components/ui";
+import AdminPagination from "../../components/AdminPagination";
 import "../../styles/pages.css";
 import "../../styles/admin.css";
 
-const FILTERS: Array<"Semua" | PoStatus> = ["Semua", "Dipesan", "Diproses", "Sudah Datang", "Selesai", "Dibatalkan"];
+type Filter = "Semua" | PoStatus;
+
+const FILTERS: Filter[] = ["Semua", "Dipesan", "Diproses", "Sudah Datang", "Selesai", "Dibatalkan"];
+
+const FILTER_TO_API: Record<Exclude<Filter, "Semua">, string> = {
+  Dipesan: "dipesan",
+  Diproses: "diproses",
+  "Sudah Datang": "sudah_datang",
+  Selesai: "selesai",
+  Dibatalkan: "dibatalkan",
+};
+
+function filterFromParam(value: string | null): Filter {
+  if (!value) return "Semua";
+  const match = (Object.entries(FILTER_TO_API) as Array<[Filter, string]>).find(([, api]) => api === value);
+  return match ? match[0] : "Semua";
+}
 
 export default function AdminPemesananPage() {
-  const { session } = useAuth();
-  const [filter, setFilter] = useState<"Semua" | PoStatus>("Semua");
+  const [params, setParams] = useSearchParams();
+  const [filter, setFilter] = useState<Filter>(() => filterFromParam(params.get("status")));
   const [query, setQuery] = useState("");
   const [orders, setOrders] = useState<ReturnType<typeof mapApiPo>[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -23,14 +43,7 @@ export default function AdminPemesananPage() {
     let active = true;
     setLoading(true);
     setError("");
-    const status = filter === "Semua" ? "" : ({
-      Dipesan: "dipesan",
-      Diproses: "diproses",
-      "Sudah Datang": "sudah_datang",
-      Selesai: "selesai",
-      Dibatalkan: "dibatalkan",
-    } as const)[filter];
-    adminPoApi.orders(status, query)
+    adminPoApi.orders()
       .then((rows) => {
         if (active) setOrders(rows.map((order) => mapApiPo(order)));
       })
@@ -43,34 +56,69 @@ export default function AdminPemesananPage() {
     return () => {
       active = false;
     };
-  }, [filter, query]);
+  }, [reloadKey]);
 
-  const rows = orders;
+  const debouncedQuery = useDebouncedValue(query);
+  const rows = useMemo(() => {
+    const normalizedQuery = debouncedQuery.trim().toLowerCase();
+    return orders.filter((order) => {
+      const matchesStatus = filter === "Semua" || order.status === filter;
+      const searchable = `${order.number} ${order.customer} ${order.phone} ${order.productLabel}`.toLowerCase();
+      return matchesStatus && (!normalizedQuery || searchable.includes(normalizedQuery));
+    });
+  }, [orders, filter, debouncedQuery]);
+  const stats = useMemo(() => ({
+    baru: orders.filter((order) => order.status === "Dipesan").length,
+    diproses: orders.filter((order) => order.status === "Diproses").length,
+    datang: orders.filter((order) => order.status === "Sudah Datang").length,
+  }), [orders]);
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const visibleRows = rows.slice((page - 1) * pageSize, page * pageSize);
 
-  const baru = orders.filter((o) => o.status === "Dipesan").length;
-  const diproses = orders.filter((o) => o.status === "Diproses").length;
-  const datang = orders.filter((o) => o.status === "Sudah Datang").length;
+  useEffect(() => {
+    setPage(1);
+  }, [filter, debouncedQuery]);
+  useEffect(() => {
+    setPage((current) => Math.min(current, pageCount));
+  }, [pageCount]);
+
+  const changeFilter = (value: Filter) => {
+    setFilter(value);
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      if (value === "Semua") next.delete("status");
+      else next.set("status", FILTER_TO_API[value]);
+      return next;
+    }, { replace: true });
+  };
+
+  const { baru, diproses, datang } = stats;
 
   return (
     <div className="page">
       <PageHeader
         overline="OPERASIONAL — PEMESANAN"
         title="Pemesanan (PO)"
-        desc={`Antrean PO dari Kasir ${session?.branch ?? "cabang"}. ${baru} PO baru menunggu diproses.`}
       />
 
       <div className="stat-row">
-        <StatCard label="Pesanan Baru" value={String(baru).padStart(2, "0")} caption="Menunggu pemrosesan admin" icon={<PackagePlus size={22} />} tone="violet" />
-        <StatCard label="Sedang Diproses" value={String(diproses).padStart(2, "0")} caption="Dalam penanganan cabang" icon={<ClipboardList size={22} />} tone="amber" />
-        <StatCard label="Sudah Datang" value={String(datang).padStart(2, "0")} caption="Siap diambil pelanggan" icon={<PackageCheck size={22} />} tone="green" />
+        <StatCard label="Pesanan Baru" value={loading || error ? "—" : String(baru)} caption="Menunggu pemrosesan admin" icon={<PackagePlus size={22} />} tone="violet" />
+        <StatCard label="Sedang Diproses" value={loading || error ? "—" : String(diproses)} caption="Dalam penanganan cabang" icon={<ClipboardList size={22} />} tone="amber" />
+        <StatCard label="Sudah Datang" value={loading || error ? "—" : String(datang)} caption="Siap diambil pelanggan" icon={<PackageCheck size={22} />} tone="green" />
       </div>
-      {error ? <div className="notice" role="alert">{error}</div> : null}
+      {error ? (
+        <div className="notice" role="alert">
+          {error}{" "}
+          <button className="btn btn-ghost" type="button" onClick={() => setReloadKey((key) => key + 1)}>
+            Coba lagi
+          </button>
+        </div>
+      ) : null}
 
       <section className="section-block">
         <div className="section-head">
           <div>
             <h2>Daftar Pemesanan</h2>
-            <div className="section-desc">Informasi pesanan pelanggan dan status terbaru</div>
           </div>
         </div>
 
@@ -81,7 +129,7 @@ export default function AdminPemesananPage() {
               className="chip-select"
               aria-label="Filter Status"
               value={filter}
-              onChange={(e) => setFilter(e.target.value as "Semua" | PoStatus)}
+              onChange={(e) => changeFilter(e.target.value as Filter)}
             >
               {FILTERS.map((f) => (
                 <option key={f} value={f}>
@@ -106,7 +154,7 @@ export default function AdminPemesananPage() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={5}><div className="empty-note">Memuat daftar PO...</div></td></tr>
-              ) : rows.map((o) => (
+              ) : visibleRows.map((o) => (
                 <tr key={o.id}>
                   <td>
                     <div className="tt-num">{o.number}</div>
@@ -125,7 +173,7 @@ export default function AdminPemesananPage() {
                     <div className="tt-num" style={{ fontSize: 13 }}>
                       {o.productLabel}
                     </div>
-                    <div className="tt-sub">{o.items.length ? `${o.items.length} jenis produk` : "Detail produk tersedia di PO"}</div>
+                    <div className="tt-sub">{o.itemCount > 0 ? `${o.itemCount} jenis produk` : "Detail produk tersedia di PO"}</div>
                   </td>
                   <td className="tt-center">
                     <StatusPill label={o.status} />
@@ -154,9 +202,13 @@ export default function AdminPemesananPage() {
               ) : null}
             </tbody>
           </table>
-          <div className="table-foot">
-            <span className="foot-note">Menampilkan {rows.length} pesanan</span>
-          </div>
+          <AdminPagination
+            page={page}
+            pageSize={pageSize}
+            total={rows.length}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </section>
     </div>

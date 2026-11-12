@@ -52,7 +52,6 @@ export default function AdminDashboardPage() {
       <PageHeader
         overline="DASHBOARD ADMIN CABANG"
         title="Dashboard Admin Cabang"
-        desc={summary ? `Ringkasan operasional ${summary.branch}. Data diperbarui langsung dari server.` : "Ringkasan operasional cabang."}
         actions={summary ? <span className="branch-chip">{summary.branch}</span> : null}
       />
 
@@ -69,25 +68,25 @@ export default function AdminDashboardPage() {
         <Link to="/admin/stok" className="stat-link">
           <StatCard
             label="Stok Menipis"
-            value={loading ? "—" : String(summary?.stats.lowStock ?? 0)}
+            value={loading || error ? "—" : String(summary?.stats.lowStock ?? 0)}
             caption="Saldo ≤ batas minimum"
             icon={<Boxes size={22} />}
             tone="amber"
           />
         </Link>
-        <Link to="/admin/pemesanan" className="stat-link">
+        <Link to="/admin/pemesanan?status=dipesan" className="stat-link">
           <StatCard
             label="PO Baru"
-            value={loading ? "—" : String(summary?.stats.newOrders ?? 0)}
+            value={loading || error ? "—" : String(summary?.stats.newOrders ?? 0)}
             caption="Menunggu diproses"
             icon={<ClipboardList size={22} />}
             tone="blue"
           />
         </Link>
-        <Link to="/admin/pemesanan" className="stat-link">
+        <Link to="/admin/pemesanan?status=diproses" className="stat-link">
           <StatCard
             label="PO Diproses"
-            value={loading ? "—" : String(summary?.stats.processingOrders ?? 0)}
+            value={loading || error ? "—" : String(summary?.stats.processingOrders ?? 0)}
             caption="Sedang ditangani cabang"
             icon={<PackageCheck size={22} />}
             tone="violet"
@@ -103,7 +102,7 @@ export default function AdminDashboardPage() {
           </Link>
           <Link className="btn btn-ghost" to="/admin/penerimaan">
             <PackageCheck size={16} />
-            Catat Penerimaan
+            Konfirmasi Penerimaan
           </Link>
           <Link className="btn btn-ghost" to="/admin/pengajuan?new=1">
             <FilePlus2 size={16} />
