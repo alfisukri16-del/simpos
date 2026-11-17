@@ -193,7 +193,6 @@ export default function OwnerTransaksiPage() {
             <div className="drawer-head">
               <div>
                 <h2>{detail.no}</h2>
-                <div className="section-desc">Rincian transaksi dari Kasir.</div>
               </div>
               <button className="icon-pill" aria-label="Tutup" onClick={() => setDetailNo(null)}>
                 <X size={18} />
