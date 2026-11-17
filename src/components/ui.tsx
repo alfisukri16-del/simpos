@@ -65,7 +65,7 @@ export function SearchBox({
       <Search size={16} />
       <input
         type="search"
-        placeholder={placeholder}
+        placeholder={placeholder ?? ""}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
       />
@@ -140,6 +140,18 @@ export function StatCard({
       </div>
       {icon ? <span className="stat-icon">{icon}</span> : null}
     </div>
+  );
+}
+
+/* ---------- Table column proportions ---------- */
+/** Render `<colgroup>` with explicit column width proportions. */
+export function TableCols({ widths }: { widths: readonly string[] }) {
+  return (
+    <colgroup>
+      {widths.map((width, index) => (
+        <col key={index} style={{ width }} />
+      ))}
+    </colgroup>
   );
 }
 
