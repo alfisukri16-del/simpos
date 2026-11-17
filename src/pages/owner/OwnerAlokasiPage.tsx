@@ -178,7 +178,7 @@ export default function OwnerAlokasiPage() {
       {open ? (
         <div className="overlay" onClick={() => !saving && setOpen(false)}>
           <div className="drawer" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
-            <div className="drawer-head"><div><h2>Buat Alokasi</h2><div className="section-desc">Alokasi stok pusat untuk cabang</div></div><button className="icon-pill" aria-label="Tutup" onClick={() => setOpen(false)} disabled={saving}><X size={18} /></button></div>
+            <div className="drawer-head"><div><h2>Buat Alokasi</h2></div><button className="icon-pill" aria-label="Tutup" onClick={() => setOpen(false)} disabled={saving}><X size={18} /></button></div>
             <form onSubmit={submit} className="drawer-form" noValidate>
               {error ? <div className="form-error" role="alert">{error}</div> : null}
               <label className="afield"><span>Cabang tujuan *</span><select value={branchId} onChange={(event) => { setBranchId(event.target.value); setRequestId(""); }} required>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.nama_cabang}</option>)}</select></label>
