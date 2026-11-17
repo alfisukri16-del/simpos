@@ -46,7 +46,7 @@ export default function OwnerPOPage() {
 
       <div className="toolbar">
         <SearchBox
-          placeholder="Cari nomor PO atau pelanggan..."
+
           value={q}
           onChange={setQ}
         />
@@ -171,6 +171,7 @@ export default function OwnerPOPage() {
             <div className="drawer-head">
               <div>
                 <h2>{detail.number}</h2>
+                <div className="section-desc">PO dikelola Kasir dan Admin cabang.</div>
               </div>
               <button className="icon-pill" aria-label="Tutup" onClick={() => setDetailId(null)}>
                 <X size={18} />
