@@ -37,21 +37,14 @@ export default function PemesananPage() {
     setLoading(true);
     setError("");
     try {
-      const status = filter === "Semua" ? "" : Object.entries({
-        dipesan: "Dipesan",
-        diproses: "Diproses",
-        sudah_datang: "Sudah Datang",
-        selesai: "Selesai",
-        dibatalkan: "Dibatalkan",
-      }).find(([, label]) => label === filter)?.[0] ?? "";
-      const results = await kasirApi.orders(status);
+      const results = await kasirApi.orders();
       setOrders(results.map((order) => mapApiPo(order)));
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : "Daftar PO gagal dimuat.");
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     void reload();
@@ -59,9 +52,10 @@ export default function PemesananPage() {
 
   const rows = useMemo(
     () => orders.filter((order) =>
+      (filter === "Semua" || order.status === filter) &&
       `${order.number} ${order.customer} ${order.phone} ${order.productLabel}`.toLowerCase().includes(query.toLowerCase()),
     ),
-    [orders, query],
+    [orders, query, filter],
   );
 
   const poBaru = orders.filter((o) => o.status === "Dipesan").length;
@@ -87,9 +81,9 @@ export default function PemesananPage() {
       />
 
       <div className="stat-row">
-        <StatCard label="Pesanan Baru" value={String(poBaru).padStart(2, "0")} caption="Menunggu pemrosesan admin" icon={<PackagePlus size={22} />} tone="violet" />
-        <StatCard label="Sedang Diproses" value={String(diproses).padStart(2, "0")} caption="Dalam penanganan cabang" icon={<ClipboardList size={22} />} tone="amber" />
-        <StatCard label="Sudah Datang" value={String(datang).padStart(2, "0")} caption="Siap diambil pelanggan" icon={<PackageCheck size={22} />} tone="green" />
+        <StatCard label="Pesanan Baru" value={loading ? "…" : String(poBaru).padStart(2, "0")} caption="Menunggu pemrosesan admin" icon={<PackagePlus size={22} />} tone="violet" />
+        <StatCard label="Sedang Diproses" value={loading ? "…" : String(diproses).padStart(2, "0")} caption="Dalam penanganan cabang" icon={<ClipboardList size={22} />} tone="amber" />
+        <StatCard label="Sudah Datang" value={loading ? "…" : String(datang).padStart(2, "0")} caption="Siap diambil pelanggan" icon={<PackageCheck size={22} />} tone="green" />
       </div>
 
       {created ? (
@@ -185,7 +179,11 @@ export default function PemesananPage() {
             </tbody>
           </table>
           <div className="table-foot">
-            <span className="foot-note">Menampilkan {rows.length} dari {orders.length} pesanan</span>
+            <span className="foot-note">
+              {filter === "Semua"
+                ? `Menampilkan ${rows.length} dari ${orders.length} pesanan`
+                : `Menampilkan ${rows.length} pesanan berstatus ${filter}`}
+            </span>
           </div>
         </div>
       </section>

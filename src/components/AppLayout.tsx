@@ -93,8 +93,8 @@ export default function AppLayout() {
                 <Search size={18} />
                 <input
                   type="search"
-                  placeholder="Cari produk, pelanggan, atau transaksi..."
-                  aria-label="Pencarian"
+                  placeholder="Cari produk (nama, merek, kode)..."
+                  aria-label="Cari produk"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />

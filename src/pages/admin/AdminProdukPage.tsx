@@ -16,6 +16,7 @@ type ProductRow = {
   brand: string;
   price: number;
   status: "Aktif" | "Nonaktif";
+  photo: string | null;
 };
 
 const empty = { name: "", brand: "", price: "" };
@@ -28,6 +29,7 @@ function mapProduct(product: AdminCatalogProduct): ProductRow {
     brand: product.merek ?? "",
     price: Number(product.harga_jual),
     status: product.status.toLowerCase() === "aktif" ? "Aktif" : "Nonaktif",
+    photo: product.foto ? `/${product.foto}` : null,
   };
 }
 
@@ -43,6 +45,7 @@ export default function AdminProdukPage({ type }: Props) {
   });
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState(empty);
+  const [photo, setPhoto] = useState<File | null>(null);
   const [formError, setFormError] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
@@ -79,6 +82,7 @@ export default function AdminProdukPage({ type }: Props) {
   const startAdd = () => {
     setEditing(null);
     setForm({ ...empty });
+    setPhoto(null);
     setFormError("");
     setOpen(true);
   };
@@ -92,6 +96,7 @@ export default function AdminProdukPage({ type }: Props) {
       brand: product.brand,
       price: String(product.price),
     });
+    setPhoto(null);
     setFormError("");
     setOpen(true);
   };
@@ -126,11 +131,13 @@ export default function AdminProdukPage({ type }: Props) {
         category: type,
         price,
       };
-      if (editing) {
-        await adminInventoryApi.updateProduct(Number(editing), payload);
-      } else {
-        await adminInventoryApi.createProduct(payload);
+      const saved = editing
+        ? await adminInventoryApi.updateProduct(Number(editing), payload)
+        : await adminInventoryApi.createProduct(payload);
+      if (photo) {
+        await adminInventoryApi.uploadPhoto(saved.id, photo);
       }
+      setPhoto(null);
       setOpen(false);
       await loadProducts();
     } catch (requestError) {
@@ -220,8 +227,19 @@ export default function AdminProdukPage({ type }: Props) {
             ) : products.map((product) => (
               <tr key={product.id}>
                 <td>
-                  <div className="tt-num">{product.name}</div>
-                  <div className="tt-sub">{product.code} · {product.brand}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {product.photo ? (
+                      <img
+                        src={product.photo}
+                        alt=""
+                        style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 8, flexShrink: 0 }}
+                      />
+                    ) : null}
+                    <div>
+                      <div className="tt-num">{product.name}</div>
+                      <div className="tt-sub">{product.code} · {product.brand}</div>
+                    </div>
+                  </div>
                 </td>
                 <td className="tt-center tt-money">{formatIDR(product.price)}</td>
                 <td className="tt-center"><StatusPill label={product.status} /></td>
@@ -282,6 +300,21 @@ export default function AdminProdukPage({ type }: Props) {
                   value={form.price}
                   onChange={(event) => setForm({ ...form, price: event.target.value })}
                 />
+              </label>
+              <label className="afield">
+                <span>Foto produk (JPG/PNG/WebP, maksimal 2 MB)</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
+                />
+                {editing && products.find((item) => item.id === editing)?.photo ? (
+                  <img
+                    src={products.find((item) => item.id === editing)?.photo ?? ""}
+                    alt="Foto produk saat ini"
+                    style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 8, marginTop: 8 }}
+                  />
+                ) : null}
               </label>
               <div className="drawer-foot">
                 <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)} disabled={saving}>Batal</button>

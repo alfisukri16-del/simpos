@@ -3,7 +3,6 @@ import { useModalDismiss } from "../lib/useModalDismiss";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Eye, Glasses, History, Package, Printer, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
-import { useSharedStore } from "../store/sharedStore";
 import { useAuth } from "../store/auth";
 import { formatIDR } from "../components/ui";
 import { kasirApi } from "../lib/api";
@@ -19,7 +18,6 @@ function ProductIcon({ category }: { category: string }) {
 
 export default function TransaksiBerhasilPage() {
   const cart = useCart();
-  const shared = useSharedStore();
   const navigate = useNavigate();
   const { session } = useAuth();
   const [searchParams] = useSearchParams();
@@ -249,8 +247,7 @@ export default function TransaksiBerhasilPage() {
                 <div className="struk-logo">
                   <MRLogo size={44} />
                 </div>
-                <b>{shared.settings.storeName.split("—")[0].trim()}</b>
-                <span>{shared.settings.storeAddress}</span>
+                <b>{session?.branch ? `Optik Mekar Jaya — ${session.branch}` : "Optik Mekar Jaya"}</b>
               </div>
               <div className="struk-meta">
                 <div>

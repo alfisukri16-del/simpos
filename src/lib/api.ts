@@ -44,6 +44,7 @@ export type ApiProduct = {
   nama_barang: string;
   jenis: string;
   merek: string | null;
+  foto: string | null;
   harga_jual: number;
   nama_kategori: string | null;
   stok: number;
@@ -209,6 +210,7 @@ export type AdminCatalogProduct = {
   nama_barang: string;
   jenis: string;
   merek: string | null;
+  foto: string | null;
   harga_jual: number;
   status: string;
   nama_kategori: string | null;
@@ -651,6 +653,28 @@ export const adminInventoryApi = {
     },
     createProduct: (product: { type: "Frame" | "Lensa"; name: string; brand: string; category: string; price: number }) =>
       requestData<AdminCatalogProduct>("/api/admin/produk", { method: "POST", body: product }),
+    uploadPhoto: async (id: number, file: File) => {
+      if (!csrfToken) await primeCsrfToken();
+      const form = new FormData();
+      form.append("foto", file);
+      // FormData tidak boleh memakai Content-Type JSON; browser yang menetapkan boundary.
+      const response = await fetch(apiUrl(`/api/admin/produk/${id}/foto`), {
+        method: "POST",
+        credentials: "include",
+        headers: csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {},
+        body: form,
+      });
+      const payload = await readPayload(response);
+      rememberCsrf(payload); // token CSRF berotasi setelah setiap POST
+      if (!response.ok || payload?.success === false) {
+        throw new ApiError(
+          payload?.message?.trim() || defaultErrorMessage(response.status),
+          response.status,
+          payload,
+        );
+      }
+      return payload;
+    },
     updateProduct: (id: number, product: { type: "Frame" | "Lensa"; name: string; brand: string; category: string; price: number }) =>
       requestData<AdminCatalogProduct>(`/api/admin/produk/${id}`, { method: "POST", body: product }),
     deactivateProduct: (id: number) =>

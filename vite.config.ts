@@ -46,6 +46,12 @@ export default defineConfig(({ command }) => ({
         target: "http://127.0.0.1:8080",
         changeOrigin: true,
       },
+      // Foto produk disimpan di Backend/public/uploads. Saat dev, Vite harus
+      // meneruskan path ini supaya <img src="/uploads/..."> tidak jatuh ke SPA.
+      "/uploads": {
+        target: "http://127.0.0.1:8080",
+        changeOrigin: true,
+      },
     },
   },
 }));

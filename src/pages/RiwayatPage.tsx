@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { type PaymentMethod, type ResepRecord, type Transaction, type TrxStatus } from "../data/mock";
-import { useSharedStore, BRANCH_ID } from "../store/sharedStore";
+import { BRANCH_ID } from "../store/sharedStore";
 import { useAuth } from "../store/auth";
 import { exportCsv, inPeriod, periodRange, stamp } from "../store/reports";
 import { kasirApi, type ApiTransaction, type ApiTransactionItem } from "../lib/api";
@@ -105,7 +105,7 @@ function StrukBody({ trx, storeName, storeAddress, cashier }: StrukBodyProps) {
           <MRLogo size={44} />
         </div>
         <b>{storeName}</b>
-        <span>{storeAddress}</span>
+        {storeAddress ? <span>{storeAddress}</span> : null}
       </div>
       <div className="struk-meta">
         <div>
@@ -182,12 +182,12 @@ function StrukBody({ trx, storeName, storeAddress, cashier }: StrukBodyProps) {
 }
 
 export default function RiwayatPage() {
-  const shared = useSharedStore();
   const { session } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [detailProducts, setDetailProducts] = useState<Record<string, NonNullable<Transaction["products"]>>>({});
   const [selectedRx, setSelectedRx] = useState<ResepRecord | undefined>();
   const [loadError, setLoadError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<RiwayatPeriod>("semua");
   const [customFrom, setCustomFrom] = useState("2026-08-01");
   const [customTo, setCustomTo] = useState("2026-10-31");
@@ -229,6 +229,8 @@ export default function RiwayatPage() {
       setLoadError("");
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Riwayat transaksi gagal dimuat dari database.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -454,7 +456,7 @@ export default function RiwayatPage() {
       <div className="stat-row">
         <StatCard
           label="Total diterima (Lunas)"
-          value={formatIDR(received)}
+          value={loading ? "…" : formatIDR(received)}
           caption={
             methodFilter === "Semua"
               ? `Tunai ${formatIDR(cashTotal)} · Non-tunai ${formatIDR(nonCashTotal)}`
@@ -465,15 +467,15 @@ export default function RiwayatPage() {
         />
         <StatCard
           label="Transaksi selesai"
-          value={String(selesaiRows.length)}
+          value={loading ? "…" : String(selesaiRows.length)}
           caption="Transaksi telah dibayar lunas"
           icon={<Wallet size={22} />}
           tone="blue"
         />
         <StatCard
           label="Jumlah ditampilkan"
-          value={String(rows.length)}
-          caption={`Dari ${transactions.length} total riwayat transaksi`}
+          value={loading ? "…" : String(rows.length)}
+          caption={loading ? "Memuat riwayat transaksi" : `Dari ${transactions.length} total riwayat transaksi`}
           icon={<CreditCard size={22} />}
           tone="violet"
         />
@@ -557,6 +559,13 @@ export default function RiwayatPage() {
               </tr>
             </thead>
             <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="empty-note">Memuat riwayat transaksi...</div>
+                  </td>
+                </tr>
+              ) : null}
               {visibleRows.map((t) => {
                 const method = (t.method as PaymentMethod | undefined) ?? "Tunai";
                 const MethodIcon = METHOD_ICON[method] ?? Banknote;
@@ -600,7 +609,7 @@ export default function RiwayatPage() {
                   </tr>
                 );
               })}
-              {rows.length === 0 ? (
+              {!loading && rows.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
                     <div className="empty-note">Tidak ada transaksi atau pembayaran yang cocok dengan filter.</div>
@@ -791,8 +800,8 @@ export default function RiwayatPage() {
         <div className="struk-print struk-print-hidden" id="struk-print" aria-hidden="true">
           <StrukBody
             trx={active}
-            storeName={shared.settings.storeName.split("—")[0].trim()}
-            storeAddress={shared.settings.storeAddress}
+            storeName={session?.branch ? `Optik Mekar Jaya — ${session.branch}` : "Optik Mekar Jaya"}
+            storeAddress=""
             cashier={session?.name ?? "Kasir"}
           />
         </div>

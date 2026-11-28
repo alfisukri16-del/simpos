@@ -18,7 +18,18 @@ import { kasirApi, type ApiProduct } from "../lib/api";
 import { Chip, PageHeader, SearchBox, Steps, formatIDR } from "../components/ui";
 import "../styles/pages.css";
 
-
+function ProductPhoto({ photoUrl, name }: { photoUrl: string | null; name: string }) {
+  const [missing, setMissing] = useState(false);
+  if (!photoUrl || missing) return <Glasses size={40} strokeWidth={1.6} />;
+  return (
+    <img
+      className="pc-photo"
+      src={photoUrl}
+      alt={name}
+      onError={() => setMissing(true)}
+    />
+  );
+}
 
 export default function TransaksiBaruPage() {
   const cart = useCart();
@@ -30,6 +41,7 @@ export default function TransaksiBaruPage() {
   const [sort, setSort] = useState("relevan");
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loadError, setLoadError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -39,6 +51,9 @@ export default function TransaksiBaruPage() {
       })
       .catch((error: unknown) => {
         if (active) setLoadError(error instanceof Error ? error.message : "Katalog gagal dimuat.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
       });
     return () => {
       active = false;
@@ -59,6 +74,7 @@ export default function TransaksiBaruPage() {
     price: Number(p.harga_jual),
     saldo: Number(p.stok),
     minimum: Number(p.stok_minimum),
+    photoUrl: p.foto ? `/${p.foto}` : null,
   }));
 
   const brands = Array.from(new Set(catalog.map((p) => p.brand)));
@@ -132,8 +148,11 @@ export default function TransaksiBaruPage() {
           ) : null}
 
           <div className="product-grid">
-            {!loadError && products.length === 0 ? (
+            {loading ? (
               <div className="empty-note" style={{ gridColumn: "1 / -1" }}>Memuat katalog dari database...</div>
+            ) : null}
+            {!loading && !loadError && products.length === 0 ? (
+              <div className="empty-note" style={{ gridColumn: "1 / -1" }}>Belum ada produk untuk cabang ini.</div>
             ) : null}
             {filtered.map((p) => {
               const outOfStock = p.saldo !== undefined && p.saldo <= 0;
@@ -156,7 +175,7 @@ export default function TransaksiBaruPage() {
                         {inCartQty} di keranjang
                       </span>
                     ) : null}
-                    <Glasses size={40} strokeWidth={1.6} />
+                    <ProductPhoto photoUrl={p.photoUrl} name={p.name} />
                   </div>
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
@@ -250,7 +269,7 @@ export default function TransaksiBaruPage() {
                 </div>
               );
             })}
-            {filtered.length === 0 ? (
+            {!loading && products.length > 0 && filtered.length === 0 ? (
               <div className="empty-note" style={{ gridColumn: "1 / -1" }}>
                 Tidak ada produk yang cocok dengan pencarian atau filter.
               </div>

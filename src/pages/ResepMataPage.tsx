@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { CalendarDays, CheckCircle2, ChevronRight, FileText, Glasses, Pencil, Plus, Printer, Users, X } from "lucide-react";
 import { type ResepRecord } from "../data/mock";
 import { ApiError, kasirApi, type ApiCustomer, type ApiRecipe } from "../lib/api";
-import { useSharedStore } from "../store/sharedStore";
+import { useAuth } from "../store/auth";
 import { Avatar, Chip, PageHeader, SearchBox, StatCard } from "../components/ui";
 import MRLogo from "../components/MRLogo";
 import "../styles/pages.css";
@@ -17,7 +17,7 @@ const EYE: Eye = { sph: "", cyl: "", axis: "" };
 const EMPTY: FormState = { customerId: "", date: "", od: { ...EYE }, os: { ...EYE }, pd: "", add: "", note: "" };
 
 export default function ResepMataPage() {
-  const shared = useSharedStore();
+  const { session } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [reseps, setReseps] = useState<ResepRecord[]>([]);
   const [customers, setCustomers] = useState<Array<{ id: string; code: string; name: string; phone: string; initials: string }>>([]);
@@ -36,8 +36,10 @@ export default function ResepMataPage() {
   const [formError, setFormError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const [recipeRows, customerRows] = await Promise.all([kasirApi.recipes(), kasirApi.customers()]);
       setCustomers(customerRows.map((customer: ApiCustomer) => ({
@@ -62,6 +64,8 @@ export default function ResepMataPage() {
       setLoadError("");
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Resep gagal dimuat dari database.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -180,22 +184,22 @@ export default function ResepMataPage() {
       <div className="stat-row">
         <StatCard
           label="Total arsip resep"
-          value={String(reseps.length)}
-          caption="Tersimpan di cabang ini"
+          value={loading ? "…" : String(reseps.length)}
+          caption="Seluruh arsip resep"
           icon={<Glasses size={22} />}
           tone="violet"
         />
         <StatCard
           label="Pelanggan memiliki resep"
-          value={String(uniqueCustomersWithRx)}
+          value={loading ? "…" : String(uniqueCustomersWithRx)}
           caption="Tercatat dalam arsip digital"
           icon={<Users size={22} />}
           tone="green"
         />
         <StatCard
           label="Pemeriksaan terbaru"
-          value={reseps[0]?.date ?? "-"}
-          caption={reseps[0] ? `${reseps[0].customer} (${reseps[0].id})` : "Belum ada data"}
+          value={loading ? "…" : reseps[0]?.date ?? "-"}
+          caption={reseps[0] ? reseps[0].customer : "Belum ada data"}
           icon={<CalendarDays size={22} />}
           tone="blue"
         />
@@ -249,6 +253,13 @@ export default function ResepMataPage() {
               </tr>
             </thead>
             <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="empty-note">Memuat arsip resep...</div>
+                  </td>
+                </tr>
+              ) : null}
               {rows.map((r) => {
                 const cust = customers.find((c) => c.name === r.customer);
                 return (
@@ -260,7 +271,6 @@ export default function ResepMataPage() {
                   >
                     <td>
                       <div className="tt-num">{formatDate(r.date)}</div>
-                      <div className="tt-sub">{r.id}</div>
                     </td>
                     <td>
                       <div className="cell-person">
@@ -311,7 +321,7 @@ export default function ResepMataPage() {
                   </tr>
                 );
               })}
-              {rows.length === 0 ? (
+              {!loading && rows.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
                     <div className="empty-note">Resep tidak ditemukan.</div>
@@ -420,8 +430,7 @@ export default function ResepMataPage() {
                 <div className="struk-logo">
                   <MRLogo size={44} />
                 </div>
-                <b>{shared.settings.storeName.split("—")[0].trim()}</b>
-                <span>{shared.settings.storeAddress}</span>
+                <b>{session?.branch ? `Optik Mekar Jaya — ${session.branch}` : "Optik Mekar Jaya"}</b>
               </div>
 
               <div className="struk-meta">
